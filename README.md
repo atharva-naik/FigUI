@@ -2,7 +2,7 @@
 The aim of FigUI is to provide a single package to view, edit, process and convert code, text, audio, document, image and video files of major popular formats.
 
 ## File formats to be supported:
-1) Text: (txt, md, rst)
+1) Text: (txt, md, rst)b
 2) Code: (most coding langs)
 3) Audio:
 4) Document: (ppt/pdf/doc/font/spreadsheet)

@@ -3,9 +3,9 @@ try:
 except ImportError:
     pass
 import logging
-from PyQt5.QtGui import QIcon, QWindow
-from PyQt5.QtCore import pyqtSlot, QProcess
+from PyQt5.QtCore import pyqtSlot, QProcess, Qt
 import os, sys, glob, pathlib, copy, time, datetime
+from PyQt5.QtGui import QIcon, QWindow, QColor, QTextFormat
 from PyQt5.QtWidgets import QMainWindow, QApplication, QPushButton, QWidget, QAction, QTabWidget, QVBoxLayout, QTextEdit
 
 
@@ -26,19 +26,30 @@ class FigShell(QWidget):
         blankWindow = QTextEdit()
         blankWindow.setReadOnly(True)
         blankWindow.setFixedHeight(20*height+20)
-        loggerWindow = QTextEdit()
-        loggerWindow.setReadOnly(True)
-        loggerWindow.setStyleSheet("background:black")
+        self.loggerWindow = QTextEdit()
+        self.loggerWindow.setReadOnly(True)
+        self.loggerWindow.setStyleSheet("background:#ffdb78; color: black")
+        self.loggerWindow.cursorPositionChanged.connect(self.highlightLoggerLine)
         # loggerWindow.setLineWrapColumnOrWidth(200)
         # loggerWindow.setLineWrapMode(QTextEdit.FixedPixelWidth)
         # loggerWindow.verticalScrollBar().minimum()
         if parent:
-            parent.logger.addWidget(loggerWindow)
+            parent.logger.addWidget(self.loggerWindow)
             parent.logger.info(f"xterm opened into a window with id: {int(self.winId())}")
         # layout.addWidget(self.terminal)
         layout.addWidget(blankWindow)
-        layout.addWidget(loggerWindow)
+        layout.addWidget(self.loggerWindow)
         self.setLayout(layout)
         # print(str(int(self.winId())))
+    def highlightLoggerLine(self):
+        extraSelections = []
+        selection = QTextEdit.ExtraSelection()
+        lineColor = QColor(Qt.yellow).lighter(160)
+        selection.format.setBackground(lineColor)
+        selection.format.setProperty(QTextFormat.FullWidthSelection, True)
+        selection.cursor = self.loggerWindow.textCursor()
+        selection.cursor.clearSelection()
+        extraSelections.append(selection)
+        self.loggerWindow.setExtraSelections(extraSelections)
 
     

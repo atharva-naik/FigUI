@@ -1,4 +1,7 @@
 Xlib
 PyQt5
+pillow
 untangle
 PyQtWebEngine
+charset-normalizer
+screen-brightness-control
