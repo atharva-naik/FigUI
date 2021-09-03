@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 import webbrowser
-import os, sys, logging, datetime
+import os, sys, logging, datetime, pathlib
 from PyQt5.QtPrintSupport import *
 from PyQt5.QtCore import QThread, QUrl, QRegExp, QSize, Qt
 from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEngineProfile, QWebEngineSettings
@@ -12,12 +12,14 @@ try:
     from Tab import FigTabWidget
     from Launcher import FigLauncher
     from FileViewer import FigFileViewer
+    from FigUI.handler import FigHandler
     from FigUI.subSystem.Shell import FigShell
     from FigUI.subSystem.system.brightness import BrightnessController
 #     from utils import *
 except ImportError:
     from .Theme import FigTheme
     from .Tab import FigTabWidget
+    from ..handler import FigHandler
     from .Launcher import FigLauncher
     from .FileViewer import FigFileViewer
     from ..subSystem.Shell import FigShell
@@ -46,7 +48,6 @@ def __font__(name):
 
 # system controllers.
 brightnessCtrl = BrightnessController()
-
 
 class QHLine(QFrame):
     def __init__(self):
@@ -276,6 +277,7 @@ class FigWindow(QMainWindow):
         self.centralWidget.setLayout(self.centralWidget.layout)
         self.setCentralWidget(self.centralWidget) # making tabs as central widget
         self.statusBar = QStatusBar() # creating a status bar
+        self.handler = FigHandler(self)
         self.fig_launcher = FigLauncher(self)
         # self.newTabBtn.clicked.connect(self.addNewTab)
         self.tabs.addTab(self.fig_launcher, FigIcon("launcher.png"), "\tLauncher")
@@ -579,9 +581,14 @@ class FigWindow(QMainWindow):
         i = self.tabs.addTab(terminal, FigIcon("launcher/bash.png"), "\tTerminal")
         self.tabs.setCurrentIndex(i)
 
+    def addNewHandlerTab(self):
+        handlerWidget = self.handler.handle()
+        i = self.tabs.addTab(handlerWidget, "New Tab")
+        self.tabs.setCurrentIndex(i)
+
     def addNewFileViewer(self):
         fileViewer = FigFileViewer(parent=self)
-        i = self.tabs.addTab(fileViewer, "\tpath")
+        i = self.tabs.addTab(fileViewer, FigIcon("launcher/fileviewer.png"), f"\t{str(pathlib.Path.home())}")
         self.tabs.setCurrentIndex(i)
 
     def addNewTab(self, Squrl=None, label="Blank"):
