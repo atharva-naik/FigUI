@@ -335,6 +335,7 @@ class FigWindow(QMainWindow):
         homeBtn = QAction("Home", self)
         homeBtn.setToolTip("open home folder.")
         homeBtn.setIcon(FigIcon("sysbar/home.svg"))
+        homeBtn.triggered.connect(lambda : self.addNewFileViewer(path=str(pathlib.Path.home())))
         # desktop.
         desktopBtn = QAction("Desktop", self)
         desktopBtn.setToolTip("open desktop.")
@@ -530,17 +531,17 @@ class FigWindow(QMainWindow):
         brewBtn = QPushButton("brew")
         brewBtn.setToolTip("Get started with brew package manager (recommended for mac)")
         brewBtn.setIcon(FigIcon("bottombar/beer.png"))
-        brewBtn.setStyleSheet("color: #fff; background: #292929; border: 0px; font-family: Monospace; font-size: 14px")
+        brewBtn.setStyleSheet("color: #fff; background: #292929; font-family: Monospace; font-size: 14px")
         # annaconda.
         condaBtn = QPushButton(" conda (base)")
         condaBtn.setToolTip("Open annaconda UI.")
         condaBtn.setIcon(FigIcon("bottombar/conda.png"))
-        condaBtn.setStyleSheet("color: #fff; background: #292929; border: 0px; font-family: Monospace; font-size: 14px")
+        condaBtn.setStyleSheet("color: #fff; background: #292929; font-family: Monospace; font-size: 14px")
         # buy me a coffee.
         coffeeBtn = QPushButton("Donate")
         coffeeBtn.setToolTip("Buy me a coffe :)")
         coffeeBtn.setIcon(FigIcon("bottombar/coffee.png"))
-        coffeeBtn.setStyleSheet("color: #fff; background: #292929; border: 0px; font-family: Monospace; font-size: 14px")
+        coffeeBtn.setStyleSheet("color: #fff; background: #292929; font-family: Monospace; font-size: 14px")
         # add actions.
         toolbar.addAction(colorpickerBtn)
         toolbar.addWidget(gitBtn)
@@ -586,8 +587,11 @@ class FigWindow(QMainWindow):
         i = self.tabs.addTab(handlerWidget, "New Tab")
         self.tabs.setCurrentIndex(i)
 
-    def addNewFileViewer(self):
-        fileViewer = FigFileViewer(parent=self)
+    def addNewFileViewer(self, path):
+        if path:
+            fileViewer = FigFileViewer(path=path, parent=self)
+        else:
+            fileViewer = FigFileViewer(parent=self)
         i = self.tabs.addTab(fileViewer, FigIcon("launcher/fileviewer.png"), f"\t{str(pathlib.Path.home())}")
         self.tabs.setCurrentIndex(i)
 
@@ -675,12 +679,14 @@ class FigApp(QApplication):
             self.window.logger.error("unable to load OMORI_GAME2.ttf")
         else:
             self.window.logger.debug("loaded OMORI_GAME2.ttf successfully")
+        self.setCursorFlashTime(1000)
 
     def run(self):
+        # self.aboutQt()
         self.window.show()
+        self.beep()
         sys.exit(self.exec_())
         self.window.fig_launcher.gifBtn.thread.join()
-
 
 if __name__ == "__main__":
     pass

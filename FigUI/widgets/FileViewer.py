@@ -11,6 +11,29 @@ from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEngineProfile, QWebEngi
 from PyQt5.QtWidgets import QApplication, QAction, QDialog, QPushButton, QWidget, QToolBar, QGridLayout, QLabel, QVBoxLayout, QHBoxLayout, QToolButton, QScrollArea, QLineEdit
 
 
+def getWallpaper():
+    import os
+    import time
+    import pathlib 
+    import platform 
+    import requests
+    osname = platform.system()
+    home = str(pathlib.Path.home())
+    if osname == "Linux":
+        wallpath = os.path.join(home, ".cache/wallpaper")
+        wallpapers = os.listdir(wallpath)
+        if len(wallpapers) > 0:
+            return os.path.join(wallpath, wallpapers[0])
+        else:
+            img = requests.get("https://picsum.photos/1600/900").content
+            fname = f"figui_wallpaper_{time.time()}.jpg"
+            open(fname, "wb").write(img)
+
+            return fname
+    else:
+        from wallpaper import get_wallpaper
+        return get_wallpaper()
+
 def FigIcon(name, w=None, h=None):
     __current_dir__ = os.path.dirname(os.path.realpath(__file__))
     __icons__ = os.path.join(__current_dir__, "../assets/icons")
@@ -63,7 +86,12 @@ class FigFileIcon(QToolButton):
             self.setIcon(FigIcon("launcher/git.png"))
             return
         elif not self.isfile:
-            self.setIcon(FigIcon("launcher/fileviewer.png"))
+            if self.name == "Music":
+                self.setIcon(FigIcon("launcher/Music.svg"))
+            elif self.name == "Desktop":
+                self.setIcon(FigIcon("launcher/Desktop.png"))
+            else:    
+                self.setIcon(FigIcon("launcher/fileviewer.png"))
             return
         elif ext in ["png","jpg"]:
             self.setIcon(QIcon(self.path))
@@ -223,12 +251,10 @@ class FigFileViewer(QWidget):
         self.j = j
         selBtn = self.gridLayout.itemAt(self.j).widget()
         selBtn.setStyleSheet("background: #42f2f5; color: #292929; font-weight: bold")
-
-    def eventFilter(self, source, event):
-        if event.type() == QEvent.KeyPress:
-            print(event.key())
-        return super(FigFileViewer, self).eventFilter(source, event)
-
+    # def eventFilter(self, source, event):
+    #     if event.type() == QEvent.KeyPress:
+    #         print(event.key())
+    #     return super(FigFileViewer, self).eventFilter(source, event)
     def prevPath(self):
         self.i -= 1
         self.i = max(0, self.i)
@@ -284,12 +310,19 @@ class FigFileViewer(QWidget):
             pass
 
     def listFiles(self, path, hide=True, reverse=False):
+        home = str(pathlib.Path.home())
+        desktop = os.path.join(home, "Desktop")
+        if path == desktop:
+            wallpaper_path = getWallpaper()
+            self.setStyleSheet(f"background-image: url({wallpaper_path});")
+        else:
+            self.setStyleSheet(f"background-image: none")
         files = []
         try:
             for file in os.listdir(path):
                 if not(file.startswith(".") and hide):
                     files.append(os.path.join(path, file))
-            return sorted(files, reverse=reverse)
+            return sorted(files, key= lambda x: x.lower(), reverse=reverse)
         except PermissionError:
             return files
 

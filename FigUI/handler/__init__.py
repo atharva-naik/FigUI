@@ -3,7 +3,7 @@ import FigUI.handler.Image.svg
 import FigUI.handler.Archives.pt
 import FigUI.handler.Archives.pkl
 import FigUI.handler.Archives.zip
-from PyQt5.QtWidgets import QFileDialog, QLabel
+from PyQt5.QtWidgets import QFileDialog, QLabel, QTextEdit
 
 
 class FigHandler:

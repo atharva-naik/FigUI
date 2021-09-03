@@ -1,0 +1,10 @@
+[Desktop Entry]
+Encoding=UTF-8
+Name=FigUI
+Comment=any Format Is Good
+Exec=/home/atharva/GUI/FigUI/main.py
+Terminal=false
+Type=Application
+Icon=/home/atharva/GUI/FigUI/logo.png
+Categories=Figs;UI;PyQt5
+StartupNotify=true
