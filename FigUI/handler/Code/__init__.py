@@ -6,11 +6,19 @@ from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEngineProfile, QWebEngi
 from PyQt5.QtGui import QIcon, QFont, QKeySequence, QTransform, QTextCharFormat, QRegExpValidator, QSyntaxHighlighter, QFontDatabase
 from PyQt5.QtWidgets import QApplication, QAction, QDialog, QPushButton, QTabWidget, QStatusBar, QToolBar, QWidget, QLineEdit, QMainWindow, QHBoxLayout, QVBoxLayout, QPlainTextEdit, QToolBar, QFrame, QSizePolicy
 
+def static(rel_path):
+    '''give relative path and get absolute static path.'''
+    __current_dir__ = os.path.dirname(os.path.realpath(__file__))
+    rel_path = os.path.join("static", rel_path)
+    path = os.path.join(__current_dir__, rel_path)
+
+    return path
+
 
 class CodeWebView(QWebEngineView):
     # TODO: 
     def __init__(self, parent=None):
-        super(WebRenderEngine, self).__init__(parent)
+        super(CodeWebView, self).__init__(parent)
         self.consoleHistory = []
         self.settings().setAttribute(QWebEngineSettings.JavascriptEnabled, True)
         self.settings().setAttribute(QWebEngineSettings.LocalContentCanAccessRemoteUrls, True)
@@ -27,7 +35,7 @@ class CodeWebView(QWebEngineView):
         #     print(filename)
         #     if self.enable_zoom: self.attachJSZoomHandler
         #     # self.load_pdf(filename) 
-        super(WebRenderEngine, self).dragEnterEvent(e)
+        super(CodeWebView, self).dragEnterEvent(e)
     # def dropEvent(self, e):
     #     e.ignore()
     def contextMenuEvent(self, event):
@@ -51,9 +59,12 @@ class CodeEditor(QWidget):
         super(CodeEditor, self).__init__(parent=parent)
         self.path = path
         self.codelines = open(self.path).read().splitlines()
+        self.template = open(static("code.html")).read()
         layout = QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         self.editor = CodeWebView(self)
+        self.editor.setZoomFactor(1.25)
+        self.editor.setHtml(self.template)
         layout.addWidget(self.editor)
         self.setLayout(layout)
 

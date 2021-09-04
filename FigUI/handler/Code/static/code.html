@@ -82,7 +82,6 @@
     <body>
         <!-- <header></header> -->
         <div style="max-width: 800px; margin-left: auto; margin-right: auto;">
-            <textarea id="codemirror">Compose an epic</textarea>
             <p>Select a theme: <select onchange="selectTheme()" id=select>
                 <option selected>default</option>
                 <option>3024-day</option>
@@ -151,6 +150,7 @@
                 <option>zenburn</option>
             </select>
             </p>
+            <textarea id="codemirror">Compose an epic</textarea>
         </div>
         <!-- core javascript source -->
         <script src="https://codemirror.net/lib/codemirror.js"></script>
@@ -196,6 +196,7 @@
                 smartIndent: true,
                 theme: "abcdef",
             });
+            editor.setSize(800, 600);
             var input = document.getElementById("select");
             function selectTheme() {
                 var theme = input.options[input.selectedIndex].textContent;

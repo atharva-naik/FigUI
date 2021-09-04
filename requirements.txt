@@ -1,5 +1,6 @@
 Xlib
 PyQt5
+jinja2
 pillow
 requests
 untangle

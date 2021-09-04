@@ -7,7 +7,7 @@ from PyQt5.QtPrintSupport import *
 from PyQt5.QtCore import QThread, QUrl, QSize, Qt
 from PyQt5.QtGui import QIcon, QKeySequence, QTransform, QFont, QFontDatabase, QMovie, QPixmap
 from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEngineProfile, QWebEngineSettings
-from PyQt5.QtWidgets import QApplication, QAction, QDialog, QPushButton, QWidget, QToolBar, QGridLayout, QLabel, QVBoxLayout, QToolButton, QFileDialog, QScrollArea
+from PyQt5.QtWidgets import QApplication, QAction, QDialog, QPushButton, QWidget, QToolBar, QGridLayout, QLabel, QVBoxLayout, QToolButton, QFileDialog, QScrollArea, QFrame
 
 
 __current_dir__ = os.path.dirname(os.path.realpath(__file__))
@@ -19,10 +19,11 @@ launcher_icons = glob.glob(os.path.join(__icons__, "launcher/*"))
 class FigToolButton(QToolButton):
     def __init__(self, parent=None):
         super(FigToolButton, self).__init__(parent)
+        self.keep_running = True
 
     def _animateMovie(self):
         import time
-        while True:
+        while self.keep_running:
             self._gifMovie.seek(self._gifIndex)
             pixmap = QPixmap.fromImage(ImageQt.ImageQt(self._gifMovie))
             self.setIcon(QIcon(pixmap))
@@ -30,7 +31,11 @@ class FigToolButton(QToolButton):
             time.sleep(self.rate/1000)
             self._gifIndex += 1
             self._gifIndex %= self._gifLength
-
+            # print("keep_runing=", self.keep_running)
+    def _endAnimation(self):
+        self.keep_running = False
+        # print("keep_runing=", self.keep_running)
+        self.thread.join()
     def setMovie(self, path, rate=100, size=(60,60)):
         import threading
         # self.setStyleSheet("background: color(0, 0, 0, 100)")
@@ -44,7 +49,7 @@ class FigToolButton(QToolButton):
 
 
 class FigLauncher(QWidget):
-    def __init__(self, parent=None, width=8, button_size=(100,100), icon_size=(60,60)):
+    def __init__(self, parent=None, width=8, button_size=(100,100), icon_size=(70,70)):
         super(FigLauncher, self).__init__(parent)
         layout = QGridLayout()
         self.layout = QVBoxLayout(self)
@@ -54,7 +59,7 @@ class FigLauncher(QWidget):
         self.scroll = QScrollArea()
         self.scroll.setWidgetResizable(True)
         self.scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
-        self.scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
 
         for i,path in enumerate(launcher_icons):
             name = pathlib.Path(path).stem
@@ -67,7 +72,7 @@ class FigLauncher(QWidget):
             
             if ext == ".gif":
                 launcherButton.setMovie(path, size=icon_size)       
-                self.giBtn = launcherButton
+                self.gifBtn = launcherButton
             else:
                 launcherButton.setIcon(QIcon(path))
                 launcherButton.setIconSize(QSize(*icon_size))
@@ -80,6 +85,10 @@ class FigLauncher(QWidget):
                 if parent:
                     parent.logger.debug("connected terminal launcher")
                 launcherButton.clicked.connect(parent.addNewTerm)
+            elif name == "Desktop":
+                home = str(pathlib.Path.home())
+                desktop = os.path.join(home, "Desktop")
+                launcherButton.clicked.connect(lambda: parent.addNewFileViewer(path=desktop))
             elif name == "fileviewer":
                 if parent:
                     parent.logger.debug("connected terminal launcher")

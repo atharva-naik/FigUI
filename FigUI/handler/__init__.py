@@ -1,4 +1,5 @@
 import pathlib, os
+import FigUI.handler.Code
 import FigUI.handler.Image.svg
 import FigUI.handler.Archives.pt
 import FigUI.handler.Archives.pkl
@@ -38,7 +39,9 @@ class FigHandler:
         self._set_path(path)
         if self.ext == ".pkl":
             self.handler = FigUI.handler.Archives.pkl.PickleHandler(self.path)
-            return self.handler.getUI(path)       
+            return self.handler.getUI(path)   
+        elif self.ext in [".feature", ".py", ".cpp", ".c", ".scala"]:
+            return FigUI.handler.Code.CodeEditor(path=self.path, parent=self.parent)
         else:
             return QLabel("no handler found")
         # elif self.ext == ".svg":

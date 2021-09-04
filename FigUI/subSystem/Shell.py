@@ -16,6 +16,8 @@ class FigShell(QWidget):
         layout = QVBoxLayout(self)
         self.process = QProcess(self)
         self.process.start('xterm',['-into', str(int(self.winId())), 
+                                    '-ls',
+                                    '-xrm', "'XTerm*selectToClipboard: true'",
                                     '-ti', 'vt340', 
                                     '-fa', 'Monospace', 
                                     '-fs', '11', 

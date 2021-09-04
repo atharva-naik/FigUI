@@ -8,7 +8,15 @@ from PyQt5.QtPrintSupport import *
 from PyQt5.QtCore import QThread, QUrl, QSize, Qt, QEvent, pyqtSlot, pyqtSignal
 from PyQt5.QtGui import QIcon, QKeySequence, QTransform, QFont, QFontDatabase, QMovie, QPixmap
 from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEngineProfile, QWebEngineSettings
-from PyQt5.QtWidgets import QApplication, QAction, QDialog, QPushButton, QWidget, QToolBar, QGridLayout, QLabel, QVBoxLayout, QHBoxLayout, QToolButton, QScrollArea, QLineEdit
+from PyQt5.QtWidgets import QApplication, QAction, QDialog, QPushButton, QWidget, QToolBar, QGridLayout, QLabel, QVBoxLayout, QHBoxLayout, QToolButton, QScrollArea, QLineEdit, QFrame
+
+
+class QVLine(QFrame):
+    def __init__(self):
+        super(QVLine, self).__init__()
+        self.setFrameShape(QFrame.VLine)
+        self.setFrameShadow(QFrame.Raised)
+        self.setStyleSheet("color: #6E6E6E")
 
 
 def getWallpaper():
@@ -62,6 +70,32 @@ def __font__(name):
 
     return path
 
+def getThumbnail(path):
+    name = pathlib.Path(path).name 
+    _,ext = os.path.splitext(name)
+    stem = pathlib.Path(path).stem
+    # print(self.name, self.stem, ext, os.path.isfile(self.path))
+    ext = ext[1:]
+    if name.lower() == "todo": return "launcher/todo.png"
+    # elif ext in ["png","jpg"]: # display standard thumbnail for png/jpg.
+    #     return path
+    elif stem == "README": return "launcher/README.png"
+    elif stem == "requirements": return "launcher/requirements.png"
+    elif stem.lower() == "license": return "launcher/license.png"
+    elif stem == ".gitignore": return "launcher/gitignore.png"
+    elif ext == "":
+        if subprocess.getoutput(f"file --mime-encoding {path}").endswith("binary"):
+            return "launcher/bin.png"
+        else:
+            return "launcher/txt.png"
+    if os.path.exists(__icon__(f"launcher/{ext}.png")): # check if png file for the ext
+        return f"launcher/{ext}.png"
+    else:
+        if os.path.exists(__icon__(f"launcher/{ext}.svg")): 
+            return f"launcher/{ext}.svg"
+        else: 
+            return f"launcher/txt.png" # if ext is not recognized set it to txt
+
 
 class FigFileIcon(QToolButton):
     def __init__(self, path, parent=None, size=(100,120), textwidth=10):
@@ -85,11 +119,16 @@ class FigFileIcon(QToolButton):
         if self.name == ".git":
             self.setIcon(FigIcon("launcher/git.png"))
             return
+        elif self.name.lower() == "todo":
+            self.setIcon(FigIcon("launcher/todo.png"))
+            return
         elif not self.isfile:
             if self.name == "Music":
                 self.setIcon(FigIcon("launcher/Music.svg"))
             elif self.name == "Desktop":
                 self.setIcon(FigIcon("launcher/Desktop.png"))
+            elif self.name == "anaconda3":
+                self.setIcon(FigIcon("launcher/anaconda3.png"))
             else:    
                 self.setIcon(FigIcon("launcher/fileviewer.png"))
             return
@@ -147,6 +186,7 @@ class FigFileViewer(QWidget):
         super(FigFileViewer, self).__init__(parent)   
         all_files = self.listFiles(path) # get list of all files and folders.
         self.path = path
+        self._parent = parent
         self.scroll = QScrollArea()
         self.scroll.setWidgetResizable(True)
         self.scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
@@ -164,10 +204,103 @@ class FigFileViewer(QWidget):
         self.viewer.setLayout(self.gridLayout)
         # self.layout.addWidget(self.welcomeLabel, alignment=Qt.AlignCenter)
         self.scroll.setWidget(self.viewer)
-        self.layout.addWidget(self.scroll)
         self.navbar = QWidget()
-        navLayout = QHBoxLayout()
-        
+        self.utilbar = QWidget()
+        navLayout = QHBoxLayout() 
+        utilLayout = QHBoxLayout() # bookmarks, restricted view, change permissions, encrypt, zip/unzip, new folder, new file, undo/redo, cut/copy/paste, rename, open in terminal, properties.
+        # bookmark files.
+        bookmarkBtn = QToolButton()
+        bookmarkBtn.setIcon(FigIcon("bookmark.svg"))
+        utilLayout.addWidget(bookmarkBtn)
+        # restrict files from other users.
+        # restrictBtn = QToolButton()
+        # restrictBtn.setIcon(FigIcon("bookmark.svg"))
+        # utilLayout.addWidget(restrictBtn)
+        # change permissions (user access group.)
+        userpermBtn = QToolButton()
+        userpermBtn.setIcon(FigIcon("user_permissions.svg")) 
+        utilLayout.addWidget(userpermBtn) 
+        # change r/w/x permissions.
+        rwxpermBtn = QToolButton()
+        rwxpermBtn.setIcon(FigIcon("permissions.svg"))
+        utilLayout.addWidget(rwxpermBtn)
+        utilLayout.addWidget(QVLine())
+        # encrypt
+        encryptBtn = QToolButton()
+        encryptBtn.setIcon(FigIcon("encrypt.svg"))
+        utilLayout.addWidget(encryptBtn)
+        # decrypt 
+        decryptBtn = QToolButton()
+        decryptBtn.setIcon(FigIcon("decrypt.svg"))
+        utilLayout.addWidget(decryptBtn)
+        utilLayout.addWidget(QVLine())
+        # zip
+        zipBtn = QToolButton()
+        zipBtn.setIcon(FigIcon("zip.svg"))
+        utilLayout.addWidget(zipBtn)
+        # unzip
+        unzipBtn = QToolButton()
+        unzipBtn.setIcon(FigIcon("zip.svg"))
+        utilLayout.addWidget(unzipBtn)
+        utilLayout.addWidget(QVLine())
+        # new file
+        newFileBtn = QToolButton()
+        newFileBtn.setIcon(FigIcon("new_file.svg"))
+        utilLayout.addWidget(newFileBtn)
+        # file share
+        fileShareBtn = QToolButton()
+        fileShareBtn.setIcon(FigIcon("file_share.svg"))
+        utilLayout.addWidget(fileShareBtn)
+        # new folder
+        newFolderBtn = QToolButton()
+        newFolderBtn.setIcon(FigIcon("new_folder.svg"))
+        utilLayout.addWidget(newFolderBtn)
+        # email file/folder.
+        emailBtn = QToolButton()
+        emailBtn.setIcon(FigIcon("email.svg"))
+        utilLayout.addWidget(emailBtn)
+        # rename
+        renameBtn = QToolButton()
+        renameBtn.setIcon(FigIcon("rename.svg"))
+        utilLayout.addWidget(renameBtn)
+        # delete
+        delBtn = QToolButton()
+        delBtn.setIcon(FigIcon("delete.svg"))
+        utilLayout.addWidget(delBtn)
+        # properties of selected file/folder.
+        utilLayout.addWidget(QVLine())
+        propBtn = QToolButton()
+        propBtn.setIcon(FigIcon("properties.svg"))
+        utilLayout.addWidget(propBtn)
+        # open in terminal
+        openInTermBtn = QToolButton()
+        openInTermBtn.setIcon(FigIcon("open_in_terminal.svg"))
+        utilLayout.addWidget(openInTermBtn)
+        # open with.
+        openBtn = QToolButton()
+        openBtn.setIcon(FigIcon("open.svg"))
+        utilLayout.addWidget(openBtn)
+        utilLayout.addWidget(QVLine())
+        # cut/copy/paste
+        cutBtn = QToolButton()
+        cutBtn.setIcon(FigIcon("cut.svg"))
+        utilLayout.addWidget(cutBtn)
+        copyBtn = QToolButton()
+        copyBtn.setIcon(FigIcon("copy.svg"))
+        utilLayout.addWidget(copyBtn)
+        pasteBtn = QToolButton()
+        pasteBtn.setIcon(FigIcon("paste.svg"))
+        utilLayout.addWidget(pasteBtn)
+        utilLayout.addWidget(QVLine())
+        # undo/redo
+        undoBtn = QToolButton()
+        undoBtn.setIcon(FigIcon("undo.svg"))
+        utilLayout.addWidget(undoBtn)
+        redoBtn = QToolButton()
+        redoBtn.setIcon(FigIcon("redo.svg"))
+        utilLayout.addWidget(redoBtn)
+        utilLayout.addWidget(QVLine())
+
         backBtn = QToolButton()
         backBtn.setIcon(FigIcon("stepback.svg"))
         backBtn.clicked.connect(self.back)
@@ -186,31 +319,64 @@ class FigFileViewer(QWidget):
         sortUpBtn = QToolButton()
         sortUpBtn.setIcon(FigIcon("sort_ascending.svg"))
         # sortUpBtn.clicked.connect(self.nextPath)
-        navLayout.addWidget(sortUpBtn)
+        utilLayout.addWidget(sortUpBtn)
 
         sortDownBtn = QToolButton()
         sortDownBtn.setIcon(FigIcon("sort_descending.svg"))
         # sortUpBtn.clicked.connect(self.nextPath)
-        navLayout.addWidget(sortDownBtn)
+        utilLayout.addWidget(sortDownBtn)
+        utilLayout.addWidget(QVLine())
+
+        unhideBtn = QToolButton()
+        unhideBtn.setIcon(FigIcon("unhide.svg"))
+        unhideBtn.clicked.connect(lambda: self.unhide(self.path))
+        utilLayout.addWidget(unhideBtn)
+
+        hideBtn = QToolButton()
+        hideBtn.setIcon(FigIcon("hide.svg"))
+        hideBtn.clicked.connect(lambda: self.refresh(self.path))
+        utilLayout.addWidget(hideBtn)
+        utilLayout.addWidget(QVLine())
 
         searchBar = QLineEdit()
         searchBar.setStyleSheet("background: #fff; color: #000")
         navLayout.addWidget(searchBar)
 
+        # match case.
+        caseBtn = QToolButton()
+        caseBtn.setIcon(FigIcon("case-sensitive.svg"))
+        # caseBtn.clicked.connect(self.back)
+        navLayout.addWidget(caseBtn)
+        # match whole word.
+        entireBtn = QToolButton()
+        entireBtn.setIcon(FigIcon("whole-word.svg"))
+        # backBtn.clicked.connect(self.back)
+        navLayout.addWidget(entireBtn)
+        # use regex search
+        regexBtn = QToolButton()
+        regexBtn.setIcon(FigIcon("regex_search.svg"))
+        # regexBtn.clicked.connect(self.back)
+        navLayout.addWidget(regexBtn)
+        
         searchBtn = QToolButton()
         searchBtn.setIcon(FigIcon("search.svg"))
         navLayout.addWidget(searchBtn)
 
-        # hideBtn = QToolButton()
-        # hideBtn.setIcon(FigIcon("hide.svg"))
-        # navLayout.addWidget(hideBtn)
+        listViewBtn = QToolButton() # toggle list view.
+        listViewBtn.setIcon(FigIcon("listview.svg"))
+        utilLayout.addWidget(listViewBtn)
 
-        delBtn = QToolButton()
-        delBtn.setIcon(FigIcon("delete.svg"))
-        navLayout.addWidget(delBtn)
+        blockViewBtn = QToolButton() # toggle block view.
+        blockViewBtn.setIcon(FigIcon("blockview.svg"))
+        utilLayout.addWidget(blockViewBtn)
 
-        self.navbar.setLayout(navLayout)    
+        navLayout.setContentsMargins(0, 0, 0, 0)
+        utilLayout.setContentsMargins(0, 0, 0, 0)
+        self.navbar.setLayout(navLayout)  
+        self.utilbar.setLayout(utilLayout)
         self.layout.addWidget(self.navbar)
+        self.layout.addWidget(self.utilbar)
+        self.layout.addWidget(self.scroll)
         self.setLayout(self.layout)
         self.width = width
         selBtn = self.gridLayout.itemAt(0).widget()
@@ -246,7 +412,10 @@ class FigFileViewer(QWidget):
         self.j = 0
 
     def highlight(self, j):
-        selBtn = self.gridLayout.itemAt(self.j).widget()
+        try:
+            selBtn = self.gridLayout.itemAt(self.j).widget()
+        except AttributeError:
+            self.back()
         selBtn.setStyleSheet("background-color: #292929; border: 0px")
         self.j = j
         selBtn = self.gridLayout.itemAt(self.j).widget()
@@ -258,53 +427,29 @@ class FigFileViewer(QWidget):
     def prevPath(self):
         self.i -= 1
         self.i = max(0, self.i)
-        self.clear()
         path = self.history[self.i]
-        all_files = self.listFiles(path) # get list of all files and folders.
-        for i,path in enumerate(all_files):
-            fileIcon = FigFileIcon(path, parent=self)
-            fileIcon.clicked.connect(self.open)
-            self.gridLayout.addWidget(fileIcon, i // self.width, i % self.width)
-        self.highlight(0)
+        self.refresh(path)
 
     def nextPath(self):
         self.i += 1
         self.i = min(len(self.history)-1, self.i)
-        self.clear()
         path = self.history[self.i]
-        all_files = self.listFiles(path) # get list of all files and folders.
-        for i,path in enumerate(all_files):
-            fileIcon = FigFileIcon(path, parent=self)
-            fileIcon.clicked.connect(self.open)
-            self.gridLayout.addWidget(fileIcon, i // self.width, i % self.width)
-        self.highlight(0)
+        self.refresh(path)
 
     def back(self):
-        self.clear()
         path = self.path
         path = pathlib.Path(path).parent
         self.path = path
         self.history.append(path)
         self.i += 1
-        all_files = self.listFiles(path) # get list of all files and folders.
-        for i,path in enumerate(all_files):
-            fileIcon = FigFileIcon(path, parent=self)
-            fileIcon.clicked.connect(self.open)
-            self.gridLayout.addWidget(fileIcon, i // self.width, i % self.width)
-        self.highlight(0)
+        self.refresh(path)
 
     def openPath(self, path):
         self.path = path
         if not os.path.isfile(path):
             self.history.append(path)
             self.i += 1
-            self.clear()
-            all_files = self.listFiles(path) # get list of all files and folders.
-            for i,path in enumerate(all_files):
-                fileIcon = FigFileIcon(path, parent=self)
-                fileIcon.clicked.connect(self.open)
-                self.gridLayout.addWidget(fileIcon, i // self.width, i % self.width)  
-            self.highlight(0)
+            self.refresh(path)
         else:
             # call file handler for the extension here
             pass
@@ -326,6 +471,24 @@ class FigFileViewer(QWidget):
         except PermissionError:
             return files
 
+    def refresh(self, path):
+        self.clear()
+        all_files = self.listFiles(path) # get list of all files and folders.
+        for i,path in enumerate(all_files):
+            fileIcon = FigFileIcon(path, parent=self)
+            fileIcon.clicked.connect(self.open)
+            self.gridLayout.addWidget(fileIcon, i // self.width, i % self.width)  
+        self.highlight(0)        
+
+    def unhide(self, path):        
+        self.clear()
+        all_files = self.listFiles(path, hide=False) # get list of all files and folders.
+        for i,path in enumerate(all_files):
+            fileIcon = FigFileIcon(path, parent=self)
+            fileIcon.clicked.connect(self.open)
+            self.gridLayout.addWidget(fileIcon, i // self.width, i % self.width)  
+        self.highlight(0)   
+
     def open(self):
         sendingBtn = self.sender()
         j = self.gridLayout.indexOf(sendingBtn)
@@ -337,16 +500,16 @@ class FigFileViewer(QWidget):
             self.path = path
             self.history.append(path)
             self.i += 1
-            self.clear()
-            all_files = self.listFiles(path) # get list of all files and folders.
-            for i,path in enumerate(all_files):
-                fileIcon = FigFileIcon(path, parent=self)
-                fileIcon.clicked.connect(self.open)
-                self.gridLayout.addWidget(fileIcon, i // self.width, i % self.width)  
-            self.highlight(0)
+            self.refresh(path)
         else:
-            # call file handler for the extension here
-            pass
+            if self._parent: # call file handler for the extension here
+                path = sendingBtn.path
+                handlerWidget = self._parent.handler.getUI(path)
+                name = pathlib.Path(path).name
+                parent = ".../" + pathlib.Path(path).parent.name
+                thumbnail = getThumbnail(path)
+                i = self._parent.tabs.addTab(handlerWidget, FigIcon(thumbnail), f"\t{name} {parent}")
+                self._parent.tabs.setCurrentIndex(i)
 
 
 if __name__ == "__main__":

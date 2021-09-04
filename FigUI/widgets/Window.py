@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 import webbrowser
 import os, sys, logging, datetime, pathlib
-from PyQt5.QtPrintSupport import *
-from PyQt5.QtCore import QThread, QUrl, QRegExp, QSize, Qt
+from PyQt5.Qt import PYQT_VERSION_STR
+from PyQt5.QtCore import QThread, QUrl, QRegExp, QSize, Qt, QT_VERSION_STR
 from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEngineProfile, QWebEngineSettings
 from PyQt5.QtGui import QIcon, QFont, QKeySequence, QTransform, QTextCharFormat, QRegExpValidator, QSyntaxHighlighter, QFontDatabase
 from PyQt5.QtWidgets import QApplication, QAction, QDialog, QPushButton, QTabWidget, QStatusBar, QToolBar, QWidget, QLineEdit, QMainWindow, QHBoxLayout, QVBoxLayout, QPlainTextEdit, QToolBar, QFrame, QSizePolicy
@@ -414,6 +414,14 @@ class FigWindow(QMainWindow):
         emailBtn = QAction("Email", self)
         emailBtn.setToolTip("Open email client")
         emailBtn.setIcon(FigIcon("sidebar/email.png"))
+        # open p2p chat server.
+        chatBtn = QAction("Chat", self)
+        chatBtn.setToolTip("Open chat server")
+        chatBtn.setIcon(FigIcon("sidebar/chat.png"))
+        # open math package.
+        mathBtn = QAction("Math", self)
+        mathBtn.setToolTip("Open mathematical and scientific computing software suite.")
+        mathBtn.setIcon(FigIcon("sidebar/calculator.png"))
         # open newsfeed.
         newsBtn = QAction("Newsfeed", self)
         newsBtn.setToolTip("Open news feed")
@@ -422,6 +430,10 @@ class FigWindow(QMainWindow):
         passBtn = QAction("PassMan", self)
         passBtn.setToolTip("Open password manager")
         passBtn.setIcon(FigIcon("sidebar/password.png"))
+        # open hardware monitoring software package.
+        hardwareBtn = QAction("Hardware Manager", self)
+        hardwareBtn.setToolTip("Open hardware manager")
+        hardwareBtn.setIcon(FigIcon("sidebar/hardware.svg"))
         # open date and time.
         calBtn = QAction("Calendar", self)
         calBtn.setToolTip("Open date/time widget")
@@ -432,11 +444,16 @@ class FigWindow(QMainWindow):
         trash.setIcon(FigIcon("sidebar/trash.png"))
         # add actions.
         subbar.addAction(emailBtn)
+        subbar.addAction(chatBtn)
+        subbar.addAction(calBtn)
         # subbar.addSeparator()
         subbar.addAction(newsBtn)
-        subbar.addAction(passBtn)
-        subbar.addAction(calBtn)
+        subbar.addAction(mathBtn)
         subbar.addSeparator()
+        subbar.addWidget(QHLine())
+        subbar.addSeparator()
+        subbar.addAction(hardwareBtn)
+        subbar.addAction(passBtn)
         subbar.addAction(trash)
 
         return subbar
@@ -471,6 +488,12 @@ class FigWindow(QMainWindow):
         toolbar.setContentsMargins(0, 0, 0, 0)
         toolbar.setIconSize(QSize(22,22))
         toolbar.setStyleSheet("background: #292929; color: #fff")
+        # about qt button.
+        qtBtn = QPushButton()
+        qtBtn.setIcon(FigIcon("bottombar/qt.png"))
+        qtBtn.setToolTip("Learn more about Qt and PyQt5.")
+        qtBtn.setStyleSheet("color: #fff; background: #292929; border: 0px; font-family: Monospace; font-size: 14px")
+        self.qtBtn = qtBtn
         # open color picker dialogue.
         colorpickerBtn = QAction("Colorpicker", self)
         colorpickerBtn.setToolTip("Open color picker")
@@ -499,23 +522,23 @@ class FigWindow(QMainWindow):
         cursorBtn = QPushButton("Ln 0, Col 0")
         cursorBtn.setToolTip("Get cursor location.")
         cursorBtn.setIcon(FigIcon("bottombar/mouse.png"))
-        cursorBtn.setStyleSheet("color: #fff; background: #292929; border: 0px; font-family: Monospace; font-size: 14px")
+        cursorBtn.setStyleSheet("color: #fff; background: #292929; border: 0px; font-size: 16px")
         # select indentation.
         indentBtn = QPushButton("Spaces: 4")
         indentBtn.setToolTip("Select Indentation.")
-        indentBtn.setStyleSheet("color: #fff; background: #292929; border: 0px; font-family: Monospace; font-size: 14px")
+        indentBtn.setStyleSheet("color: #fff; background: #292929; border: 0px; font-size: 16px")
         # select encoding.
         encBtn = QPushButton("UTF")
         encBtn.setToolTip("Select Encoding.")
-        encBtn.setStyleSheet("color: #fff; background: #292929; border: 0px; font-family: Monospace; font-size: 14px")
+        encBtn.setStyleSheet("color: #fff; background: #292929; border: 0px; font-size: 16px")
         # select end of sequence.
         eosBtn = QPushButton("LF")
         eosBtn.setToolTip("Select End of Sequence.")
-        eosBtn.setStyleSheet("color: #fff; background: #292929; border: 0px; font-family: Monospace; font-size: 14px")
+        eosBtn.setStyleSheet("color: #fff; background: #292929; border: 0px; font-size: 16px")
         # language mode of code.
         langBtn = QPushButton("Text")
         langBtn.setToolTip("Select Language mode.")
-        langBtn.setStyleSheet("color: #fff; background: #292929; border: 0px; font-family: Monospace; font-size: 14px")
+        langBtn.setStyleSheet("color: #fff; background: #292929; border: 0px; font-size: 16px")
         # tweet.
         tweetBtn = QPushButton()
         tweetBtn.setToolTip("Tweet out any issues at me (@Atharva93149016).")
@@ -543,6 +566,7 @@ class FigWindow(QMainWindow):
         coffeeBtn.setIcon(FigIcon("bottombar/coffee.png"))
         coffeeBtn.setStyleSheet("color: #fff; background: #292929; font-family: Monospace; font-size: 14px")
         # add actions.
+        toolbar.addWidget(qtBtn)
         toolbar.addAction(colorpickerBtn)
         toolbar.addWidget(gitBtn)
         toolbar.addWidget(warningBtn)
@@ -680,13 +704,25 @@ class FigApp(QApplication):
         else:
             self.window.logger.debug("loaded OMORI_GAME2.ttf successfully")
         self.setCursorFlashTime(1000)
+        self.window.qtBtn.clicked.connect(self.aboutQt)
+
+    def announce(self):
+        print(sys.version)
+        print("Qt version:", QT_VERSION_STR)
+        print("PyQt5 version:", PYQT_VERSION_STR)
+        print("made by: 𝓐𝓽𝓱𝓪𝓻𝓿𝓪 𝓝𝓪𝓲𝓴, with ❤️ ")
 
     def run(self):
         # self.aboutQt()
         self.window.show()
         self.beep()
-        sys.exit(self.exec_())
-        self.window.fig_launcher.gifBtn.thread.join()
+        self.announce()
+        sys.exit(self.__exec__())
+
+    def __exec__(self):
+        self.exec_()
+        self.window.fig_launcher.gifBtn._endAnimation()
+        
 
 if __name__ == "__main__":
     pass
