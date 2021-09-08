@@ -1,0 +1,4 @@
+<svg>
+    <circle cx="50%" cy="50%" r="10" fill="#ff605c" fill-opacity="0"/>
+    <circle cx="50%" cy="50%" r="6" fill="red"/>
+</svg>

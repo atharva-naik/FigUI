@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <link href="https://vjs.zencdn.net/7.14.3/video-js.css" rel="stylesheet" />
+        <!-- If you'd like to support IE8 (for Video.js versions prior to v7) -->
+        <!-- <script src="https://vjs.zencdn.net/ie8/1.1.2/videojs-ie8.min.js"></script> -->
+        <title>HTML 5 Video Player</title>
+    </head>
+
+    <body style='background-color: {{ VIDEO_WIDGET_BACKGROUND_COLOR }}'>
+        <div style="margin-left: auto; margin-right: auto; text-align: center">
+            <h1 style='color: white; text-align: center'> HTML 5 Video Player </h1>
+            <video id="my-video" class="video-js" controls preload="auto" width="640" height="360" data-setup='{"playbackRates": [0.5, 1, 1.5, 2]}' style="text-align: center">
+                <source src="http://localhost:3000/home/atharva/Videos/pewdiepie-coco.mp4" type="video/mp4" />
+                <source src="http://localhost:3000/home/atharva/Videos/pewdiepie-coco.mp4" type="video/webm" />
+                <p class="vjs-no-js">
+                    To view this video please enable JavaScript, and consider upgrading to a
+                    web browser that
+                    <a href="https://videojs.com/html5-video-support/" target="_blank">supports HTML5 video</a>
+                </p>
+            </video>
+            <script src="https://vjs.zencdn.net/7.14.3/video.min.js"></script>
+        </div>
+    </body>
+
+</html>

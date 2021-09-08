@@ -4,6 +4,69 @@
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
         <!-- core styling -->
+        <!-- <link rel="stylesheet" href="{{ MINIMAP_MIN_CSS }}" /> -->
+		
+        <!-- Minimap sources -->
+        <link rel="stylesheet" type="text/css" href="sublimeScroll.css">
+        <link rel="stylesheet" type="text/css" href="sublimeScrollLite.css">
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jshint/2.9.5/jshint.min.js"></script>
+        <script src="jquery.min.js"></script>
+        <script src="modernizr.min.js"></script>
+        <script src="sublimeScroll.js"></script>
+        <script src="sublimeScrollLite.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jshint/2.9.5/jshint.min.js"></script>
+        
+        <!-- <link rel="stylesheet" type="text/css" href="{{ SUBLIME_SCROLL_CSS }}">
+        <link rel="stylesheet" type="text/css" href="{{ SUBLIME_SCROLL_LITE_CSS }}">
+        <script src="{{ JQUERY_MIN_JS }}"></script>
+        <script src="{{ MODERNIZR_MIN_JS }}"></script>
+        <script src="{{ SUBLIME_SCROLL_JS }}"></script>
+        <script src="{{ SUBLIME_SCROLL_LITE_JS }}"></script> -->
+        <!-- <script id="script">var widgets = []
+            function updateHints() {
+            editor.operation(function(){
+                for (var i = 0; i < widgets.length; ++i)
+                editor.removeLineWidget(widgets[i]);
+                widgets.length = 0;
+            
+                JSHINT(editor.getValue());
+                for (var i = 0; i < JSHINT.errors.length; ++i) {
+                var err = JSHINT.errors[i];
+                if (!err) continue;
+                var msg = document.createElement("div");
+                var icon = msg.appendChild(document.createElement("span"));
+                icon.innerHTML = "!!";
+                icon.className = "lint-error-icon";
+                msg.appendChild(document.createTextNode(err.reason));
+                msg.className = "lint-error";
+                widgets.push(editor.addLineWidget(err.line - 1, msg, {coverGutter: false, noHScroll: true}));
+                }
+            });
+            var info = editor.getScrollInfo();
+            var after = editor.charCoords({line: editor.getCursor().line + 1, ch: 0}, "local").top;
+            if (info.top + info.clientHeight < after)
+                editor.scrollTo(null, after - info.clientHeight + 3);
+            }
+            
+            window.onload = function() {
+            var sc = document.getElementById("script");
+            var content = sc.textContent || sc.innerText || sc.innerHTML;
+            
+            window.editor = CodeMirror(document.getElementById("code"), {
+                lineNumbers: true,
+                mode: "javascript",
+                value: content
+            });
+            
+            var waiting;
+            editor.on("change", function() {
+                clearTimeout(waiting);
+                waiting = setTimeout(updateHints, 500);
+            });
+            
+            setTimeout(updateHints, 100);
+            };
+        </script> -->
         <link rel="stylesheet" href="https://codemirror.net/lib/codemirror.css">
         <!-- editor themes -->
         <link rel="stylesheet" href="https://codemirror.net/theme/3024-day.css">
@@ -77,80 +140,88 @@
         <link rel="stylesheet" href="https://codemirror.net/addon/fold/foldgutter.css">
         <link rel="stylesheet" href="https://codemirror.net/addon/search/matchesonscrollbar.css">
         <link rel="stylesheet" href="https://codemirror.net/addon/scroll/simplescrollbars.css"></link>
+        <link rel="stylesheet" href="https://codemirror.net/addon/lint/lint.css"></link>
+        <link rel="stylesheet" href="https://codemirror.net/addon/tern/tern.css"></link>
         <title>Code Mirror</title>
     </head>
-    <body>
-        <!-- <header></header> -->
-        <div style="max-width: 800px; margin-left: auto; margin-right: auto;">
-            <p>Select a theme: <select onchange="selectTheme()" id=select>
-                <option selected>default</option>
-                <option>3024-day</option>
-                <option>3024-night</option>
-                <option>abbott</option>
-                <option>abcdef</option>
-                <option>ambiance</option>
-                <option>ayu-dark</option>
-                <option>ayu-mirage</option>
-                <option>base16-dark</option>
-                <option>base16-light</option>
-                <option>bespin</option>
-                <option>blackboard</option>
-                <option>cobalt</option>
-                <option>colorforth</option>
-                <option>darcula</option>
-                <option>dracula</option>
-                <option>duotone-dark</option>
-                <option>duotone-light</option>
-                <option>eclipse</option>
-                <option>elegant</option>
-                <option>erlang-dark</option>
-                <option>gruvbox-dark</option>
-                <option>hopscotch</option>
-                <option>icecoder</option>
-                <option>idea</option>
-                <option>isotope</option>
-                <option>juejin</option>
-                <option>lesser-dark</option>
-                <option>liquibyte</option>
-                <option>lucario</option>
-                <option>material</option>
-                <option>material-darker</option>
-                <option>material-palenight</option>
-                <option>material-ocean</option>
-                <option>mbo</option>
-                <option>mdn-like</option>
-                <option>midnight</option>
-                <option>monokai</option>
-                <option>moxer</option>
-                <option>neat</option>
-                <option>neo</option>
-                <option>night</option>
-                <option>nord</option>
-                <option>oceanic-next</option>
-                <option>panda-syntax</option>
-                <option>paraiso-dark</option>
-                <option>paraiso-light</option>
-                <option>pastel-on-dark</option>
-                <option>railscasts</option>
-                <option>rubyblue</option>
-                <option>seti</option>
-                <option>shadowfox</option>
-                <option>solarized dark</option>
-                <option>solarized light</option>
-                <option>the-matrix</option>
-                <option>tomorrow-night-bright</option>
-                <option>tomorrow-night-eighties</option>
-                <option>ttcn</option>
-                <option>twilight</option>
-                <option>vibrant-ink</option>
-                <option>xq-dark</option>
-                <option>xq-light</option>
-                <option>yeti</option>
-                <option>yonce</option>
-                <option>zenburn</option>
-            </select>
-            </p>
-            <textarea id="codemirror">Compose an epic</textarea>
+    <body style="background-color: {{ EDITOR_BACKGROUND_COLOR }}">
+        <!-- <header class="top" style='background-color: black;'>
+            <div class="wrapper">
+            </div>
+        </header> -->
+            <textarea id="codemirror">
+{{ CODE_FILE_CONTENT }}
+            </textarea>
+            <div style="margin-left: auto; margin-right: auto;">
+                <p>Select a theme: 
+                    <select onchange="selectTheme()" id=select>
+                    <option>default</option>
+                    <option>3024-day</option>
+                    <option>3024-night</option>
+                    <option>abbott</option>
+                    <option>abcdef</option>
+                    <option>ambiance</option>
+                    <option>ayu-dark</option>
+                    <option>ayu-mirage</option>
+                    <option>base16-dark</option>
+                    <option>base16-light</option>
+                    <option>bespin</option>
+                    <option>blackboard</option>
+                    <option>cobalt</option>
+                    <option>colorforth</option>
+                    <option>darcula</option>
+                    <option>dracula</option>
+                    <option>duotone-dark</option>
+                    <option>duotone-light</option>
+                    <option>eclipse</option>
+                    <option>elegant</option>
+                    <option>erlang-dark</option>
+                    <option>gruvbox-dark</option>
+                    <option>hopscotch</option>
+                    <option>icecoder</option>
+                    <option>idea</option>
+                    <option>isotope</option>
+                    <option>juejin</option>
+                    <option>lesser-dark</option>
+                    <option>liquibyte</option>
+                    <option>lucario</option>
+                    <option>material</option>
+                    <option>material-darker</option>
+                    <option>material-palenight</option>
+                    <option>material-ocean</option>
+                    <option>mbo</option>
+                    <option>mdn-like</option>
+                    <option>midnight</option>
+                    <option selected>monokai</option>
+                    <option>moxer</option>
+                    <option>neat</option>
+                    <option>neo</option>
+                    <option>night</option>
+                    <option>nord</option>
+                    <option>oceanic-next</option>
+                    <option>panda-syntax</option>
+                    <option>paraiso-dark</option>
+                    <option>paraiso-light</option>
+                    <option>pastel-on-dark</option>
+                    <option>railscasts</option>
+                    <option>rubyblue</option>
+                    <option>seti</option>
+                    <option>shadowfox</option>
+                    <option>solarized dark</option>
+                    <option>solarized light</option>
+                    <option>the-matrix</option>
+                    <option>tomorrow-night-bright</option>
+                    <option>tomorrow-night-eighties</option>
+                    <option>ttcn</option>
+                    <option>twilight</option>
+                    <option>vibrant-ink</option>
+                    <option>xq-dark</option>
+                    <option>xq-light</option>
+                    <option>yeti</option>
+                    <option>yonce</option>
+                    <option>zenburn</option>
+                </select>
+                </p>
         </div>
         <!-- core javascript source -->
         <script src="https://codemirror.net/lib/codemirror.js"></script>
@@ -182,21 +253,86 @@
         <!-- language highlighting scripts -->
         <script src="https://codemirror.net/mode/javascript/javascript.js"></script>
         <script src="https://codemirror.net/mode/python/python.js"></script>
+        <script src="https://codemirror.net/mode/markdown/markdown.js"></script>
+        <script src="https://codemirror.net/mode/css/css.js"></script>
+        <script src="https://codemirror.net/addon/lint/coffeescript-lint.js"></script>
+        <script src="https://codemirror.net/addon/lint/css-lint.js"></script>
+        <script src="https://codemirror.net/addon/lint/html-lint.js"></script>
+        <script src="https://codemirror.net/addon/lint/javascript-lint.js"></script>
+        <script src="https://codemirror.net/addon/lint/json-lint.js"></script>
+        <script src="https://codemirror.net/addon/lint/lint.js"></script>
+        <script src="https://codemirror.net/addon/lint/yaml-lint.js"></script>
+        <script src="https://codemirror.net/addon/tern/tern.js"></script>
+        <script src="https://codemirror.net/addon/tern/worker.js"></script>
+        <script src="https://codemirror.net/addon/selection/active-line.js"></script>
+        <script src="https://codemirror.net/addon/selection/mark-selection.js"></script>
+        <script src="https://codemirror.net/addon/selection/selection-pointer.js"></script>
+        <!-- <script src="{{ JQUERY_JS }}"></script> -->
+        <!-- <script src="jquery.js"></script> -->
+        <!-- <script src="{{ MINIMAP_MIN_JS }}"></script> -->
+        <!-- <script src="pagemap-1.4.0.min.js"></script> -->
+        <!-- <script src="minimap.js"></script> -->
+        <style>
+            .CodeMirror-gutter-wrapper {
+                width: 80px;
+            }
+            .CodeMirror-linenumber {
+                /* padding: 1px 8px 0 5px; */
+                padding-left: 25px;
+                /* color: #c8d2d7; */
+                /* font-size: 10px; */
+            }
+            .CodeMirror {border: 1px solid black;}
+            .CodeMirror-activeline-gutter {background-image: url({{ HINT_IMAGE }}); background-color: purple}
+            .lint-error {font-family: arial; font-size: 70%; background: #ffa; color: #a00; padding: 2px 5px 3px; }
+            .lint-error-icon {color: white; background-color: red; font-weight: bold; border-radius: 50%; padding: 0 3px; margin-right: 7px;}
+       </style>
         <script>
             var editor = CodeMirror.fromTextArea(document.getElementById("codemirror"), {
                 value: "function myScript(){return 100;}\n",
                 lineNumbers: true,
                 electricChars: true,
                 lineSeparator: null,
-                mode:  "text/x-python",
+                extraKeys: {"Ctrl-Q": "toggleComment"},
+                mode: "text/{{ LANGUAGE }}",
                 indentUnit: 4,
+                styleActiveLine: true,
+                xml: true,
+                fencedCodeBlockHighlighting: true,
                 foldGutter: true,
-                gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"],
+                highlightFormatting: true,
+                highlightNonStandardPropertyKeywords: true, 
+                gutters: ["breakpoints", "CodeMirror-linenumbers", "CodeMirror-foldgutter"],
                 // mode: "htmlmixed",
                 smartIndent: true,
                 theme: "abcdef",
             });
-            editor.setSize(800, 600);
+            editor.on("gutterClick", function(cm, n) {
+                var info = cm.lineInfo(n);
+                cm.setGutterMarker(n, "breakpoints", info.gutterMarkers ? null : makeMarker());
+                // cm.setGutterMarker(n, "jars", info.gutterMarkers ? null : setJar());
+            });
+
+            function setJar() {
+                var marker = document.createElement("div");
+                marker.style.color = "#ff4d00";
+                marker.style.whiteSpace = "nowrap";
+                marker.innerHTML = `<img width='14px' src='{{ JAR_IMAGE }}' title="hints">`;
+
+                return marker;
+            }
+
+            function makeMarker() {
+                var marker = document.createElement("div");
+                marker.style.color = "#ff4d00";
+                marker.style.whiteSpace = "nowrap";
+                marker.innerHTML = `●<img width='14px' src='{{ HINT_IMAGE }}' title="hints">`;
+
+                return marker;
+            }
+
+            editor.setSize("100%", 600);
+            editor.setOption('viewportMargin', Infinity);
             var input = document.getElementById("select");
             function selectTheme() {
                 var theme = input.options[input.selectedIndex].textContent;
@@ -214,6 +350,56 @@
                 var theme = location.hash.slice(1);
                 if (theme) { input.value = theme; selectTheme(); }
             });
+
         </script>
+        <!-- <script>
+            // Only run on browsers that support css transitions
+            // See also example.css:15
+            if(Modernizr.csstransforms) {
+                $(document).ready(function() {
+                    $.sublimeScroll({
+                        top: 20, // px to top
+                        bottom: 40, // px to bottom
+                        scrollWidth: 200, // Width of scrollbar
+                        removeElements: 'script',
+                        fixedElements: 'header.top, footer.bottom',
+                        contentWidth: 860, // Scroll viewport width
+                        contentHeight: 1000,
+                        minWidth: 1000 // Min width of window to display scroll
+                    });
+    
+                    $('#content2').sublimeScroll({
+                        contentWidth: 583
+                    });
+                });
+            }
+        </script> -->
     </body>
 </html>
+
+<!-- <!DOCTYPE html>
+<html lang="en">
+
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <link href="https://vjs.zencdn.net/7.14.3/video-js.css" rel="stylesheet" />
+        <title>HTML 5 Video Player</title>
+    </head>
+
+    <body style='background-color: {{ VIDEO_WIDGET_BACKGROUND_COLOR }}'>
+        <div style="margin-left: auto; margin-right: auto; text-align: center">
+            <h1 style='color: white; text-align: center'> HTML 5 Video Player </h1>
+            <video id="my-video" class="video-js" controls preload="auto" width="640" height="360" data-setup='{"playbackRates": [0.5, 1, 1.5, 2]}' style="text-align: center">
+                <source src="http://localhost:3000/home/atharva/Videos/pewdiepie-coco.mp4" type="video/mp4" />
+                <source src="http://localhost:3000/home/atharva/Videos/pewdiepie-coco.mp4" type="video/webm" />
+                <p class="vjs-no-js">
+                    To view this video please enable JavaScript, and consider upgrading to a
+                    web browser that
+                    <a href="https://videojs.com/html5-video-support/" target="_blank">supports HTML5 video</a>
+                </p>
+            </video>
+            <script src="https://vjs.zencdn.net/7.14.3/video.min.js"></script>
+        </div>
+    </body>
+</html> -->

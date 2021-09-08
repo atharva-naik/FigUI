@@ -1,9 +1,12 @@
 import pathlib, os
 import FigUI.handler.Code
+import FigUI.handler.Video
+import FigUI.handler.Code.html
 import FigUI.handler.Image.svg
 import FigUI.handler.Archives.pt
 import FigUI.handler.Archives.pkl
 import FigUI.handler.Archives.zip
+import FigUI.handler.Document.pdf
 from PyQt5.QtWidgets import QFileDialog, QLabel, QTextEdit
 
 
@@ -40,8 +43,14 @@ class FigHandler:
         if self.ext == ".pkl":
             self.handler = FigUI.handler.Archives.pkl.PickleHandler(self.path)
             return self.handler.getUI(path)   
-        elif self.ext in [".feature", ".py", ".cpp", ".c", ".scala"]:
-            return FigUI.handler.Code.CodeEditor(path=self.path, parent=self.parent)
+        elif self.ext in [".feature", ".py", ".css", ".scss", ".less", ".js", ".cpp", ".c", ".scala", ".md"]:
+            return FigUI.handler.Code.CodeEditor(path=path, parent=self.parent)
+        elif self.ext in [".html"]:
+            return FigUI.handler.Code.html.FigHTMLEditor(path=path, parent=self.parent)
+        elif self.ext in [".pdf"]:
+            return FigUI.handler.Document.pdf.FigPdfViewer(path)
+        elif self.ext in [".webm", ".mp4", ".flv", ".ogv", ".wmv", ".mov"]:
+            return FigUI.handler.Video.FigVideoWidget(path=path, parent=self.parent)
         else:
             return QLabel("no handler found")
         # elif self.ext == ".svg":

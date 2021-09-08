@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-import webbrowser
+import webbrowser, http.server, threading
 import os, sys, logging, datetime, pathlib
 from PyQt5.Qt import PYQT_VERSION_STR
 from PyQt5.QtCore import QThread, QUrl, QRegExp, QSize, Qt, QT_VERSION_STR
 from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEngineProfile, QWebEngineSettings
 from PyQt5.QtGui import QIcon, QFont, QKeySequence, QTransform, QTextCharFormat, QRegExpValidator, QSyntaxHighlighter, QFontDatabase
-from PyQt5.QtWidgets import QApplication, QAction, QDialog, QPushButton, QTabWidget, QStatusBar, QToolBar, QWidget, QLineEdit, QMainWindow, QHBoxLayout, QVBoxLayout, QPlainTextEdit, QToolBar, QFrame, QSizePolicy
+from PyQt5.QtWidgets import QApplication, QAction, QDialog, QPushButton, QTabWidget, QStatusBar, QToolBar, QWidget, QLineEdit, QMainWindow, QHBoxLayout, QVBoxLayout, QPlainTextEdit, QToolBar, QFrame, QSizePolicy, QTabBar
 try:
     from Theme import FigTheme
     from Tab import FigTabWidget
@@ -48,6 +48,21 @@ def __font__(name):
 
 # system controllers.
 brightnessCtrl = BrightnessController()
+
+def serve_all_files(directory="/", port=3000):
+    import http.server
+    import socketserver
+    PORT = port
+    DIRECTORY = directory
+
+    class Handler(http.server.SimpleHTTPRequestHandler):
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, directory=DIRECTORY, **kwargs)
+
+    with socketserver.TCPServer(("", PORT), Handler) as httpd:
+        print("serving at port", PORT)
+        httpd.serve_forever()
+
 
 class QHLine(QFrame):
     def __init__(self):
@@ -281,52 +296,32 @@ class FigWindow(QMainWindow):
         self.fig_launcher = FigLauncher(self)
         # self.newTabBtn.clicked.connect(self.addNewTab)
         self.tabs.addTab(self.fig_launcher, FigIcon("launcher.png"), "\tLauncher")
+        self.tabs.tabBar().setTabButton(0, QTabBar.RightSide,None) # make launcher tab unclosable.
         self.navBarAdded = False
         # self.setLayout(self.layout)
         self.bottomBar = self.initBottomBar()
         self.subSysBar = self.subSystemsBar()
+        self.debugBar = self.initDebugBar()
+        self.mediaBar = self.initMediaBar()
         self.systemBar = self.systemBar()
         self.folderBar = self.folderNavBar()
+        self.shortcutBar = self.initShortcutBar()
+        self.packmanBar = self.packageManagerBar()
         self.addToolBar(Qt.TopToolBarArea, self.folderBar)
+        self.addToolBar(Qt.LeftToolBarArea, self.shortcutBar)
+        self.addToolBar(Qt.LeftToolBarArea, self.debugBar)
+        self.addToolBar(Qt.LeftToolBarArea, self.mediaBar)
         self.addToolBar(Qt.LeftToolBarArea, self.systemBar)
         self.addToolBar(Qt.RightToolBarArea, self.subSysBar)
         self.addToolBar(Qt.BottomToolBarArea, self.bottomBar)
+        self.addToolBarBreak(Qt.BottomToolBarArea)
+        self.addToolBar(Qt.BottomToolBarArea, self.packmanBar)
         self.addToolBarBreak(Qt.TopToolBarArea)
 
-    def systemBar(self):
+    def initShortcutBar(self):
         sysbar = QToolBar()
-        sysbar.setIconSize(QSize(25,25))
-        sysbar.setStyleSheet("background: #292929; color: #fff")
-        # decrease volume .
-        volMinusBtn = QAction("Volume Minus", self)
-        volMinusBtn.setToolTip("Decrease volume.")
-        volMinusBtn.setIcon(FigIcon("sysbar/volminus.svg")) 
-        # increase volume .
-        volPlusBtn = QAction("Volume Plus", self)
-        volPlusBtn.setToolTip("Increase volume.")
-        volPlusBtn.setIcon(FigIcon("sysbar/volplus.svg")) 
-        # mute.
-        muteBtn = QAction("Mute", self)
-        muteBtn.setToolTip("Mute.")
-        muteBtn.setIcon(FigIcon("sysbar/mute.svg"))
-        # lower brightness.
-        dimBtn = QAction("Lower Brightness", self)
-        dimBtn.setToolTip("Lower screen brightness.")
-        dimBtn.setIcon(FigIcon("sysbar/dim.svg"))
-        dimBtn.triggered.connect(brightnessCtrl.dec_brightness)
-        # increase brightness.
-        brightBtn = QAction("Increase Brightness", self)
-        brightBtn.setToolTip("Increase screen brightness.")
-        brightBtn.setIcon(FigIcon("sysbar/bright.svg"))
-        brightBtn.triggered.connect(brightnessCtrl.inc_brightness)
-        # user settings.
-        userBtn = QAction("User Settings", self)
-        userBtn.setToolTip("Open user/admin system settings.")
-        userBtn.setIcon(FigIcon("sysbar/user_settings.svg"))
-        # settings.
-        settingsBtn = QAction("Settings", self)
-        settingsBtn.setToolTip("Open system settings.")
-        settingsBtn.setIcon(FigIcon("sysbar/settings.svg"))
+        sysbar.setIconSize(QSize(22,22))
+        sysbar.setStyleSheet("background: #292929; color: #fff")   
         # recents.
         recentBtn = QAction("Recent", self)
         recentBtn.setToolTip("recently modified/opened files.")
@@ -360,19 +355,7 @@ class FigWindow(QMainWindow):
         videosBtn = QAction("Videos", self)
         videosBtn.setToolTip("open videos.")
         videosBtn.setIcon(FigIcon("sysbar/videos.svg"))
-        # debugging.
-        bugBtn = QAction("Debug", self)
-        bugBtn.setToolTip("start debugging.")
-        bugBtn.setIcon(FigIcon("sysbar/bug.svg"))
-        # lab.
-        labBtn = QAction("Lab", self)
-        labBtn.setToolTip("Open development lab")
-        labBtn.setIcon(FigIcon("sysbar/lab.svg"))
-        # lab.
-        gitHubBtn = QAction("GitHub", self)
-        gitHubBtn.setToolTip("Integrate with github")
-        gitHubBtn.setIcon(FigIcon("sysbar/github.svg"))
-        # add actions and buttons.
+        # add actions.
         sysbar.addAction(recentBtn)
         sysbar.addAction(homeBtn)
         sysbar.addAction(desktopBtn)
@@ -381,26 +364,105 @@ class FigWindow(QMainWindow):
         sysbar.addAction(musicBtn)
         sysbar.addAction(picturesBtn)
         sysbar.addAction(videosBtn)
-        sysbar.addSeparator()
-        sysbar.addWidget(QHLine())
-        sysbar.addSeparator()
+
+        return sysbar
+
+    def initDebugBar(self):
+        sysbar = QToolBar()
+        sysbar.setIconSize(QSize(22,22))
+        sysbar.setStyleSheet("background: #292929; color: #fff")        
+        # debugging.
+        bugBtn = QAction("Debug", self)
+        bugBtn.setToolTip("start debugging.")
+        bugBtn.setIcon(FigIcon("sysbar/bug.svg"))
+        # lab.
+        labBtn = QAction("Lab", self)
+        labBtn.setToolTip("Open development lab")
+        labBtn.setIcon(FigIcon("sysbar/lab.svg"))
+        # github GUI.
+        gitHubBtn = QAction("GitHub", self)
+        gitHubBtn.setToolTip("Integrate with github")
+        gitHubBtn.setIcon(FigIcon("sysbar/github.svg"))
+        # run code to test.
+        runBtn = QAction("Run Code", self)
+        runBtn.setToolTip("Run code for testing.") 
+        runBtn.setIcon(FigIcon("sysbar/run.svg"))
         sysbar.addAction(bugBtn)
         sysbar.addAction(labBtn)
         sysbar.addAction(gitHubBtn)
-        sysbar.addSeparator()
-        sysbar.addWidget(QHLine())
-        sysbar.addSeparator()
+        sysbar.addAction(runBtn)
+
+        return sysbar
+
+    def initMediaBar(self):
+        sysbar = QToolBar()
+        sysbar.setIconSize(QSize(22,22))
+        sysbar.setStyleSheet("background: #292929; color: #fff")        
+        # decrease volume .
+        volMinusBtn = QAction("Volume Minus", self)
+        volMinusBtn.setToolTip("Decrease volume.")
+        volMinusBtn.setIcon(FigIcon("sysbar/volminus.svg"))
+        volMinusBtn.triggered.connect(lambda: os.system("xdotool key XF86AudioLowerVolume")) 
+        # increase volume .
+        volPlusBtn = QAction("Volume Plus", self)
+        volPlusBtn.setToolTip("Increase volume.")
+        volPlusBtn.setIcon(FigIcon("sysbar/volplus.svg")) 
+        volPlusBtn.triggered.connect(lambda: os.system("xdotool key XF86AudioRaiseVolume"))
+        # mute.
+        muteBtn = QAction("Mute", self)
+        muteBtn.setToolTip("Mute.")
+        muteBtn.setIcon(FigIcon("sysbar/mute.svg"))
+        muteBtn.triggered.connect(lambda: os.system("xdotool key XF86AudioMute"))
+        # play or pause media.
+        playBtn = QAction("Play/Pause", self)
+        playBtn.setToolTip("Play or pause media.")
+        playBtn.setIcon(FigIcon("sysbar/play.svg"))
+        playBtn.triggered.connect(lambda: os.system("xdotool key XF86AudioPlay"))
+        # previous media.
+        prevBtn = QAction("Prev", self)
+        prevBtn.setToolTip("Previous media.")
+        prevBtn.setIcon(FigIcon("sysbar/prev.svg"))
+        prevBtn.triggered.connect(lambda: os.system("xdotool key XF86AudioPrev"))
+        # next media.
+        nextBtn = QAction("Next", self)
+        nextBtn.setToolTip("Next media.")
+        nextBtn.setIcon(FigIcon("sysbar/next.svg"))
+        nextBtn.triggered.connect(lambda: os.system("xdotool key XF86AudioNext"))
+        # add actions.
+        sysbar.addAction(prevBtn)
+        sysbar.addAction(nextBtn)
         sysbar.addAction(volPlusBtn)
         sysbar.addAction(volMinusBtn)
         sysbar.addAction(muteBtn)
-        sysbar.addSeparator()
-        sysbar.addWidget(QHLine())
-        sysbar.addSeparator()
+        sysbar.addAction(playBtn)
+
+        return sysbar
+
+    def systemBar(self):
+        sysbar = QToolBar()
+        sysbar.setIconSize(QSize(22,22))
+        sysbar.setStyleSheet("background: #292929; color: #fff")
+        # lower brightness.
+        dimBtn = QAction("Lower Brightness", self)
+        dimBtn.setToolTip("Lower screen brightness.")
+        dimBtn.setIcon(FigIcon("sysbar/dim.svg"))
+        dimBtn.triggered.connect(brightnessCtrl.dec_brightness)
+        # increase brightness.
+        brightBtn = QAction("Increase Brightness", self)
+        brightBtn.setToolTip("Increase screen brightness.")
+        brightBtn.setIcon(FigIcon("sysbar/bright.svg"))
+        brightBtn.triggered.connect(brightnessCtrl.inc_brightness)
+        # user settings.
+        userBtn = QAction("User Settings", self)
+        userBtn.setToolTip("Open user/admin system settings.")
+        userBtn.setIcon(FigIcon("sysbar/user_settings.svg"))
+        # settings.
+        settingsBtn = QAction("Settings", self)
+        settingsBtn.setToolTip("Open system settings.")
+        settingsBtn.setIcon(FigIcon("sysbar/settings.svg"))
+        # add actions and buttons.
         sysbar.addAction(dimBtn)
         sysbar.addAction(brightBtn)
-        sysbar.addSeparator()
-        sysbar.addWidget(QHLine())
-        sysbar.addSeparator()
         sysbar.addAction(userBtn)
         sysbar.addAction(settingsBtn)
 
@@ -458,17 +520,45 @@ class FigWindow(QMainWindow):
 
         return subbar
 
+    def maximize(self):
+        if self.isMaximized():
+            self.showNormal()
+        else:
+            self.showMaximized()
+
     def folderNavBar(self):
         toolbar = QToolBar()
         toolbar.setStyleSheet("color: #fff; background: #292929")
         toolbar.setIconSize(QSize(22,22))
         
+        closeBtn = QAction(self)
+        closeBtn.setToolTip("close window")
+        closeBtn.setIcon(FigIcon("close.svg")) 
+        closeBtn.triggered.connect(lambda: self.close()) # closing logic.
+
+        minimizeBtn = QAction(self)
+        minimizeBtn.setToolTip("minimize window")
+        minimizeBtn.setIcon(FigIcon("minimize.svg"))
+        minimizeBtn.triggered.connect(lambda: self.showMinimized())
+
+        maximizeBtn = QAction(self)
+        maximizeBtn.setToolTip("maximize window")
+        maximizeBtn.setIcon(FigIcon("maximize.svg"))
+        maximizeBtn.triggered.connect(lambda: self.maximize())
+
         backBtn = QPushButton()
         backBtn.setToolTip("go back in folders")
         backBtn.setIcon(FigIcon("back.svg"))
+        
         nextBtn = QPushButton()
         nextBtn.setToolTip("go forward in folders")
         nextBtn.setIcon(FigIcon("forward.svg"))
+        
+        toolbar.addAction(closeBtn)
+        toolbar.addAction(minimizeBtn)
+        toolbar.addAction(maximizeBtn)
+        toolbar.addSeparator()
+        toolbar.addWidget(QVLine())
         toolbar.addWidget(backBtn)
         toolbar.addWidget(nextBtn)
         
@@ -482,17 +572,101 @@ class FigWindow(QMainWindow):
 
         return toolbar
 
+    def packageManagerBar(self):
+        toolbar = QToolBar()
+        toolbar.setContentsMargins(0, 0, 0, 0)
+        toolbar.setIconSize(QSize(25,25))
+        toolbar.setStyleSheet("background: #292929; color: #fff")
+        # apt package manager.
+        aptBtn = QPushButton()#(" apt ")
+        aptBtn.setToolTip("Open a UI for apt/pacman.")
+        aptBtn.setIcon(FigIcon("bottombar/apt.png"))
+        aptBtn.setStyleSheet("color: #fff; background: #292929; font-family: Monospace; font-size: 14px; margin: 0px")
+        # snapcraft package manager.
+        snapBtn = QPushButton()#(" snap ")
+        snapBtn.setToolTip("Open a UI for snapcraft.")
+        snapBtn.setIcon(FigIcon("bottombar/snap.png"))
+        snapBtn.setStyleSheet("color: #fff; background: #292929; font-family: Monospace; font-size: 14px; margin: 0px")
+        # homebrew.
+        brewBtn = QPushButton()#(" brew ")
+        brewBtn.setToolTip("Get started with brew package manager (recommended for mac)")
+        brewBtn.setIcon(FigIcon("bottombar/beer.png"))
+        brewBtn.setStyleSheet("color: #fff; background: #292929; font-family: Monospace; font-size: 14px; margin: 0px")
+        # wine.
+        wineBtn = QPushButton()#(" wine ")
+        wineBtn.setToolTip("Get started with wine for running windows software.")
+        wineBtn.setIcon(FigIcon("bottombar/wine.png"))
+        wineBtn.setStyleSheet("color: #fff; background: #292929; font-family: Monospace; font-size: 14px; margin: 0px")
+        # pip.
+        pipBtn = QPushButton()#(" pip ")
+        pipBtn.setToolTip("Open UI for pip.")
+        pipBtn.setIcon(FigIcon("bottombar/pip.png"))
+        pipBtn.setStyleSheet("color: #fff; background: #292929; font-family: Monospace; font-size: 14px; margin: 0px")
+        # annaconda.
+        condaBtn = QPushButton()#(" conda (base) ")
+        condaBtn.setToolTip("Open annaconda UI.")
+        condaBtn.setIcon(FigIcon("bottombar/conda.png"))
+        condaBtn.setStyleSheet("color: #fff; background: #292929; font-family: Monospace; font-size: 14px; margin: 0px")
+        # npm package manager.
+        npmBtn = QPushButton()#(" npm ")
+        npmBtn.setToolTip("Open a UI for npm.")
+        npmBtn.setIcon(FigIcon("bottombar/npm.png"))
+        npmBtn.setStyleSheet("color: #fff; background: #292929; font-family: Monospace; font-size: 14px; margin: 0px")
+        # gem package manager.
+        gemBtn = QPushButton()#(" gem ")
+        gemBtn.setToolTip("Open a UI for gem package manager.")
+        gemBtn.setIcon(FigIcon("bottombar/gem.png"))
+        gemBtn.setStyleSheet("color: #fff; background: #292929; font-family: Monospace; font-size: 14px; margin: 0px")
+        # maven package manager.
+        mvnBtn = QPushButton()#(" mvn ")
+        mvnBtn.setToolTip("Open a UI for maven.")
+        mvnBtn.setIcon(FigIcon("bottombar/mvn.png"))
+        mvnBtn.setStyleSheet("color: #fff; background: #292929; font-family: Monospace; font-size: 14px; margin: 0px")
+        # crates package manager for RUST.
+        cargoBtn = QPushButton()#(" cargo ")
+        cargoBtn.setToolTip("Open a UI for cargo package manager.")
+        cargoBtn.setIcon(FigIcon("bottombar/cargo.png"))
+        cargoBtn.setStyleSheet("color: #fff; background: #292929; font-family: Monospace; font-size: 14px; margin: 0px")
+        # for center alignment.
+        left_spacer = QWidget()
+        left_spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        right_spacer = QWidget()
+        right_spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        # add actions.
+        toolbar.addWidget(left_spacer)
+        toolbar.addWidget(aptBtn)
+        toolbar.addSeparator()
+        toolbar.addWidget(snapBtn)
+        toolbar.addSeparator()
+        toolbar.addWidget(brewBtn)
+        toolbar.addSeparator()
+        toolbar.addWidget(wineBtn)
+        toolbar.addSeparator()
+        toolbar.addWidget(pipBtn)
+        toolbar.addSeparator()
+        toolbar.addWidget(condaBtn)
+        toolbar.addSeparator()
+        toolbar.addWidget(npmBtn)
+        toolbar.addSeparator()
+        toolbar.addWidget(gemBtn)
+        toolbar.addSeparator()
+        toolbar.addWidget(mvnBtn)
+        toolbar.addSeparator()
+        toolbar.addWidget(cargoBtn)   
+        toolbar.addWidget(right_spacer)  
+
+        return toolbar
+
     def initBottomBar(self):
         toolbar = QToolBar()
-        toolbar.setStyleSheet("color: #fff")
         toolbar.setContentsMargins(0, 0, 0, 0)
         toolbar.setIconSize(QSize(22,22))
-        toolbar.setStyleSheet("background: #292929; color: #fff")
+        toolbar.setStyleSheet("background: #292929; color: #fff; margin: 0px")
         # about qt button.
         qtBtn = QPushButton()
         qtBtn.setIcon(FigIcon("bottombar/qt.png"))
         qtBtn.setToolTip("Learn more about Qt and PyQt5.")
-        qtBtn.setStyleSheet("color: #fff; background: #292929; border: 0px; font-family: Monospace; font-size: 14px")
+        qtBtn.setStyleSheet("color: #fff; background: #292929; border: 0px; font-family: Helvetica; font-size: 14px")
         self.qtBtn = qtBtn
         # open color picker dialogue.
         colorpickerBtn = QAction("Colorpicker", self)
@@ -502,70 +676,101 @@ class FigWindow(QMainWindow):
         gitBtn = QPushButton(" main*")
         gitBtn.setToolTip("Inspect current git branch")
         gitBtn.setIcon(FigIcon("bottombar/git-merge.svg"))
-        gitBtn.setStyleSheet("color: #fff; background: #292929; border: 0px; font-family: Monospace; font-size: 14px")
+        gitBtn.setStyleSheet("color: #fff; background: #292929; border: 0px; font-family: Helvetica; font-size: 14px")
         # warnings.
-        warningBtn = QPushButton(" 0")
+        warningBtn = QPushButton(" 10")
         warningBtn.setToolTip("See warnings")
         warningBtn.setIcon(FigIcon("bottombar/warning.png"))
-        warningBtn.setStyleSheet("color: #fff; background: #292929; border: 0px; font-family: Monospace; font-size: 14px")
+        warningBtn.setStyleSheet("color: #fff; background: #292929; border: 0px; font-family: Helvetica; font-size: 14px")
         # errors.
-        errorBtn = QPushButton(" 0")
+        errorBtn = QPushButton(" 24")
         errorBtn.setToolTip("See errors")
         errorBtn.setIcon(FigIcon("bottombar/error.png"))
-        errorBtn.setStyleSheet("color: #fff; background: #292929; border: 0px; font-family: Monospace; font-size: 14px")
+        errorBtn.setStyleSheet("color: #fff; background: #292929; border: 0px; font-family: Helvetica; font-size: 14px")
         # rw permissions.
         rwBtn = QPushButton("[RW]")
         rwBtn.setToolTip("See read write permissions")
         rwBtn.setIcon(FigIcon("bottombar/pen.svg"))
-        rwBtn.setStyleSheet("color: #fff; background: #292929; border: 0px; font-family: Monospace; font-size: 14px")
+        rwBtn.setStyleSheet("color: #fff; background: #292929; border: 0px; font-family: Helvetica; font-size: 14px")
         # show cursor location.
         cursorBtn = QPushButton("Ln 0, Col 0")
         cursorBtn.setToolTip("Get cursor location.")
         cursorBtn.setIcon(FigIcon("bottombar/mouse.png"))
-        cursorBtn.setStyleSheet("color: #fff; background: #292929; border: 0px; font-size: 16px")
+        cursorBtn.setStyleSheet("color: #fff; background: #292929; border: 0px; font-family: Helvetica; font-size: 14px")
         # select indentation.
         indentBtn = QPushButton("Spaces: 4")
         indentBtn.setToolTip("Select Indentation.")
-        indentBtn.setStyleSheet("color: #fff; background: #292929; border: 0px; font-size: 16px")
+        indentBtn.setStyleSheet("color: #fff; background: #292929; border: 0px; font-family: Helvetica; font-size: 14px")
         # select encoding.
         encBtn = QPushButton("UTF")
         encBtn.setToolTip("Select Encoding.")
-        encBtn.setStyleSheet("color: #fff; background: #292929; border: 0px; font-size: 16px")
+        encBtn.setStyleSheet("color: #fff; background: #292929; border: 0px; font-family: Helvetica; font-size: 14px")
         # select end of sequence.
         eosBtn = QPushButton("LF")
         eosBtn.setToolTip("Select End of Sequence.")
-        eosBtn.setStyleSheet("color: #fff; background: #292929; border: 0px; font-size: 16px")
+        eosBtn.setStyleSheet("color: #fff; background: #292929; border: 0px; font-family: Helvetica; font-size: 14px")
         # language mode of code.
         langBtn = QPushButton("Text")
         langBtn.setToolTip("Select Language mode.")
-        langBtn.setStyleSheet("color: #fff; background: #292929; border: 0px; font-size: 16px")
+        langBtn.setStyleSheet("color: #fff; background: #292929; border: 0px; font-family: Helvetica; font-size: 14px")
         # tweet.
         tweetBtn = QPushButton()
         tweetBtn.setToolTip("Tweet out any issues at me (@Atharva93149016).")
         tweetBtn.setIcon(FigIcon("bottombar/tweet.png"))
-        tweetBtn.setStyleSheet("color: #fff; background: #292929; border: 0px; font-family: Monospace; font-size: 14px")
+        tweetBtn.setStyleSheet("color: #fff; background: #292929; border: 0px; font-family: Helvetica; font-size: 14px")
         tweetBtn.clicked.connect(lambda x: webbrowser.open("https://twitter.com/compose/tweet?text=@Atharva93149016"))
         # notifications.
         notifBtn = QPushButton()
         notifBtn.setToolTip("Open notifications.")
         notifBtn.setIcon(FigIcon("bottombar/bell.png"))
-        notifBtn.setStyleSheet("color: #fff; background: #292929; border: 0px; font-family: Monospace; font-size: 14px")
+        notifBtn.setStyleSheet("color: #fff; background: #292929; border: 0px; font-family: Helvetica; font-size: 14px")
+        # apt package manager.
+        aptBtn = QPushButton("apt")
+        aptBtn.setToolTip("Open a UI for apt/pacman.")
+        aptBtn.setIcon(FigIcon("bottombar/apt.png"))
+        aptBtn.setStyleSheet("color: #fff; background: #292929; font-family: Monospace; font-size: 14px")
         # homebrew.
         brewBtn = QPushButton("brew")
         brewBtn.setToolTip("Get started with brew package manager (recommended for mac)")
         brewBtn.setIcon(FigIcon("bottombar/beer.png"))
         brewBtn.setStyleSheet("color: #fff; background: #292929; font-family: Monospace; font-size: 14px")
+        # wine.
+        wineBtn = QPushButton("wine")
+        wineBtn.setToolTip("Get started with wine for running windows software.")
+        wineBtn.setIcon(FigIcon("bottombar/wine.png"))
+        wineBtn.setStyleSheet("color: #fff; background: #292929; font-family: Monospace; font-size: 14px")
+        # pip.
+        pipBtn = QPushButton("pip")
+        pipBtn.setToolTip("Open UI for pip.")
+        pipBtn.setIcon(FigIcon("bottombar/pip.png"))
+        pipBtn.setStyleSheet("color: #fff; background: #292929; font-family: Monospace; font-size: 14px")
         # annaconda.
-        condaBtn = QPushButton(" conda (base)")
+        condaBtn = QPushButton("conda (base)")
         condaBtn.setToolTip("Open annaconda UI.")
         condaBtn.setIcon(FigIcon("bottombar/conda.png"))
         condaBtn.setStyleSheet("color: #fff; background: #292929; font-family: Monospace; font-size: 14px")
+        # npm package manager.
+        npmBtn = QPushButton("npm")
+        npmBtn.setToolTip("Open a UI for npm.")
+        npmBtn.setIcon(FigIcon("bottombar/npm.png"))
+        npmBtn.setStyleSheet("color: #fff; background: #292929; font-family: Monospace; font-size: 14px")
+        # npm package manager.
+        mvnBtn = QPushButton("mvn")
+        mvnBtn.setToolTip("Open a UI for maven.")
+        mvnBtn.setIcon(FigIcon("bottombar/mvn.png"))
+        mvnBtn.setStyleSheet("color: #fff; background: #292929; font-family: Monospace; font-size: 14px")
         # buy me a coffee.
-        coffeeBtn = QPushButton("Donate")
+        coffeeBtn = QPushButton(" Donate")
         coffeeBtn.setToolTip("Buy me a coffe :)")
         coffeeBtn.setIcon(FigIcon("bottombar/coffee.png"))
-        coffeeBtn.setStyleSheet("color: #fff; background: #292929; font-family: Monospace; font-size: 14px")
+        coffeeBtn.setStyleSheet("color: #fff; background: #292929; font-family: Helvetica; font-size: 14px")
+        # for center alignment.
+        left_spacer = QWidget()
+        left_spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        right_spacer = QWidget()
+        right_spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         # add actions.
+        toolbar.addWidget(left_spacer)
         toolbar.addWidget(qtBtn)
         toolbar.addAction(colorpickerBtn)
         toolbar.addWidget(gitBtn)
@@ -587,16 +792,21 @@ class FigWindow(QMainWindow):
         toolbar.addSeparator()
         toolbar.addWidget(langBtn)
         toolbar.addSeparator()
+        # toolbar.addWidget(aptBtn)
+        # toolbar.addWidget(brewBtn)
+        # toolbar.addWidget(wineBtn)
+        # toolbar.addWidget(pipBtn)
+        # toolbar.addWidget(condaBtn)
+        # toolbar.addWidget(npmBtn)
+        # toolbar.addWidget(mvnBtn)
+        # toolbar.addSeparator()
+        toolbar.addWidget(coffeeBtn)
+        toolbar.addSeparator()
         toolbar.addSeparator()
         toolbar.addWidget(tweetBtn)
         toolbar.addSeparator()
-        toolbar.addWidget(notifBtn)
-        toolbar.addSeparator()
-        toolbar.addWidget(brewBtn)
-        toolbar.addSeparator()
-        toolbar.addWidget(condaBtn)
-        toolbar.addSeparator()
-        toolbar.addWidget(coffeeBtn)
+        toolbar.addWidget(notifBtn)  
+        toolbar.addWidget(right_spacer)      
 
         return toolbar
 
@@ -683,6 +893,12 @@ class FigApp(QApplication):
                  x=100, y=100, w=1050, h=850, 
                  theme=None, icon="logo.png", 
                  *args, **kwargs):
+        # Handle high resolution displays:
+        if hasattr(Qt, 'AA_EnableHighDpiScaling'):
+            print("high resolution")
+            QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
+        if hasattr(Qt, 'AA_UseHighDpiPixmaps'):
+            QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True)
         super(FigApp, self).__init__(argv)
         self.setApplicationName("Fig: any Format Is Good enough")
         fontId1 = QFontDatabase.addApplicationFont(__font__("OMORI_GAME.ttf"))
@@ -694,6 +910,7 @@ class FigApp(QApplication):
             # self.window.fig_launcher.setFont(QFont(families[0], 20))
         self.window = FigWindow(*args, **kwargs)
         self.window.setGeometry(x, y, w, h)
+        self.server_thread = threading.Thread(target=serve_all_files)
         self.setWindowIcon(QIcon(icon))
         if fontId1 < 0:
             self.window.logger.error("unable to load OMORI_GAME.ttf")
@@ -715,6 +932,7 @@ class FigApp(QApplication):
     def run(self):
         # self.aboutQt()
         self.window.show()
+        self.server_thread.start()
         self.beep()
         self.announce()
         sys.exit(self.__exec__())
@@ -722,6 +940,7 @@ class FigApp(QApplication):
     def __exec__(self):
         self.exec_()
         self.window.fig_launcher.gifBtn._endAnimation()
+        self.server_thread.join()
         
 
 if __name__ == "__main__":

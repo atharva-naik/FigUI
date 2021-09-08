@@ -2,9 +2,13 @@ Xlib
 PyQt5
 jinja2
 pillow
+moviepy
+pymupdf
 requests
 untangle
+python-vlc
 py-wallpaper
 PyQtWebEngine
+# preview-generator
 charset-normalizer
-screen-brightness-control
+# screen-brightness-control

@@ -8,12 +8,23 @@ from PyQt5.QtCore import QThread, QUrl, QSize, Qt
 from PyQt5.QtGui import QIcon, QKeySequence, QTransform, QFont, QFontDatabase, QMovie, QPixmap
 from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEngineProfile, QWebEngineSettings
 from PyQt5.QtWidgets import QApplication, QAction, QDialog, QPushButton, QWidget, QToolBar, QGridLayout, QLabel, QVBoxLayout, QToolButton, QFileDialog, QScrollArea, QFrame
+try:
+    from utils import *
+except ImportError:
+    from FigUI.utils import *
 
 
 __current_dir__ = os.path.dirname(os.path.realpath(__file__))
 __icons__ = os.path.join(__current_dir__, "../assets/icons")
 __fonts__ = os.path.join(__current_dir__, "../assets/fonts")
 launcher_icons = glob.glob(os.path.join(__icons__, "launcher/*"))
+
+def FigIcon(name, w=None, h=None):
+    __current_dir__ = os.path.dirname(os.path.realpath(__file__))
+    __icons__ = os.path.join(__current_dir__, "../assets/icons")
+    path = os.path.join(__icons__, name)
+
+    return QIcon(path)
 
 
 class FigToolButton(QToolButton):
@@ -55,7 +66,8 @@ class FigLauncher(QWidget):
         self.layout = QVBoxLayout(self)
         self.launcherWidget = QWidget()
         self.gifBtn = None
-        
+        self._parent = parent
+
         self.scroll = QScrollArea()
         self.scroll.setWidgetResizable(True)
         self.scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
@@ -69,7 +81,7 @@ class FigLauncher(QWidget):
             launcherButton.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
             launcherButton.setText(name)
             launcherButton.setMaximumSize(QSize(*button_size))
-            
+
             if ext == ".gif":
                 launcherButton.setMovie(path, size=icon_size)       
                 self.gifBtn = launcherButton
@@ -104,17 +116,39 @@ class FigLauncher(QWidget):
         self.scroll.setWidget(self.launcherWidget) # comment
         
         self.welcomeLabel = QPushButton("Welcome to FIG, launch an app!")
-        figLogo = QIcon("logo.png")
+        figLogo = FigIcon("logo.png")
         self.welcomeLabel.setIcon(figLogo)
         self.welcomeLabel.setStyleSheet("background: transparent; color: #734494")
         self.welcomeLabel.setIconSize(QSize(100,100))
-        self.welcomeLabel.setMaximumWidth(800)
+        #self.welcomeLabel.setMaximumWidth(900)
         self.welcomeLabel.setFont(QFont('OMORI_GAME2', 40))
 
         self.layout.addWidget(self.welcomeLabel, alignment=Qt.AlignCenter)
         # self.layout.addWidget(self.launcherWidget) 
         self.layout.addWidget(self.scroll) # comment
         self.setLayout(self.layout)
+        self.setAcceptDrops(True)
 
     def _clickHandler(self, event):
         pass
+
+    def dragEnterEvent(self, e):
+        import pathlib
+        from pathlib import Path
+        from urllib.parse import urlparse, unquote_plus
+        
+        e.accept()
+        e.acceptProposedAction()
+        filename = e.mimeData().text().strip("\n").strip()
+        filename = unquote_plus(filename).replace("file://","")
+        print(filename)
+
+        if self._parent:
+            handlerWidget = self._parent.handler.getUI(filename)
+            name = pathlib.Path(filename).name
+            thumbnail = getThumbnail(filename)
+            parent = ".../" + pathlib.Path(filename).parent.name
+            i = self._parent.tabs.addTab(handlerWidget, FigIcon(thumbnail), f"\t{truncateString(name)} {parent}")
+            self._parent.tabs.setCurrentIndex(i)
+
+        super(FigLauncher, self).dragEnterEvent(e)
