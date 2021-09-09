@@ -24,98 +24,171 @@ subSystem -> Scrape
 subSystem -> API
 FigUI
 ```
-├── assets
-│   ├── icons
-│   │   ├── fix.png
-│   │   ├── idea.png
-│   │   ├── launcher
-│   │   │   ├── bash.png
-│   │   │   ├── bmp.png
-│   │   │   ├── browser.png
-│   │   │   ├── css.png
-│   │   │   ├── html.png
-│   │   │   ├── jpg.png
-│   │   │   ├── json.png
-│   │   │   ├── pdf.png
-│   │   │   ├── png.png
-│   │   │   ├── svg.png
-│   │   │   └── vscode.png
-│   │   ├── launcher.png
-│   │   └── tips.png
-│   └── icons_license.pdf
-├── conf
-│   └── theme.json
-├── handler
-│   ├── Audio
-│   │   ├── aiff
-│   │   ├── mp3
-│   │   ├── ogg
-│   │   └── wav
-│   ├── Code
-│   │   ├── c
-│   │   ├── cpp
-│   │   ├── css
-│   │   ├── html
-│   │   ├── java
-│   │   ├── js
-│   │   ├── py
-│   │   └── scala
-│   ├── Document
-│   │   ├── csv
-│   │   ├── doc
-│   │   ├── pdf
-│   │   ├── ppt
-│   │   └── xls
-│   ├── Image
-│   │   ├── bmp
-│   │   ├── convert.py
-│   │   ├── gif
-│   │   ├── ico
+.
+├── basic.ics
+├── datetime.pkl
+├── example.feature
+├── FigUI
+│   ├── assets
+│   │   ├── attributions.md
+│   │   ├── fonts
+│   │   │   ├── OMORI_GAME2.ttf
+│   │   │   └── OMORI_GAME.ttf
+│   │   ├── icons
+│   │   │   ├── back.svg
+│   │   │   ├── blockview.svg
+│   │   │   ├── bookmark.svg
+│   │   │   ├── bottombar
+│   │   │   ├── browser
+│   │   │   ├── case-sensitive.svg
+│   │   │   ├── close.svg
+│   │   │   ├── copy.svg
+│   │   │   ├── cut.svg
+│   │   │   ├── decrypt.svg
+│   │   │   ├── delete.svg
+│   │   │   ├── email.svg
+│   │   │   ├── encrypt.svg
+│   │   │   ├── file_share.svg
+│   │   │   ├── forward.svg
+│   │   │   ├── hide.svg
+│   │   │   ├── launcher
+│   │   │   ├── launcher.png
+│   │   │   ├── listview.svg
+│   │   │   ├── logo.png
+│   │   │   ├── maximize.svg
+│   │   │   ├── minimize.svg
+│   │   │   ├── new_file.svg
+│   │   │   ├── new_folder.svg
+│   │   │   ├── open_in_terminal.svg
+│   │   │   ├── open.svg
+│   │   │   ├── paste.svg
+│   │   │   ├── permissions.svg
+│   │   │   ├── pizza.gif
+│   │   │   ├── properties.svg
+│   │   │   ├── redo.svg
+│   │   │   ├── regex_search.svg
+│   │   │   ├── rename.svg
+│   │   │   ├── search.svg
+│   │   │   ├── sidebar
+│   │   │   ├── sort_ascending.svg
+│   │   │   ├── sort_descending.svg
+│   │   │   ├── stepback.svg
+│   │   │   ├── sysbar
+│   │   │   ├── undo.svg
+│   │   │   ├── unhide.svg
+│   │   │   ├── user_permissions.svg
+│   │   │   ├── whole-word.svg
+│   │   │   └── zip.svg
+│   │   └── icons_license.pdf
+│   ├── conf
+│   │   └── theme.json
+│   ├── handler
+│   │   ├── Archives
+│   │   │   ├── pkl.py
+│   │   │   ├── pt.py
+│   │   │   ├── __pycache__
+│   │   │   └── zip.py
+│   │   ├── Audio
+│   │   │   ├── aiff
+│   │   │   ├── mp3
+│   │   │   ├── ogg
+│   │   │   └── wav
+│   │   ├── Code
+│   │   │   ├── bashrc.py
+│   │   │   ├── c
+│   │   │   ├── cpp
+│   │   │   ├── css
+│   │   │   ├── html
+│   │   │   ├── __init__.py
+│   │   │   ├── java
+│   │   │   ├── js
+│   │   │   ├── LICENSE
+│   │   │   ├── py
+│   │   │   ├── __pycache__
+│   │   │   ├── QtColorPicker
+│   │   │   ├── scala
+│   │   │   └── static
+│   │   ├── Document
+│   │   │   ├── csv
+│   │   │   ├── doc
+│   │   │   ├── pdf
+│   │   │   ├── ppt
+│   │   │   └── xls
+│   │   ├── Image
+│   │   │   ├── bmp
+│   │   │   ├── convert.py
+│   │   │   ├── gif
+│   │   │   ├── ico
+│   │   │   ├── __init__.py
+│   │   │   ├── jpg
+│   │   │   ├── png
+│   │   │   ├── __pycache__
+│   │   │   ├── static
+│   │   │   ├── svg
+│   │   │   └── tiff
 │   │   ├── __init__.py
-│   │   ├── jpg
-│   │   ├── png
-│   │   ├── svg
-│   │   ├── tiff
-│   │   └── ui.py
-│   ├── Text
-│   │   ├── log
-│   │   ├── md
-│   │   ├── rst
-│   │   └── txt
-│   └── Video
-│       ├── mov
-│       ├── mp4
-│       └── webm
-├── subSystem
-│   ├── API
-│   ├── Auth
-│   ├── Browser
-│   ├── Chat
-│   ├── Email
-│   ├── News
-│   ├── PassMan
+│   │   ├── __pycache__
+│   │   │   └── __init__.cpython-37.pyc
+│   │   ├── Text
+│   │   │   ├── log
+│   │   │   ├── md
+│   │   │   ├── rst
+│   │   │   └── txt
+│   │   └── Video
+│   │       ├── __init__.py
+│   │       ├── mov
+│   │       ├── mp4
+│   │       ├── __pycache__
+│   │       ├── static
+│   │       └── webm
 │   ├── __pycache__
-│   │   └── Shell.cpython-37.pyc
-│   ├── Scrape
-│   ├── Shell.py
-│   ├── Storage
-│   ├── system
-│   ├── Weather
-│   └── WinMan
-├── utils.py
-└── widgets
-    ├── Launcher.py
-    ├── Minimap.py
-    ├── __pycache__
-    │   ├── Launcher.cpython-37.pyc
-    │   ├── Tab.cpython-37.pyc
-    │   ├── Tabs.cpython-37.pyc
-    │   ├── Theme.cpython-37.pyc
-    │   └── Window.cpython-37.pyc
-    ├── Tab.py
-    ├── Theme.py
-    ├── Toolbar.py
-    └── Window.py
+│   │   └── utils.cpython-37.pyc
+│   ├── subSystem
+│   │   ├── Calendar
+│   │   │   ├── __init__.py
+│   │   │   └── static
+│   │   ├── Chat
+│   │   ├── Email
+│   │   ├── News
+│   │   ├── PassMan
+│   │   ├── __pycache__
+│   │   │   └── Shell.cpython-37.pyc
+│   │   ├── Scrape
+│   │   ├── Shell.py
+│   │   ├── system
+│   │   │   ├── brightness.py
+│   │   │   └── __pycache__
+│   │   └── Weather
+│   ├── utils.py
+│   └── widgets
+│       ├── DELETE.py
+│       ├── FileViewer.py
+│       ├── Launcher.py
+│       ├── __pycache__
+│       │   ├── FileViewer.cpython-37.pyc
+│       │   ├── Launcher.cpython-37.pyc
+│       │   ├── Tab.cpython-37.pyc
+│       │   ├── Tabs.cpython-37.pyc
+│       │   ├── Theme.cpython-37.pyc
+│       │   └── Window.cpython-37.pyc
+│       ├── Tab.py
+│       ├── Theme.py
+│       ├── Toolbar.py
+│       └── Window.py
+├── FigUI.desktop
+├── figui_wallpaper_1631225129.6073387.jpg
+├── gay.sass
+├── hello.ts
+├── LICENSE
+├── logo.png
+├── logs
+│   └── 10_Sep_2021_04_41_53.log
+├── main.py
+├── pickle.pkl
+├── pom.xml
+├── README.md
+├── requirements.txt
+└── TODO
 
-58 directories, 34 files
+74 directories, 90 files
 ```
