@@ -131,3 +131,4 @@ dmypy.json
 logs/
 # ignore wallpapers
 figui_wallpaper_*
+file_formats/
