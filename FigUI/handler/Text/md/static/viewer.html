@@ -1,0 +1,13 @@
+<link rel="stylesheet" href="{{ SHOWDOWN_CSS }}" />
+<div id="main" class="workspace-container"></div>
+<script src="{{ SHOWDOWN_JS }}"></script>
+<script>
+    showdowns.init();
+    let md = "";
+    function updateMd(md) {
+        var element = document.getElementById("main")
+        showdowns.makeHtml(md).then(html => {
+            element.innerHTML = html;
+        })
+    }
+</script>

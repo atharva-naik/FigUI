@@ -73,7 +73,7 @@ class FigLauncher(QWidget):
         self.scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
         self.scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
 
-        for i,path in enumerate(launcher_icons):
+        for i,path in enumerate(sorted(launcher_icons)):
             name = pathlib.Path(path).stem
             ext = os.path.splitext(path)[1]
             
@@ -105,6 +105,10 @@ class FigLauncher(QWidget):
                 if parent:
                     parent.logger.debug("connected terminal launcher")
                 launcherButton.clicked.connect(parent.addNewFileViewer)
+            elif name == "bashrc":
+                if parent:
+                    parent.logger.debug("connected bashrc customizer")
+                launcherButton.clicked.connect(parent.addNewBashrcViewer)
             else:
                 if parent:
                     parent.logger.debug(f"connected FigHandler instance to '{name}' button")

@@ -2,10 +2,14 @@ Xlib
 PyQt5
 jinja2
 pillow
+easydev
 moviepy
 pymupdf
+colormap
+markdown
 requests
 untangle
+ansicolors
 python-vlc
 py-wallpaper
 PyQtWebEngine

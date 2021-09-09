@@ -34,6 +34,7 @@ __lang_map__ = {
     ".scss" : "x-scss",
     ".less" : "x-less",
     ".md" : "x-markdown",
+    ".bashrc" : "x-sh",
 }
 
 def serve(path):
@@ -96,8 +97,11 @@ class CodeWebView(QWebEngineView):
         self.menu.addAction('Refactor')
         self.menu.popup(event.globalPos())
 
-    def execJS(self, script):
-        self.loadFinished.connect(lambda: self.page().runJavaScript(script))
+    def execJS(self, script, callback=None):
+        if callback:
+            self.loadFinished.connect(lambda: self.page().runJavaScript(script, callback))
+        else:
+            self.loadFinished.connect(lambda: self.page().runJavaScript(script))
 
     def alert(self, message):
         self.execJS(f"alert('{message}')")
@@ -114,8 +118,11 @@ class CodeEditor(QWidget):
         # self.server = StaticServer("/")
         # self.server.serve()
         lang = pathlib.Path(path).suffix
-        print(f"file type by ext. is: {lang}")
-        lang = __lang_map__.get(lang, "text")
+        print(f"file type by .ext is: {lang}")
+        if path == os.path.join(pathlib.Path.home(), ".bashrc"):
+            lang = "x-sh"
+        else:
+            lang = __lang_map__.get(lang, "text")
         print(f"syntax highlight mode is:", lang)
         self.code = open(self.path).read()
         self.params = {
@@ -139,6 +146,20 @@ class CodeEditor(QWidget):
         self.editor.setHtml(self.template.render(**self.params))
         layout.addWidget(self.editor)
         self.setLayout(layout)
+
+    def callback(self, data):
+        print(data)
+        self.innerText = str(data)
+
+    def getText(self):
+        import time
+        self.innerText = None
+        self.editor.execJS("document.getElementById('codemirror').innerText", self.callback)
+        while self.innerText is None:
+            time.sleep(1000)
+            print(self.innerText)
+        
+        return self.innerText
     # def save(self):
     #     open(self.path, "w").write(code)
 if __name__ == "__main__":

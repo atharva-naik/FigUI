@@ -13,7 +13,9 @@ try:
     from Launcher import FigLauncher
     from FileViewer import FigFileViewer
     from FigUI.handler import FigHandler
+    # from FigUI.handler.Code import CodeEditor
     from FigUI.subSystem.Shell import FigShell
+    from FigUI.handler.Code.QtColorPicker import ColorPicker
     from FigUI.subSystem.system.brightness import BrightnessController
 #     from utils import *
 except ImportError:
@@ -22,7 +24,9 @@ except ImportError:
     from ..handler import FigHandler
     from .Launcher import FigLauncher
     from .FileViewer import FigFileViewer
+    # from ..handler.Code import CodeEditor
     from ..subSystem.Shell import FigShell
+    from ..handler.Code.QtColorPicker import ColorPicker
     from ..subSystem.system.brightness import BrightnessController
 #     from .utils import *
 def FigIcon(name, w=None, h=None):
@@ -672,6 +676,7 @@ class FigWindow(QMainWindow):
         colorpickerBtn = QAction("Colorpicker", self)
         colorpickerBtn.setToolTip("Open color picker")
         colorpickerBtn.setIcon(FigIcon("bottombar/colorwheel.svg"))
+        colorpickerBtn.triggered.connect(lambda: self.colorPickerDialog())
         # get git info.
         gitBtn = QPushButton(" main*")
         gitBtn.setToolTip("Inspect current git branch")
@@ -810,10 +815,23 @@ class FigWindow(QMainWindow):
 
         return toolbar
 
+    def colorPickerDialog(self):
+        colorPicker = ColorPicker(useAlpha=True)
+        picked_color = colorPicker.getColor((0,0,0,50))
+        print(picked_color)
+
     def addNewTerm(self):
         '''Add new terminal widget'''
         terminal = FigShell(parent=self)
         i = self.tabs.addTab(terminal, FigIcon("launcher/bash.png"), "\tTerminal")
+        self.tabs.setCurrentIndex(i)
+
+    def addNewBashrcViewer(self):
+        '''Add new bashrc customizer.'''
+        home = pathlib.Path.home()
+        bashrc = os.path.join(home, ".bashrc")
+        handlerWidget = self.handler.getUI(path=bashrc)
+        i = self.tabs.addTab(handlerWidget, FigIcon("launcher/bashrc.png"), "\t.bashrc")
         self.tabs.setCurrentIndex(i)
 
     def addNewHandlerTab(self):
@@ -931,9 +949,19 @@ class FigApp(QApplication):
 
     def run(self):
         # self.aboutQt()
+        import time
+        start = time.time()
         self.window.show()
+        print("window.show took:", time.time()-start)
+        
+        start = time.time()
         self.server_thread.start()
+        print("server.thread.start() took:", time.time()-start)
+        
+        start = time.time()
         self.beep()
+        print("self.beep() took:", time.time()-start)
+
         self.announce()
         sys.exit(self.__exec__())
 

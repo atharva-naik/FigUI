@@ -2,10 +2,10 @@
 from jinja2 import Template
 import os, sys, logging, datetime, pathlib
 from PyQt5.QtPrintSupport import *
-from PyQt5.QtCore import QThread, QUrl, QRegExp, QSize, Qt
+from PyQt5.QtCore import QThread, QUrl, QSize, Qt
 from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEngineProfile, QWebEngineSettings
-from PyQt5.QtGui import QIcon, QFont, QKeySequence, QTransform, QTextCharFormat, QRegExpValidator, QSyntaxHighlighter, QFontDatabase
-from PyQt5.QtWidgets import QApplication, QAction, QDialog, QPushButton, QTabWidget, QStatusBar, QToolBar, QWidget, QLineEdit, QMainWindow, QHBoxLayout, QVBoxLayout, QPlainTextEdit, QToolBar, QFrame, QSizePolicy
+from PyQt5.QtGui import QIcon, QFont, QKeySequence, QTransform, QTextCharFormat
+from PyQt5.QtWidgets import QApplication, QAction, QDialog, QPushButton, QTabWidget, QToolBar, QWidget, QLineEdit, QMainWindow, QHBoxLayout, QVBoxLayout, QPlainTextEdit, QToolBar, QFrame, QSizePolicy
 
 
 def localStaticUrl(filename):
@@ -24,10 +24,10 @@ def getLocalUrl(filename):
     return QUrl.fromLocalFile(filename)
 
 
-class ImageWebView(QWebEngineView):
+class CalendarWebView(QWebEngineView):
     # TODO: 
     def __init__(self, path, parent=None):
-        super(ImageWebView, self).__init__(parent)
+        super(CalendarWebView, self).__init__(parent)
         self.consoleHistory = []
         self.settings().setAttribute(QWebEngineSettings.JavascriptEnabled, True)
         self.settings().setAttribute(QWebEngineSettings.LocalContentCanAccessRemoteUrls, True)
@@ -45,6 +45,7 @@ class ImageWebView(QWebEngineView):
     #         self.uris.append(getLocalUrl(self.files[-1]).toString())
     #     self.uri = getLocalUrl(self.path).toString()
     def dragEnterEvent(self, e):
+        '''use drag event on ics files to add events to the callendar.'''
         from pathlib import Path
         filename = e.mimeData().text().strip()
         file_format = Path(filename).suffix
@@ -53,7 +54,7 @@ class ImageWebView(QWebEngineView):
         #     print(filename)
         #     if self.enable_zoom: self.attachJSZoomHandler
         #     # self.load_pdf(filename) 
-        super(ImageWebView, self).dragEnterEvent(e)
+        super(CalendarWebView, self).dragEnterEvent(e)
     # def dropEvent(self, e):
     #     e.ignore()
     def contextMenuEvent(self, event):
@@ -70,13 +71,13 @@ class ImageWebView(QWebEngineView):
         self.execJS(f"alert('{message}')")
 
 
-class FigImageViewer(QWidget):
+class FigCalendar(QWidget):
     '''
     You need to provide a file always. 
     If you want to code a new script, create a file first at a given path and then open it.
     --'''
     def __init__(self, path, parent=None):
-        super(FigImageViewer, self).__init__(parent=parent)
+        super(FigCalendar, self).__init__(parent=parent)
         self.path = path
         self.params = {
             "FABRIC_JS" : localStaticUrl("fabric.js").toString(),
@@ -92,7 +93,7 @@ class FigImageViewer(QWidget):
         self.template = Template(open(__static__("viewer.html")).read())
         layout = QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
-        self.viewer = ImageWebView(path, self)
+        self.viewer = CalendarWebView(path, self)
         self.viewer.setZoomFactor(1.25)
         open(__static__("rendered.html"),"w").write(self.template.render(**self.params))
         self.viewer.load(localStaticUrl("rendered.html"))

@@ -1,0 +1,39 @@
+<link rel="stylesheet" href="dist/showdowns.min.css" />
+
+<div id="main" class="workspace-container"></div>
+<script src="dist/showdowns.min.js"></script>
+<!-- <script>
+  (function(element) {
+    showdowns.init();
+    let md = `
+# FigUI: The pythonic file UI
+The aim of FigUI is to provide a single package to view, edit, process and convert code, text, audio, document, image and video files of major popular formats.
+
+## File formats to be supported:
+1) Text: (txt, md, rst)b
+2) Code: (most coding langs)
+3) Audio:
+4) Document: (ppt/pdf/doc/font/spreadsheet)
+5) Image: (stills/gifs)
+6) Video: 
+
+## Package Structure
+handler -> Modality -> ext -> [formatter, highlighter, linter, parser, processor, AI, editor, widgets] 
+subSystem -> storage // storage management APIs (for files and databases)
+subSystem -> system -> [camera, gpu, cpu, battery, display, time, logging]
+    `;
+    showdowns.makeHtml(md).then(html => {
+        element.innerHTML = html;
+    })
+  })(document.getElementById("main"));
+</script> -->
+<script>
+    showdowns.init();
+    let md = "";
+    function updateMd(md) {
+        var element = document.getElementById("main")
+        showdowns.makeHtml(md).then(html => {
+            element.innerHTML = html;
+        })
+    }
+</script>

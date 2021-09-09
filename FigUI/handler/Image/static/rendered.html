@@ -2,8 +2,8 @@
     <head>
         <meta charset="UTF-8">
         <title>0. Design</title>
-        <link type="text/css" href="{{ COLOR_PICKER_CSS }}" rel="stylesheet">
-        <link rel="stylesheet" href="{{ TUI_IMAGE_EDITOR_CSS }}">
+        <link type="text/css" href="file:///home/atharva/GUI/FigUI/FigUI/handler/Image/static/tui-color-picker.css" rel="stylesheet">
+        <link rel="stylesheet" href="file:///home/atharva/GUI/FigUI/FigUI/handler/Image/static/tui-image-editor.css">
         <style>
             /* @import url(http://fonts.googleapis.com/css?family=Noto+Sans); */
             html, body {
@@ -15,11 +15,11 @@
     <body>
 
         <div id="tui-image-editor-container"></div>
-        <script type="text/javascript" src="{{ FABRIC_JS }}"></script>
-        <script type="text/javascript" src="{{ TUI_CODE_SNIPPET_MIN_JS }}"></script>
-        <script type="text/javascript" src="{{ COLOR_PICKER_JS }}"></script>
-        <script type="text/javascript" src="{{ FILE_SAVER_MIN_JS }}"></script>
-        <script src="{{ TUI_IMAGE_EDITOR_JS }}"></script>
+        <script type="text/javascript" src="file:///home/atharva/GUI/FigUI/FigUI/handler/Image/static/fabric.js"></script>
+        <script type="text/javascript" src="file:///home/atharva/GUI/FigUI/FigUI/handler/Image/static/tui-code-snippet.min.js"></script>
+        <script type="text/javascript" src="file:///home/atharva/GUI/FigUI/FigUI/handler/Image/static/tui-color-picker.js"></script>
+        <script type="text/javascript" src="file:///home/atharva/GUI/FigUI/FigUI/handler/Image/static/FileSaver.min.js"></script>
+        <script src="file:///home/atharva/GUI/FigUI/FigUI/handler/Image/static/tui-image-editor.js"></script>
         <!-- <script type="text/javascript" src="./js/theme/white-theme.js"></script>
         <script type="text/javascript" src="./js/theme/black-theme.js"></script> -->
         <script>
@@ -27,8 +27,8 @@
          var imageEditor = new tui.ImageEditor('#tui-image-editor-container', {
              includeUI: {
                  loadImage: {
-                    path: '{{ IMAGE_FILE_PATH }}',
-                    name: '{{ IMAGE_FILE_NAME }}'
+                    path: 'file:///home/atharva/GUI/figui_wallpaper_1631084454.509298.jpg',
+                    name: 'figui_wallpaper_1631084454.509298'
                  },
                 //  theme: blackTheme, // or whiteTheme
                  initMenu: 'filter',

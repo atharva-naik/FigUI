@@ -1,0 +1,13 @@
+<link rel="stylesheet" href="file:///home/atharva/GUI/FigUI/FigUI/handler/Text/md/static/dist/showdowns.min.css" />
+<div id="main" class="workspace-container"></div>
+<script src="file:///home/atharva/GUI/FigUI/FigUI/handler/Text/md/static/dist/showdowns.min.js"></script>
+<script>
+    showdowns.init();
+    let md = "";
+    function updateMd(md) {
+        var element = document.getElementById("main")
+        showdowns.makeHtml(md).then(html => {
+            element.innerHTML = html;
+        })
+    }
+</script>

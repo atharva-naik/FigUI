@@ -129,3 +129,5 @@ dmypy.json
 .pyre/
 # ignore logs folder.
 logs/
+# ignore wallpapers
+figui_wallpaper_*
