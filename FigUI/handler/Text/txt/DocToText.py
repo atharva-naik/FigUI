@@ -1,0 +1,1 @@
+# use OCR/pdf parsers/html parsers to extract text from documents and images.

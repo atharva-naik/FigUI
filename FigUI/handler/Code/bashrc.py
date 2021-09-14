@@ -46,7 +46,7 @@ class PromptEditor(QWidget):
         super(PromptEditor, self).__init__(parent)
         layout = QVBoxLayout()
         self.editor = QLineEdit()
-        self.viewer = VisualizerShell(parent)
+        self.viewer = VisualizerShell()
         layout.addWidget(self.editor)
         layout.addWidget(self.viewer)
         self.setLayout(layout)
@@ -129,9 +129,9 @@ class BashrcCustomizer(QWidget):
     def __init__(self, parent=None, path="~/.bashrc"):
         super(BashrcCustomizer, self).__init__(parent)
         
-        prompt_editor = PromptEditor(parent=parent)
-        ansi_color_picker = ANSIColorPicker(parent=parent)
-        code_editor = CodeEditor(path=path, parent=parent)
+        prompt_editor = PromptEditor()
+        ansi_color_picker = ANSIColorPicker()
+        code_editor = CodeEditor(path=path)
         
         prompt_editor.setMaximumHeight(100)
         ansi_color_picker.setMaximumHeight(100)

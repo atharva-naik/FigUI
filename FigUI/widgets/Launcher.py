@@ -73,7 +73,7 @@ class FigLauncher(QWidget):
         self.scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
         self.scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
 
-        for i,path in enumerate(sorted(launcher_icons)):
+        for i,path in enumerate(sorted(launcher_icons, key=lambda x: x.lower() )):
             name = pathlib.Path(path).stem
             ext = os.path.splitext(path)[1]
             

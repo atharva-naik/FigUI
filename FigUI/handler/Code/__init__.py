@@ -37,6 +37,17 @@ __lang_map__ = {
     ".bashrc" : "x-sh",
 }
 
+__highlight_map__ = {
+    ".py" : "python",
+    ".html" : "htmlmixed",
+    ".js" : "javascript",
+    ".css" : "css",
+    ".scss" : "scss",
+    ".less" : "less",
+    ".md" : "markdown",
+    ".bashrc" : "shell",
+}
+
 def serve(path):
     '''give relative path and get absolute static path.'''
     __current_dir__ = os.path.dirname(os.path.realpath(__file__))

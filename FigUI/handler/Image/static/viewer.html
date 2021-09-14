@@ -1,46 +1,69 @@
-<html>
-    <head>
-        <meta charset="UTF-8">
-        <title>0. Design</title>
-        <link type="text/css" href="{{ COLOR_PICKER_CSS }}" rel="stylesheet">
-        <link rel="stylesheet" href="{{ TUI_IMAGE_EDITOR_CSS }}">
-        <style>
-            /* @import url(http://fonts.googleapis.com/css?family=Noto+Sans); */
-            html, body {
-                height: 100%;
-                margin: 0;
-            }
-        </style>
-    </head>
-    <body>
-
-        <div id="tui-image-editor-container"></div>
-        <script type="text/javascript" src="{{ FABRIC_JS }}"></script>
-        <script type="text/javascript" src="{{ TUI_CODE_SNIPPET_MIN_JS }}"></script>
-        <script type="text/javascript" src="{{ COLOR_PICKER_JS }}"></script>
-        <script type="text/javascript" src="{{ FILE_SAVER_MIN_JS }}"></script>
-        <script src="{{ TUI_IMAGE_EDITOR_JS }}"></script>
-        <!-- <script type="text/javascript" src="./js/theme/white-theme.js"></script>
-        <script type="text/javascript" src="./js/theme/black-theme.js"></script> -->
-        <script>
-         // Image editor
-         var imageEditor = new tui.ImageEditor('#tui-image-editor-container', {
-             includeUI: {
-                 loadImage: {
-                    path: '{{ IMAGE_FILE_PATH }}',
-                    name: '{{ IMAGE_FILE_NAME }}'
-                 },
-                //  theme: blackTheme, // or whiteTheme
-                 initMenu: 'filter',
-                 menuBarPosition: 'bottom'
-             },
-             cssMaxWidth: 700,
-             cssMaxHeight: 500,
-             usageStatistics: false
-         });
-         window.onresize = function() {
-             imageEditor.ui.resizeEditor();
-         }
-        </script>
-    </body>
-</html>
+<style>
+    div.inline { 
+        float:left; 
+        padding: 5px;
+        font-size: 14px;
+        font-family: Helvetica;
+    }
+    .clearBoth { clear:both; }
+    img {
+        background: repeating-conic-gradient(#292929 0% 25%, #424242 0% 50%) 
+              50% / 25px 25px;
+        border-width: 0px;
+        border: none;
+    }
+    body {
+        background-color: #292929;
+        color: white;
+    }
+</style>
+<span style="color: #e2e2e2; text-decoration: underline; font-family: Helvetica">{{ FILE_PATH }}</span>
+<br>
+<div class="inline">
+    <img class="img" src="{{ IMAGE_URL }}" width="500px"/>
+</div>
+<div class="inline">
+    <ul style="list-style-type:none; overflow-wrap: break-word; word-wrap: break-word; white-space: normal !important">
+        <li>Name: {{ NAME }}</li>
+        <li>Type: {{ MIMETYPE }}</li>
+        <li>Size: {{ FILE_SIZE }}</li>
+        <br>
+        <li>Accesed: {{ ACCESS_TIME }}</li>
+        <li>Modified: {{ MODIFY_TIME }}</li>
+        <br>
+        <li>Width: {{ IMAGE_WIDTH }}</li>
+        <li>Height: {{ IMAGE_HEIGHT }}</li>
+        <br>
+        <li>User: {{ USER_ACCESS }}</li>
+        <li>Group: {{ GROUP_ACCESS }}</li>
+        <li>Others: {{ OTHERS_ACCESS }}</li>
+        <br>
+        <br>
+        <li>Description:</li>
+        <li>
+            <input placeholder="Add description">
+            </input>
+        </li>
+        <li>Tags:</li>
+        <li>
+            <input placeholder="Add tags separated by ','">
+            </input>
+        </li>
+        <br>
+        <li>
+            <a href="{{ EDITOR_PATH }}">
+                <button>edit</button>
+            </a>
+        </li>
+    </ul>
+</div>
+<br class="clearBoth">
+<span style="font-size: 14px; font-family: Helvetica">
+    Color Distribution: <br>
+    {% for clr, count in IMAGE_HISTOGRAM %} 
+        <svg width="15" height="15">
+            <rect width="20" height="20" style="fill:{{ clr }}"></rect>
+        </svg>    
+        {{ clr }}: {{ count }} %,&nbsp;&nbsp; 
+    {% endfor %}
+</span>

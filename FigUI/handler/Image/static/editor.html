@@ -1,0 +1,49 @@
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <title>0. Design</title>
+        <link type="text/css" href="{{ COLOR_PICKER_CSS }}" rel="stylesheet">
+        <link rel="stylesheet" href="{{ TUI_IMAGE_EDITOR_CSS }}">
+        <style>
+            /* @import url(http://fonts.googleapis.com/css?family=Noto+Sans); */
+            html, body {
+                height: 100%;
+                margin: 0;
+            }
+        </style>
+    </head>
+    <body>
+        <a href="{{ VIEWER_PATH }}">
+            <button>back to viewer</button>
+        </a>
+        <br>
+        <div id="tui-image-editor-container"></div>
+        <script type="text/javascript" src="{{ FABRIC_JS }}"></script>
+        <script type="text/javascript" src="{{ TUI_CODE_SNIPPET_MIN_JS }}"></script>
+        <script type="text/javascript" src="{{ COLOR_PICKER_JS }}"></script>
+        <script type="text/javascript" src="{{ FILE_SAVER_MIN_JS }}"></script>
+        <script src="{{ TUI_IMAGE_EDITOR_JS }}"></script>
+        <!-- <script type="text/javascript" src="./js/theme/white-theme.js"></script>
+        <script type="text/javascript" src="./js/theme/black-theme.js"></script> -->
+        <script>
+         // Image editor
+         var imageEditor = new tui.ImageEditor('#tui-image-editor-container', {
+             includeUI: {
+                 loadImage: {
+                    path: '{{ IMAGE_FILE_PATH }}',
+                    name: '{{ IMAGE_FILE_NAME }}'
+                 },
+                //  theme: blackTheme, // or whiteTheme
+                 initMenu: 'filter',
+                 menuBarPosition: 'bottom'
+             },
+             cssMaxWidth: 700,
+             cssMaxHeight: 500,
+             usageStatistics: false
+         });
+         window.onresize = function() {
+             imageEditor.ui.resizeEditor();
+         }
+        </script>
+    </body>
+</html>

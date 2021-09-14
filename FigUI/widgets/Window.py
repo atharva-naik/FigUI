@@ -323,6 +323,14 @@ class FigWindow(QMainWindow):
         self.addToolBarBreak(Qt.TopToolBarArea)
 
     def initShortcutBar(self):
+        home = str(pathlib.Path.home())
+        music = os.path.join(home, "Music")
+        videos = os.path.join(home, "Videos")
+        desktop = os.path.join(home, "Desktop")
+        pictures = os.path.join(home, "Pictures")
+        documents = os.path.join(home, "Documents")
+        downloads = os.path.join(home, "Downloads")
+
         sysbar = QToolBar()
         sysbar.setIconSize(QSize(22,22))
         sysbar.setStyleSheet("background: #292929; color: #fff")   
@@ -334,31 +342,37 @@ class FigWindow(QMainWindow):
         homeBtn = QAction("Home", self)
         homeBtn.setToolTip("open home folder.")
         homeBtn.setIcon(FigIcon("sysbar/home.svg"))
-        homeBtn.triggered.connect(lambda : self.addNewFileViewer(path=str(pathlib.Path.home())))
+        homeBtn.triggered.connect(lambda : self.addNewFileViewer(path=home))
         # desktop.
         desktopBtn = QAction("Desktop", self)
         desktopBtn.setToolTip("open desktop.")
         desktopBtn.setIcon(FigIcon("sysbar/desktop.svg"))
+        desktopBtn.triggered.connect(lambda: self.addNewFileViewer(path=desktop))
         # documents.
         documentBtn = QAction("Documents", self)
         documentBtn.setToolTip("open documents.")
         documentBtn.setIcon(FigIcon("sysbar/documents.svg"))
+        documentBtn.triggered.connect(lambda: self.addNewFileViewer(path=documents))
         # downloads.
         downloadsBtn = QAction("Downloads", self)
         downloadsBtn.setToolTip("open downloads.")
         downloadsBtn.setIcon(FigIcon("sysbar/downloads.svg"))
+        downloadsBtn.triggered.connect(lambda: self.addNewFileViewer(path=downloads))
         # music.
         musicBtn = QAction("Music", self)
         musicBtn.setToolTip("open music.")
         musicBtn.setIcon(FigIcon("sysbar/music.svg"))
+        musicBtn.triggered.connect(lambda: self.addNewFileViewer(path=music))
         # pictures.
         picturesBtn = QAction("Pictures", self)
         picturesBtn.setToolTip("open videos.")
         picturesBtn.setIcon(FigIcon("sysbar/pictures.svg"))
+        picturesBtn.triggered.connect(lambda: self.addNewFileViewer(path=pictures))
         # videos.
         videosBtn = QAction("Videos", self)
         videosBtn.setToolTip("open videos.")
         videosBtn.setIcon(FigIcon("sysbar/videos.svg"))
+        videosBtn.triggered.connect(lambda: self.addNewFileViewer(path=videos))
         # add actions.
         sysbar.addAction(recentBtn)
         sysbar.addAction(homeBtn)
@@ -844,7 +858,10 @@ class FigWindow(QMainWindow):
             fileViewer = FigFileViewer(path=path, parent=self)
         else:
             fileViewer = FigFileViewer(parent=self)
-        i = self.tabs.addTab(fileViewer, FigIcon("launcher/fileviewer.png"), f"\t{str(pathlib.Path.home())}")
+            path = str(pathlib.Path.home())
+        parent = ".../" + pathlib.Path(path).parent.name
+        name = pathlib.Path(path).name
+        i = self.tabs.addTab(fileViewer, FigIcon("launcher/fileviewer.png"), f"\t{name} {parent}")# f"\t{str(pathlib.Path.home())}")
         self.tabs.setCurrentIndex(i)
 
     def addNewTab(self, Squrl=None, label="Blank"):
@@ -912,11 +929,12 @@ class FigApp(QApplication):
                  theme=None, icon="logo.png", 
                  *args, **kwargs):
         # Handle high resolution displays:
-        if hasattr(Qt, 'AA_EnableHighDpiScaling'):
-            print("high resolution")
-            QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
-        if hasattr(Qt, 'AA_UseHighDpiPixmaps'):
-            QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True)
+        if len(sys.argv)>1 and sys.argv[1] == "high_dpi":
+            if hasattr(Qt, 'AA_EnableHighDpiScaling'):
+                print("high resolution")
+                QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
+            if hasattr(Qt, 'AA_UseHighDpiPixmaps'):
+                QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True)
         super(FigApp, self).__init__(argv)
         self.setApplicationName("Fig: any Format Is Good enough")
         fontId1 = QFontDatabase.addApplicationFont(__font__("OMORI_GAME.ttf"))

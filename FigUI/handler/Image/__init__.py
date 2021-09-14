@@ -1,4 +1,7 @@
 # handler codes for various image file formats.
+import os, stat
+import mimetypes
+from PIL import Image
 from jinja2 import Template
 import os, sys, logging, datetime, pathlib
 from PyQt5.QtPrintSupport import *
@@ -7,6 +10,38 @@ from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEngineProfile, QWebEngi
 from PyQt5.QtGui import QIcon, QFont, QKeySequence, QTransform, QTextCharFormat, QRegExpValidator, QSyntaxHighlighter, QFontDatabase
 from PyQt5.QtWidgets import QApplication, QAction, QDialog, QPushButton, QTabWidget, QStatusBar, QToolBar, QWidget, QLineEdit, QMainWindow, QHBoxLayout, QVBoxLayout, QPlainTextEdit, QToolBar, QFrame, QSizePolicy
 
+
+def getStatInfo(path, fstring="%a,%b %d %Y %H:%M:%S"):
+    import datetime, pathlib
+    fname = pathlib.Path(path)
+    stat_output = fname.stat()
+    a_time = stat_output.st_atime
+    m_time = stat_output.st_mtime
+    a_time = datetime.datetime.fromtimestamp(a_time)
+    m_time = datetime.datetime.fromtimestamp(m_time)
+    a_time = a_time.strftime(fstring)
+    m_time = m_time.strftime(fstring)
+
+    return {"access" : a_time,
+            "modify" : m_time}
+
+def getColors(path, topk=8):
+    from PIL import Image
+    import extcolors, colormap
+    # with tempfile.NamedTemporaryFile(mode="wb") as jpg:
+    img = Image.open(path)
+    img.thumbnail((500,500))
+    img.save("/tmp/tempfile_tempimg_12345.png")
+    colors,_ = extcolors.extract_from_path("/tmp/tempfile_tempimg_12345.png")
+    hexcolors = []
+    tot = sum([clr[1] for clr in colors])
+    for clr, count in colors:
+        hexcolors.append((
+            colormap.rgb2hex(*clr), 
+            round(100*count/tot,1) 
+        ))
+   
+    return hexcolors[:topk]
 
 def localStaticUrl(filename):
     CURRENT_DIR = os.path.dirname(os.path.realpath(__file__))
@@ -78,8 +113,37 @@ class FigImageViewer(QWidget):
     def __init__(self, path, parent=None):
         super(FigImageViewer, self).__init__(parent=parent)
         self.path = path
-        self.params = {
+        sinfo = getStatInfo(path)
+        img = Image.open(path)
+        width, height = img.size
+        # print("type:", mimetypes.guess_type(self.path))
+        import json
+        color_hist = json.load(open(__static__("color_histograms.json"), 'r'))
+        try:
+            colors = color_hist[path]
+            print("found in cache!")
+        except KeyError:
+            colors = getColors(path)
+            color_hist[path] = colors
+            json.dump(color_hist, open(__static__("color_histograms.json"),  "w"))
+        
+        self.viewer_params = {
+            "NAME" : pathlib.Path(self.path).name,
+            "MIMETYPE" : mimetypes.guess_type(self.path)[0],
+            "FILE_SIZE" : os.path.getsize(self.path),
+            "FILE_PATH" : self.path,
+            "ACCESS_TIME" : sinfo["access"],  
+            "MODIFY_TIME" : sinfo["modify"], 
+            "IMAGE_WIDTH" : width,
+            "IMAGE_HEIGHT" : height,
+            "IMAGE_URL" : getLocalUrl(path).toString(), 
+            "IMAGE_HISTOGRAM" : colors,
+            "EDITOR_PATH" : localStaticUrl("editor_rendered.html").toString(),
+        }
+        
+        self.editor_params = {
             "FABRIC_JS" : localStaticUrl("fabric.js").toString(),
+            "VIEWER_PATH" : localStaticUrl("viewer_rendered.html").toString(),
             "FILE_SAVER_MIN_JS" : localStaticUrl("FileSaver.min.js").toString(),
             "IMAGE_FILE_PATH" : getLocalUrl(path).toString(),
             "IMAGE_FILE_NAME" : pathlib.Path(path).stem,
@@ -89,13 +153,19 @@ class FigImageViewer(QWidget):
             "TUI_IMAGE_EDITOR_JS" : localStaticUrl("tui-image-editor.js").toString(),
             "TUI_CODE_SNIPPET_MIN_JS" : localStaticUrl("tui-code-snippet.min.js").toString(),
         }
-        self.template = Template(open(__static__("viewer.html")).read())
+        
+        self.editor_template = Template(open(__static__("editor.html")).read())
+        self.viewer_template = Template(open(__static__("viewer.html")).read())
+        
         layout = QHBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         self.viewer = ImageWebView(path, self)
         self.viewer.setZoomFactor(1.25)
-        open(__static__("rendered.html"),"w").write(self.template.render(**self.params))
-        self.viewer.load(localStaticUrl("rendered.html"))
+        
+        open(__static__("viewer_rendered.html"),"w").write(self.viewer_template.render(**self.viewer_params))
+        open(__static__("editor_rendered.html"),"w").write(self.editor_template.render(**self.editor_params))
+        
+        self.viewer.load(localStaticUrl("viewer_rendered.html"))
         layout.addWidget(self.viewer)
         self.setLayout(layout)
     # def save(self):
