@@ -848,6 +848,12 @@ class FigWindow(QMainWindow):
         i = self.tabs.addTab(handlerWidget, FigIcon("launcher/bashrc.png"), "\t.bashrc")
         self.tabs.setCurrentIndex(i)
 
+    def addNewTextEditor(self):
+        '''Add new bashrc customizer.'''
+        handlerWidget = self.handler.getUI("Untitled.txt")
+        i = self.tabs.addTab(handlerWidget, FigIcon("launcher/txt.png"), "\tUntitled")
+        self.tabs.setCurrentIndex(i)
+
     def addNewHandlerTab(self):
         handlerWidget = self.handler.handle()
         i = self.tabs.addTab(handlerWidget, "New Tab")
@@ -937,25 +943,20 @@ class FigApp(QApplication):
                 QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True)
         super(FigApp, self).__init__(argv)
         self.setApplicationName("Fig: any Format Is Good enough")
-        fontId1 = QFontDatabase.addApplicationFont(__font__("OMORI_GAME.ttf"))
-        fontId2 = QFontDatabase.addApplicationFont(__font__("OMORI_GAME2.ttf"))
-        if fontId1 >= 0:
-            families = QFontDatabase.applicationFontFamilies(fontId1)
-        if fontId2 >= 0:
-            families = QFontDatabase.applicationFontFamilies(fontId2)
-            # self.window.fig_launcher.setFont(QFont(families[0], 20))
+        # add fonts to database.
+        fontIds = []
+        fontFiles = ["OMORI_GAME.ttf", "OMORI_GAME2.ttf", "HomemadeApple.ttf"]
+        for fontFile in fontFiles:
+            fontIds.append(QFontDatabase.addApplicationFont(__font__(fontFile)))
+
         self.window = FigWindow(*args, **kwargs)
         self.window.setGeometry(x, y, w, h)
         self.server_thread = threading.Thread(target=serve_all_files)
         self.setWindowIcon(QIcon(icon))
-        if fontId1 < 0:
-            self.window.logger.error("unable to load OMORI_GAME.ttf")
-        else:
-            self.window.logger.debug("loaded OMORI_GAME.ttf successfully")
-        if fontId2 < 0:
-            self.window.logger.error("unable to load OMORI_GAME2.ttf")
-        else:
-            self.window.logger.debug("loaded OMORI_GAME2.ttf successfully")
+        # if fontId1 < 0:
+        #     self.window.logger.error("unable to load OMORI_GAME.ttf")
+        # else:
+        #     self.window.logger.debug("loaded OMORI_GAME.ttf successfully")
         self.setCursorFlashTime(1000)
         self.window.qtBtn.clicked.connect(self.aboutQt)
 

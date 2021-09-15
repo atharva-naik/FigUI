@@ -3,6 +3,7 @@ import FigUI.handler.Code
 import FigUI.handler.Image
 import FigUI.handler.Video
 import FigUI.handler.Text.md
+import FigUI.handler.Text.txt
 import FigUI.handler.Code.html
 import FigUI.handler.Image.svg
 import FigUI.handler.Code.bashrc
@@ -52,7 +53,9 @@ class FigHandler:
             self.handler = FigUI.handler.Archives.pkl.PickleHandler(self.path)
             return self.handler.getUI(path)   
         elif self.ext == ".md":
-            return FigUI.handler.Text.md.MarkdownEditor(path=path, parent=self.parent)            
+            return FigUI.handler.Text.md.MarkdownEditor(path=path, parent=self.parent)       
+        elif self.ext == ".txt":
+            return FigUI.handler.Text.txt.FigTextEditor(path=path, parent=self.parent)  
         elif self.ext in [".feature", ".py", ".css", ".scss", ".less", ".js", ".cpp", ".c", ".scala", ".md"]:
             return FigUI.handler.Code.CodeEditor(path=path, parent=self.parent)
         elif self.name == ".bashrc":
@@ -66,7 +69,8 @@ class FigHandler:
         elif self.ext in [".webm", ".mp4", ".flv", ".ogv", ".wmv", ".mov"]:
             return FigUI.handler.Video.FigVideoWidget(path=path, parent=self.parent)
         else:
-            return QLabel("no handler found")
+            return FigUI.handler.Text.txt.FigTextEditor(path=path, parent=self.parent) 
+            # return QLabel("no handler found")
         # elif self.ext == ".svg":
         #     self.handler = FigUI.handler.Image.svg.SvgHandler(self.path)
 

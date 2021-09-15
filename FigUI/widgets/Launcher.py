@@ -109,6 +109,10 @@ class FigLauncher(QWidget):
                 if parent:
                     parent.logger.debug("connected bashrc customizer")
                 launcherButton.clicked.connect(parent.addNewBashrcViewer)
+            elif name == "txt":
+                if parent:
+                    parent.logger.debug("connected text editor")
+                launcherButton.clicked.connect(lambda: parent.addNewTextEditor())
             else:
                 if parent:
                     parent.logger.debug(f"connected FigHandler instance to '{name}' button")
