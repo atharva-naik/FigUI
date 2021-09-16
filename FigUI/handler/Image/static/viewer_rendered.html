@@ -12,27 +12,38 @@
         border-width: 0px;
         border: none;
     }
+    #tooltip { 
+        text-align:center; 
+        background:black; 
+        color:white; 
+        padding:3px 0; 
+        width:60px; 
+        position:fixed; 
+        display:none; 
+        white-space:nowrap; 
+        font-size: 12px;
+    }
     body {
         background-color: #292929;
         color: white;
     }
 </style>
-<span style="color: #e2e2e2; text-decoration: underline; font-family: Helvetica">/home/atharva/Pictures/elena_sama_toon.jpg</span>
+<span style="color: #e2e2e2; text-decoration: underline; font-family: Helvetica">/home/atharva/dailymlblog.github.io/assets/about/atharva.jpg</span>
 <br>
 <div class="inline">
-    <img class="img" src="file:///home/atharva/Pictures/elena_sama_toon.jpg" width="500px"/>
+    <img class="img coords" src="file:///home/atharva/dailymlblog.github.io/assets/about/atharva.jpg" width="500px"/>
 </div>
 <div class="inline">
     <ul style="list-style-type:none; overflow-wrap: break-word; word-wrap: break-word; white-space: normal !important">
-        <li>Name: elena_sama_toon.jpg</li>
+        <li>Name: atharva.jpg</li>
         <li>Type: image/jpeg</li>
-        <li>Size: 136480</li>
+        <li>Size: 435317</li>
         <br>
-        <li>Accesed: Wed,Sep 15 2021 15:51:49</li>
-        <li>Modified: Tue,Dec 22 2020 01:38:15</li>
+        <li>Accesed: Thu,Sep 16 2021 02:30:59</li>
+        <li>Modified: Sun,Apr 12 2020 07:34:16</li>
         <br>
-        <li>Width: 512</li>
-        <li>Height: 512</li>
+        <li>Width: 1536</li>
+        <li>Height: 1536</li>
         <br>
         <li>User: </li>
         <li>Group: </li>
@@ -62,38 +73,71 @@
     Color Distribution: <br>
      
         <svg width="15" height="15">
-            <rect width="20" height="20" style="fill:#B7BBBE"></rect>
+            <rect width="20" height="20" style="fill:#958B70"></rect>
         </svg>    
-        #B7BBBE: 57.5 %,&nbsp;&nbsp; 
+        #958B70: 51.6 %,&nbsp;&nbsp; 
      
         <svg width="15" height="15">
-            <rect width="20" height="20" style="fill:#060606"></rect>
+            <rect width="20" height="20" style="fill:#242430"></rect>
         </svg>    
-        #060606: 33.3 %,&nbsp;&nbsp; 
+        #242430: 22.8 %,&nbsp;&nbsp; 
      
         <svg width="15" height="15">
-            <rect width="20" height="20" style="fill:#665E5B"></rect>
+            <rect width="20" height="20" style="fill:#FEFEFE"></rect>
         </svg>    
-        #665E5B: 8.6 %,&nbsp;&nbsp; 
+        #FEFEFE: 16.8 %,&nbsp;&nbsp; 
      
         <svg width="15" height="15">
-            <rect width="20" height="20" style="fill:#CB798B"></rect>
+            <rect width="20" height="20" style="fill:#54341B"></rect>
         </svg>    
-        #CB798B: 0.6 %,&nbsp;&nbsp; 
+        #54341B: 4.4 %,&nbsp;&nbsp; 
      
         <svg width="15" height="15">
-            <rect width="20" height="20" style="fill:#8C4E31"></rect>
+            <rect width="20" height="20" style="fill:#BF9A49"></rect>
         </svg>    
-        #8C4E31: 0.0 %,&nbsp;&nbsp; 
+        #BF9A49: 2.2 %,&nbsp;&nbsp; 
      
         <svg width="15" height="15">
-            <rect width="20" height="20" style="fill:#623A69"></rect>
+            <rect width="20" height="20" style="fill:#346007"></rect>
         </svg>    
-        #623A69: 0.0 %,&nbsp;&nbsp; 
+        #346007: 1.4 %,&nbsp;&nbsp; 
      
         <svg width="15" height="15">
-            <rect width="20" height="20" style="fill:#92A36E"></rect>
+            <rect width="20" height="20" style="fill:#778CB7"></rect>
         </svg>    
-        #92A36E: 0.0 %,&nbsp;&nbsp; 
+        #778CB7: 0.5 %,&nbsp;&nbsp; 
+     
+        <svg width="15" height="15">
+            <rect width="20" height="20" style="fill:#8DBB65"></rect>
+        </svg>    
+        #8DBB65: 0.1 %,&nbsp;&nbsp; 
     
 </span>
+<script src="file:///home/atharva/GUI/FigUI/FigUI/handler/Image/static/jquery.js"></script>
+<script>
+    var tooltip = $( '<div id="tooltip">' ).appendTo( 'body' )[0];
+    $( '.coords' ).
+        each(function () {
+            var pos = $( this ).position(),
+                top = pos.top,
+                left = pos.left,
+                width = $( this ).width(),
+                height = $( this ).height();
+
+            $( this ).
+                mousemove(function ( e ) {
+                    var x, y;
+
+                    x = ( ( e.clientX - left ) ).toFixed( 0 ),
+                    y = ( ( height - ( e.clientY - top ) ) ).toFixed( 0 );
+
+                    $( tooltip ).text( x + ', ' + y ).css({
+                        left: e.clientX - 30,
+                        top: e.clientY - 30
+                    }).show();
+                }).
+                mouseleave(function () {
+                    $( tooltip ).hide();
+                }); 
+        });
+</script>

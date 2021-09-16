@@ -3,6 +3,7 @@ PyQt5
 spacy
 jinja2
 pillow
+psutil
 easydev
 moviepy
 pymupdf

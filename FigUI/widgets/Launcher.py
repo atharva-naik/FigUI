@@ -63,7 +63,9 @@ class FigLauncher(QWidget):
     def __init__(self, parent=None, width=8, button_size=(100,100), icon_size=(70,70)):
         super(FigLauncher, self).__init__(parent)
         layout = QGridLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
         self.layout = QVBoxLayout(self)
+        self.layout.setContentsMargins(0, 0, 0, 0)
         self.launcherWidget = QWidget()
         self.gifBtn = None
         self._parent = parent

@@ -153,7 +153,7 @@
 {{ CODE_FILE_CONTENT }}
             </textarea>
             <div style="margin-left: auto; margin-right: auto;">
-                <p>Select a theme: 
+                <p><span style="color: white; font-size: 13px">Select a theme </span>
                     <select onchange="selectTheme()" id=select>
                     <option>default</option>
                     <option>3024-day</option>
@@ -161,7 +161,7 @@
                     <option>abbott</option>
                     <option>abcdef</option>
                     <option>ambiance</option>
-                    <option>ayu-dark</option>
+                    <option selected>ayu-dark</option>
                     <option>ayu-mirage</option>
                     <option>base16-dark</option>
                     <option>base16-light</option>
@@ -192,7 +192,7 @@
                     <option>mbo</option>
                     <option>mdn-like</option>
                     <option>midnight</option>
-                    <option selected>monokai</option>
+                    <option>monokai</option>
                     <option>moxer</option>
                     <option>neat</option>
                     <option>neo</option>
@@ -307,29 +307,26 @@
                 gutters: ["breakpoints", "CodeMirror-linenumbers", "CodeMirror-foldgutter"],
                 // mode: "htmlmixed",
                 smartIndent: true,
-                theme: "abcdef",
+                theme: "ayu-dark",
             });
             editor.on("gutterClick", function(cm, n) {
                 var info = cm.lineInfo(n);
                 cm.setGutterMarker(n, "breakpoints", info.gutterMarkers ? null : makeMarker());
                 // cm.setGutterMarker(n, "jars", info.gutterMarkers ? null : setJar());
             });
+            // function setJar() {
+            //     var marker = document.createElement("div");
+            //     marker.style.color = "#ff4d00";
+            //     marker.style.whiteSpace = "nowrap";
+            //     marker.innerHTML = `<img width='14px' src='{{ JAR_IMAGE }}' title="hints">`;
 
-            function setJar() {
-                var marker = document.createElement("div");
-                marker.style.color = "#ff4d00";
-                marker.style.whiteSpace = "nowrap";
-                marker.innerHTML = `<img width='14px' src='{{ JAR_IMAGE }}' title="hints">`;
-
-                return marker;
-            }
-
+            //     return marker;
+            // }
             function makeMarker() {
                 var marker = document.createElement("div");
                 marker.style.color = "#ff4d00";
                 marker.style.whiteSpace = "nowrap";
-                marker.innerHTML = `●<img width='14px' src='{{ HINT_IMAGE }}' title="hints">`;
-
+                marker.innerHTML = " ●" // `●<img width='14px' src='{{ HINT_IMAGE }}' title="hints">`;
                 return marker;
             }
 
@@ -338,6 +335,7 @@
             var input = document.getElementById("select");
             function selectTheme() {
                 var theme = input.options[input.selectedIndex].textContent;
+                // alert(theme)
                 editor.setOption("theme", theme);
                 location.hash = "#" + theme;
             }

@@ -7,8 +7,8 @@ import os, sys, logging, datetime, pathlib
 from PyQt5.QtPrintSupport import *
 from PyQt5.QtCore import QThread, QUrl, QRegExp, QSize, Qt
 from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEngineProfile, QWebEngineSettings
-from PyQt5.QtGui import QIcon, QFont, QKeySequence, QTransform, QTextCharFormat, QRegExpValidator, QSyntaxHighlighter, QFontDatabase
-from PyQt5.QtWidgets import QApplication, QAction, QDialog, QPushButton, QTabWidget, QStatusBar, QToolBar, QWidget, QLineEdit, QMainWindow, QHBoxLayout, QVBoxLayout, QPlainTextEdit, QToolBar, QFrame, QSizePolicy
+from PyQt5.QtGui import QIcon, QFont, QKeySequence, QTransform, QTextCharFormat, QFontDatabase
+from PyQt5.QtWidgets import QApplication, QAction, QDialog, QPushButton, QTabWidget, QToolBar, QWidget, QHBoxLayout, QVBoxLayout, QPlainTextEdit, QToolBar, QSizePolicy
 
 
 def getStatInfo(path, fstring="%a,%b %d %Y %H:%M:%S"):
@@ -138,6 +138,7 @@ class FigImageViewer(QWidget):
             "IMAGE_HEIGHT" : height,
             "IMAGE_URL" : getLocalUrl(path).toString(), 
             "IMAGE_HISTOGRAM" : colors,
+            "JQUERY_JS" : localStaticUrl("jquery.js").toString(),
             "EDITOR_PATH" : localStaticUrl("editor_rendered.html").toString(),
         }
         

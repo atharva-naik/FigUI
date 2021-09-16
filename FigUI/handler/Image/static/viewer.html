@@ -12,6 +12,17 @@
         border-width: 0px;
         border: none;
     }
+    #tooltip { 
+        text-align:center; 
+        background:black; 
+        color:white; 
+        padding:3px 0; 
+        width:60px; 
+        position:fixed; 
+        display:none; 
+        white-space:nowrap; 
+        font-size: 12px;
+    }
     body {
         background-color: #292929;
         color: white;
@@ -20,7 +31,7 @@
 <span style="color: #e2e2e2; text-decoration: underline; font-family: Helvetica">{{ FILE_PATH }}</span>
 <br>
 <div class="inline">
-    <img class="img" src="{{ IMAGE_URL }}" width="500px"/>
+    <img class="img coords" src="{{ IMAGE_URL }}" width="500px"/>
 </div>
 <div class="inline">
     <ul style="list-style-type:none; overflow-wrap: break-word; word-wrap: break-word; white-space: normal !important">
@@ -67,3 +78,31 @@
         {{ clr }}: {{ count }} %,&nbsp;&nbsp; 
     {% endfor %}
 </span>
+<script src="{{ JQUERY_JS }}"></script>
+<script>
+    var tooltip = $( '<div id="tooltip">' ).appendTo( 'body' )[0];
+    $( '.coords' ).
+        each(function () {
+            var pos = $( this ).position(),
+                top = pos.top,
+                left = pos.left,
+                width = $( this ).width(),
+                height = $( this ).height();
+
+            $( this ).
+                mousemove(function ( e ) {
+                    var x, y;
+
+                    x = ( ( e.clientX - left ) ).toFixed( 0 ),
+                    y = ( ( height - ( e.clientY - top ) ) ).toFixed( 0 );
+
+                    $( tooltip ).text( x + ', ' + y ).css({
+                        left: e.clientX - 30,
+                        top: e.clientY - 30
+                    }).show();
+                }).
+                mouseleave(function () {
+                    $( tooltip ).hide();
+                }); 
+        });
+</script>

@@ -12,6 +12,17 @@ import FigUI.handler.Archives.pkl
 import FigUI.handler.Archives.zip
 import FigUI.handler.Document.pdf
 from PyQt5.QtWidgets import QFileDialog, QLabel, QTextEdit
+try:
+    from utils import *
+except ImportError:
+    from FigUI.utils import *
+
+def FigIcon(name, w=None, h=None):
+    __current_dir__ = os.path.dirname(os.path.realpath(__file__))
+    __icons__ = os.path.join(__current_dir__, "../assets/icons")
+    path = os.path.join(__icons__, name)
+
+    return QIcon(path)
 
 
 class FigHandler:
@@ -49,6 +60,10 @@ class FigHandler:
     def getUI(self, path):
         # generate and return UI handler.
         self._set_path(path)
+        if self.parent:
+            iconPath = getThumbnail(path)
+            self.parent.langReadOut.setIcon(FigIcon(iconPath))
+            # self.parent.langReadOut.setText(self.ext[1:])
         if self.ext == ".pkl":
             self.handler = FigUI.handler.Archives.pkl.PickleHandler(self.path)
             return self.handler.getUI(path)   

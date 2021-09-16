@@ -572,6 +572,10 @@ class FigFileViewer(QWidget):
         selBtn.setStyleSheet("background: color(0, 0, 255, 50)")
         self.highlight(0)
 
+        if self._parent:
+            self._parent.backNavBtn.clicked.connect(self.prevPath)
+            self._parent.nextNavBtn.clicked.connect(self.nextPath)
+
     def highlightOnClick(self):
         sendingBtn = self.sender()
         j = self.gridLayout.indexOf(sendingBtn)
@@ -603,12 +607,12 @@ class FigFileViewer(QWidget):
     def highlight(self, j):
         try:
             selBtn = self.gridLayout.itemAt(self.j).widget()
+            selBtn.setStyleSheet("background-color: #292929; border: 0px")
+            self.j = j
+            selBtn = self.gridLayout.itemAt(self.j).widget()
+            selBtn.setStyleSheet("background: #42f2f5; color: #292929; font-weight: bold")
         except AttributeError:
             self.back()
-        selBtn.setStyleSheet("background-color: #292929; border: 0px")
-        self.j = j
-        selBtn = self.gridLayout.itemAt(self.j).widget()
-        selBtn.setStyleSheet("background: #42f2f5; color: #292929; font-weight: bold")
     # def eventFilter(self, source, event):
     #     if event.type() == QEvent.KeyPress:
     #         print(event.key())
@@ -635,6 +639,7 @@ class FigFileViewer(QWidget):
 
     def openPath(self, path):
         self.path = path
+        print(f"opened {path}")
         if not os.path.isfile(path):
             self.history.append(path)
             self.i += 1
@@ -667,6 +672,7 @@ class FigFileViewer(QWidget):
             name = pathlib.Path(path).name
             parent = pathlib.Path(path).parent.name
             self._parent.tabs.setTabText(i, f"{name} .../{parent}")
+            self._parent.updateFolderBar(path, openWith=self.openPath)
         all_files = self.listFiles(path) # get list of all files and folders.
         for i,path in enumerate(all_files):
             fileIcon = FigFileIcon(path, parent=self)
