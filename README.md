@@ -1,15 +1,18 @@
 # FigUI: The pythonic file UI
-The aim of FigUI is to provide a single package to view, edit, process and convert code, text, audio, document, image and video files of major popular formats.
+
+The aim of FigUI is to provide a single desktop application to view, edit, process and convert various file types - images, videos, audio files, 3D model files, binary files, log files, code files, pdf, excel, ppt files etc. You get the picture :P . This is just a passion project and don't expect this to be a replacement for gnome apps, VSCode or VLC :|
 
 ## File formats to be supported:
-1) Text: (txt, md, rst)b
-2) Code: (most coding langs)
-3) Audio:
-4) Document: (ppt/pdf/doc/font/spreadsheet)
-5) Image: (stills/gifs)
-6) Video: 
 
-## Package Structure
+1) Text: (txt, md, rst, log)
+2) Code: (most coding languages: think python, Javascript, C, C++, Java, Perl, Ruby, anything code mirror can highlight :P, JSON, JSONL, pickle files, github flavored markdown, html, css, scss, less etc.)
+3) Audio: (mp3, wav, ogg etc.)
+4) Document: ppt/ CSVs
+5) Image: (still images formats such as png, jpg, svg (technically they are more like html files though :P), ico, bmp etc. as well as more dynamic formats such as gif)
+6) Video: (mp4, mov, webm etc.)
+7) Archives: (zip, 7zip etc)
+
+<!-- ## Package Structure
 handler -> Modality -> ext -> [formatter, highlighter, linter, parser, processor, AI, editor, widgets] 
 subSystem -> storage // storage management APIs (for files and databases)
 subSystem -> system -> [camera, gpu, cpu, battery, display, time, logging]
@@ -191,4 +194,4 @@ FigUI
 └── TODO
 
 74 directories, 90 files
-```
+``` -->
