@@ -4,13 +4,28 @@ The aim of FigUI is to provide a single desktop application to view, edit, proce
 
 ## File formats to be supported:
 
-1) Text: (txt, md, rst, log)
-2) Code: (most coding languages: think python, Javascript, C, C++, Java, Perl, Ruby, anything code mirror can highlight :P, JSON, JSONL, pickle files, github flavored markdown, html, css, scss, less etc.)
-3) Audio: (mp3, wav, ogg etc.)
-4) Document: ppt/ CSVs
-5) Image: (still images formats such as png, jpg, svg (technically they are more like html files though :P), ico, bmp etc. as well as more dynamic formats such as gif)
-6) Video: (mp4, mov, webm etc.)
-7) Archives: (zip, 7zip etc)
+1) **Text:** (txt, md, rst, log)
+2) **Code:** (most coding languages: think python, Javascript, C, C++, Java, Perl, Ruby, anything code mirror can highlight :P, JSON, JSONL, pickle files, github flavored markdown, html, css, scss, less etc.)
+3) **Audio:** (mp3, wav, ogg etc.)
+4) **Document:** ppt/ CSVs
+5) **Image:** (still images formats such as png, jpg, svg (technically they are more like html files though :P), ico, bmp etc. as well as more dynamic formats such as gif)
+6) **Video:** (mp4, mov, webm etc.)
+7) **Archives:** (zip, 7zip etc)
+
+## Screenshots of the UI:
+
+1) App Launcher
+![app launcher](screenshots/launcher.png?raw=true "App Launcher")
+2) File Viewer
+3) Bashrc Editor
+4) Code Editor
+5) Image Viewer
+6) Image Editor
+7) File Formats 
+8) PDF Reader
+9) Pickle Viewer
+10) Text Editor
+11) Embedded xterm Emulator
 
 <!-- ## Package Structure
 handler -> Modality -> ext -> [formatter, highlighter, linter, parser, processor, AI, editor, widgets] 
