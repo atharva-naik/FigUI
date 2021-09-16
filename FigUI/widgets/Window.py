@@ -120,6 +120,23 @@ class BatteryDisplay(QPushButton):
         else:
             self.setIcon(QIcon())
 
+
+class QFolderNavBtn(QPushButton):
+    def __init__(self, text, till_now, parent=None):
+        super(QFolderNavBtn, self).__init__(parent)
+        self.setText(text)
+        self._till_now = till_now
+        self._display_text = text
+
+    def callback(self):
+        print(f"QFolderNavBtn(text={self._display_text}, till_now={self._till_now}) clicked")
+        self.fileViewer.openPath(self._till_now)
+
+    def connectLauncher(self, fileViewer):
+        self.fileViewer = fileViewer
+        self.clicked.connect(self.callback)
+
+
 class FigLogHiglighter(QSyntaxHighlighter):
     def __init__(self, parent):
         self._highlight_lines = dict()
@@ -635,7 +652,7 @@ class FigWindow(QMainWindow):
         ontopBtn.setIcon(FigIcon("ontop.svg"))
         ontopBtn.triggered.connect(lambda: self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint))
 
-        self.opacLevel = 0.97
+        self.opacLevel = 0.99
         opacUpBtn = QAction(self)
         opacUpBtn.setToolTip("increase opacity")
         opacUpBtn.setIcon(FigIcon("blue.svg"))
@@ -677,7 +694,7 @@ class FigWindow(QMainWindow):
         self.opacLevel = max(self.opacLevel, 0.9)
         self.setWindowOpacity(self.opacLevel)
 
-    def updateFolderBar(self, path, openWith=None):
+    def updateFolderBar(self, path, viewer=None):
         folderBtnStyle = '''
         QPushButton:hover{
                 background: qlineargradient(x1 : 0, y1 : 0, x2 : 0, y2 : 1, stop : 0.0 #292929, stop : 0.2 #4a4a4a, stop : 1.0 #6e6e6e);
@@ -688,8 +705,12 @@ class FigWindow(QMainWindow):
                 border-radius: 2px;
                 background: qlineargradient(x1 : 0, y1 : 0, x2 : 0, y2 : 1, stop : 0.0 #6e6e6e, stop : 0.8 #4a4a4a, stop : 1.0 #292929);
                 margin-left: 2px;
-                margin-right: 2px;
-                padding: 5px;
+                margin-right: 4px;
+                padding-top: 4px;
+                padding-bottom: 4px;
+                padding-left: 5px;
+                padding-right: 5px;
+                font-size: 16px;
         }
         '''
         selFolderBtnStyle = '''
@@ -703,9 +724,13 @@ class FigWindow(QMainWindow):
                 background: qlineargradient(x1 : 0, y1 : 0, x2 : 0, y2 : 1, stop : 0.0 #6e6e6e, stop : 0.8 #4a4a4a, stop : 1.0 #292929);
                 margin-left: 2px;
                 margin-right: 2px;
-                padding: 5px;
+                padding-top: 4px;
+                padding-bottom: 4px;
+                padding-left: 5px;
+                padding-right: 5px;
                 font-weight: bold; 
                 color: #ff9100;
+                font-size: 16px;
         }
         '''
         for action in self.folderBarActions:
@@ -714,17 +739,19 @@ class FigWindow(QMainWindow):
         path = str(path)
         
         folders = path.split('/')
-        tillNow = "/"
+        till_now = "/" # running variable for subpath till now.
         for i,folder in enumerate(folders):
             if folder != "":
-                tillNow = os.path.join(tillNow, folder)
-                btn = QPushButton(folder)
+                till_now = os.path.join(till_now, folder)
+                btn = QFolderNavBtn(folder, till_now)
+                # event handler for click will be attached to open the subpath till now.
+                if viewer:
+                    btn.connectLauncher(viewer)
+                # color the active button differently
                 if i == len(folders)-1:
                     btn.setStyleSheet(selFolderBtnStyle)
                 else:
                     btn.setStyleSheet(folderBtnStyle)
-                if openWith:
-                    btn.clicked.connect(lambda: openWith(path=tillNow))
                 action = self.folderBar.addWidget(btn)
                 self.folderBarActions.append(action)
 

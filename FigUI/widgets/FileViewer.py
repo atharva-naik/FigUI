@@ -639,7 +639,7 @@ class FigFileViewer(QWidget):
 
     def openPath(self, path):
         self.path = path
-        print(f"opened {path}")
+        # print(f"opened {path}") # DEBUG
         if not os.path.isfile(path):
             self.history.append(path)
             self.i += 1
@@ -672,7 +672,7 @@ class FigFileViewer(QWidget):
             name = pathlib.Path(path).name
             parent = pathlib.Path(path).parent.name
             self._parent.tabs.setTabText(i, f"{name} .../{parent}")
-            self._parent.updateFolderBar(path, openWith=self.openPath)
+            self._parent.updateFolderBar(path, viewer=self)
         all_files = self.listFiles(path) # get list of all files and folders.
         for i,path in enumerate(all_files):
             fileIcon = FigFileIcon(path, parent=self)
