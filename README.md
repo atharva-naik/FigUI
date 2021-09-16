@@ -15,17 +15,34 @@ The aim of FigUI is to provide a single desktop application to view, edit, proce
 ## Screenshots of the UI:
 
 1) App Launcher
-![app launcher](screenshots/launcher.png?raw=true "App Launcher")
+![App Launcher](screenshots/launcher.png?raw=true "App Launcher")
 2) File Viewer
+![File Viewer 1](screenshots/file-viewer1.png?raw=true "File Viewer 1")
+![File Viewer 2](screenshots/file-viewer2.png?raw=true "File Viewer 2")
+![File Viewer 3](screenshots/file-viewer3.png?raw=true "File Viewer 3")
+![File Viewer 4](screenshots/file-viewer4.png?raw=true "File Viewer 4")
+![File Viewer 5](screenshots/file-viewer5.png?raw=true "File Viewer 5")
+![File Viewer 6](screenshots/file-viewer6.png?raw=true "File Viewer 6")
+![File Viewer 7](screenshots/file-viewer7.png?raw=true "File Viewer 7")
+![File Viewer 8](screenshots/file-viewer8.png?raw=true "File Viewer 8")
 3) Bashrc Editor
+![Bashrc Editor](screenshots/bashrc-editor.png?raw=true "Bashrc Editor")
 4) Code Editor
+![Code Editor](screenshots/code-editor.png?raw=true "Code Editor")
 5) Image Viewer
+![Image Viewer](screenshots/image-viewer.png?raw=true "Image Viewer")
 6) Image Editor
+![Image Editor](screenshots/image-editor.png?raw=true "Image Editor")
 7) File Formats 
+![File Formats](screenshots/file-formats.png?raw=true "File Formats")
 8) PDF Reader
+![PDF Reader](screenshots/pdf-reader.png?raw=true "PDF Reader")
 9) Pickle Viewer
+![Pickle Viewer](screenshots/pickle-viewer.png?raw=true "Pickle Viewer")
 10) Text Editor
+![Text Editor](screenshots/text-editor.png?raw=true "Text Editor")
 11) Embedded xterm Emulator
+![Embedded xterm Emulator](screenshots/embedded-xterm.png?raw=true "Embedded xterm Emulator")
 
 <!-- ## Package Structure
 handler -> Modality -> ext -> [formatter, highlighter, linter, parser, processor, AI, editor, widgets] 
