@@ -370,13 +370,10 @@ class FigLicenseGenerator(QWidget):
         self.textedit.setMinimumHeight(500)
         # list of permissions, limitations and conditions
         self.permList = QListWidget()
-        self.permList.addItem(QListWidgetItem("✔️ A permission",  self.permList))
         self.permList.setFixedHeight(100)
         self.limList = QListWidget()
-        self.limList.addItem(QListWidgetItem("❌ A limitation",  self.limList))
         self.limList.setFixedHeight(100)
         self.condList = QListWidget()
-        self.condList.addItem(QListWidgetItem("ⓘ A condition",  self.condList))
         self.condList.setFixedHeight(100)
 
         listLayout = QHBoxLayout()    
@@ -420,7 +417,7 @@ class FigLicenseGenerator(QWidget):
         version = license_template["version"]
         timestamp = license_template["date"]
         self.version.setText(version)
-        self.timestamp.setText(f"📅 {timestamp}")
+        self.timestamp.setText(f"🗓 {timestamp}")
 
 
 class WebRenderEngine(QWebEngineView):
@@ -1463,7 +1460,7 @@ class FigApp(QApplication):
             if hasattr(Qt, 'AA_UseHighDpiPixmaps'):
                 QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True)
         super(FigApp, self).__init__(argv)
-        self.setApplicationName("Fig: any Format Is Good enough")
+        # self.setApplicationName("Fig: any Format Is Good enough")
         # add fonts to database.
         fontIds = []
         fontFiles = ["OMORI_GAME.ttf", "OMORI_GAME2.ttf", "HomemadeApple.ttf"]
