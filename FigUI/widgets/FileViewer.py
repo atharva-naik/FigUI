@@ -113,93 +113,57 @@ class FigFileIcon(QToolButton):
         self.setMaximumSize(QSize(*size))
         self.setIconSize(QSize(size[0]-40, size[1]-40))
         self._setThumbnail()
-
-    def _setThumbnailMime(self):
-        _,ext = os.path.splitext(self.name)
-        # print(self.name, self.stem, ext, os.path.isfile(self.path))
-        ext = ext[1:]
-        if self.name == ".git":
-            self.setIcon(FigIcon("launcher/git.png"))
-            return
-        elif self.name == "pom.xml":
-            self.setIcon(FigIcon("launcher/pom.png"))
-            return
-        elif self.name.lower() == "todo":
-            self.setIcon(FigIcon("launcher/todo.png"))
-            return
-        elif not self.isfile:
-            for phrase in ["nano", "eclipse", "cache", "java", "cargo", "compiz", "aiml", "kivy", "netbeans", "mozilla"]:
-                if phrase in self.name.lower():
-                    self.setIcon(FigIcon(f"launcher/{phrase}.png"))
-                    return
-
-            if self.name == "Music":
-                self.setIcon(FigIcon("launcher/Music.svg"))
-            elif self.name in ["Videos", "Desktop", "Documents", "Downloads", "Pictures"]:
-                self.setIcon(FigIcon(f"launcher/{self.name}.png"))
-            elif self.name.startswith(".git"):
-                self.setIcon(FigIcon("launcher/git.png"))
-            elif self.name in [".rstudio-desktop"]:
-                self.setIcon(FigIcon("launcher/R.png"))
-            elif self.name in [".python-eggs"]:
-                self.setIcon(FigIcon("launcher/python-eggs.png"))
-            elif "android" in self.name.lower():
-                self.setIcon(FigIcon("launcher/android.png"))
-            elif "gnome" in self.name.lower():
-                self.setIcon(FigIcon("launcher/gnome.png"))
-            elif "anaconda" in self.name.lower() or self.name.startswith(".conda"):
-                self.setIcon(FigIcon("launcher/anaconda3.png"))
-            elif "jupyter" in self.name.lower() or "ipython" in self.name.lower() or "ipynb" in self.name.lower():
-                self.setIcon(FigIcon("launcher/ipynb.png"))
-            # elif "nano" in self.name.lower():
-            #     self.setIcon(FigIcon("launcher/nano.png"))
-            # elif "eclipse" in self.name.lower():
-            #     self.setIcon(FigIcon("launcher/eclipse.png"))
-            # elif "cache" in self.name.lower():
-            #     self.setIcon(FigIcon("launcher/cache.png"))
-            # elif "java" in self.name.lower():
-            #     self.setIcon(FigIcon("launcher/java.png"))
-            # elif "cargo" in self.name.lower():
-            #     self.setIcon(FigIcon("launcher/cargo.png"))
-            # elif "compiz" in self.name.lower():
-            #     self.setIcon(FigIcon("launcher/compiz.png"))
-            # elif "aiml" in self.name.lower():
-            #     self.setIcon(FigIcon("launcher/aiml.png"))
-            # elif "kivy" in self.name.lower():
-            #     self.setIcon(FigIcon("launcher/kivy.png"))
-            # elif "netbeans" in self.name.lower():
-            #     self.setIcon(FigIcon("launcher/netbeans.svg"))
-            # elif "mozilla" in self.name.lower():
-            #     self.setIcon(FigIcon("launcher/mozilla.png"))
-            elif "julia" in self.name.lower():
-                self.setIcon(FigIcon("launcher/jl.png"))
-            elif "vscode" in self.name.lower():
-                self.setIcon(FigIcon("launcher/notvscode.png"))
-            
-            elif "tor" in re.split("_| |-", self.name.lower()) or self.name == ".tor":
-                self.setIcon(FigIcon("launcher/tor.png"))
-            elif self.name in [".thunderbird", ".wine", ".dbus", ".ssh", ".npm", ".gradle", ".openoffice"]:
-                self.setIcon(FigIcon(f"launcher/{self.name[1:]}.png"))
-            # elif self.name == ".wine":
-            #     self.setIcon(FigIcon("launcher/wine.png"))
-            # elif self.name == ".dbus":
-            #     self.setIcon(FigIcon("launcher/dbus.png"))
-            # elif self.name == ".ssh":
-            #     self.setIcon(FigIcon("launcher/ssh.png"))
-            # elif self.name == ".npm":
-            #     self.setIcon(FigIcon("launcher/npm.png"))
-            # elif self.name == ".gradle":
-            #     self.setIcon(FigIcon("launcher/gradle.png"))
-            elif self.name == ".linuxbrew" or self.name == "Homebrew":
-                self.setIcon(FigIcon("launcher/brew.png"))
-            # elif self.name == ".openoffice":
-            #     self.setIcon(FigIcon("launcher/openoffice.png"))
-            elif self.name == ".cmake":
-                self.setIcon(FigIcon("launcher/cmake.svg"))
-            else:    
-                self.setIcon(FigIcon("launcher/fileviewer.png"))
-            return        
-
+    # def _setThumbnailMime(self):
+    #     _,ext = os.path.splitext(self.name)
+    #     # print(self.name, self.stem, ext, os.path.isfile(self.path))
+    #     ext = ext[1:]
+    #     if self.name == ".git":
+    #         self.setIcon(FigIcon("launcher/git.png"))
+    #         return
+    #     elif self.name == "pom.xml":
+    #         self.setIcon(FigIcon("launcher/pom.png"))
+    #         return
+    #     elif self.name.lower() == "todo":
+    #         self.setIcon(FigIcon("launcher/todo.png"))
+    #         return
+    #     elif not self.isfile:
+    #         for phrase in ["nano", "eclipse", "cache", "java", "cargo", "compiz", "aiml", "kivy", "netbeans", "mozilla"]:
+    #             if phrase in self.name.lower():
+    #                 self.setIcon(FigIcon(f"launcher/{phrase}.png"))
+    #                 return
+    #         if self.name == "Music":
+    #             self.setIcon(FigIcon("launcher/Music.svg"))
+    #         elif self.name in ["Videos", "Desktop", "Documents", "Downloads", "Pictures"]:
+    #             self.setIcon(FigIcon(f"launcher/{self.name}.png"))
+    #         elif self.name.startswith(".git"):
+    #             self.setIcon(FigIcon("launcher/git.png"))
+    #         elif self.name in [".rstudio-desktop"]:
+    #             self.setIcon(FigIcon("launcher/R.png"))
+    #         elif self.name in [".python-eggs"]:
+    #             self.setIcon(FigIcon("launcher/python-eggs.png"))
+    #         elif "android" in self.name.lower():
+    #             self.setIcon(FigIcon("launcher/android.png"))
+    #         elif "gnome" in self.name.lower():
+    #             self.setIcon(FigIcon("launcher/gnome.png"))
+    #         elif "anaconda" in self.name.lower() or self.name.startswith(".conda"):
+    #             self.setIcon(FigIcon("launcher/anaconda3.png"))
+    #         elif "jupyter" in self.name.lower() or "ipython" in self.name.lower() or "ipynb" in self.name.lower():
+    #             self.setIcon(FigIcon("launcher/ipynb.png"))
+    #         elif "julia" in self.name.lower():
+    #             self.setIcon(FigIcon("launcher/jl.png"))
+    #         elif "vscode" in self.name.lower():
+    #             self.setIcon(FigIcon("launcher/notvscode.png"))
+    #         elif "tor" in re.split("_| |-", self.name.lower()) or self.name == ".tor":
+    #             self.setIcon(FigIcon("launcher/tor.png"))
+    #         elif self.name in [".thunderbird", ".wine", ".dbus", ".ssh", ".npm", ".gradle", ".openoffice"]:
+    #             self.setIcon(FigIcon(f"launcher/{self.name[1:]}.png"))
+    #         elif self.name == ".linuxbrew" or self.name == "Homebrew":
+    #             self.setIcon(FigIcon("launcher/brew.png"))
+    #         elif self.name == ".cmake":
+    #             self.setIcon(FigIcon("launcher/cmake.svg"))
+    #         else:    
+    #             self.setIcon(FigIcon("launcher/fileviewer.png"))
+    #         return        
     def _setThumbnail(self):
         _,ext = os.path.splitext(self.name)
         # print(self.name, self.stem, ext, os.path.isfile(self.path))
@@ -228,6 +192,10 @@ class FigFileIcon(QToolButton):
                 self.setIcon(FigIcon("launcher/android.png"))
             elif "gnome" in self.name.lower():
                 self.setIcon(FigIcon("launcher/gnome.png"))
+            elif self.stem == ".gconf":
+                self.setIcon(FigIcon("launcher/gnome.png"))
+            elif self.stem == ".fontconfig":
+                self.setIcon(FigIcon("launcher/ttf.svg"))
             elif "anaconda" in self.name.lower() or self.name.startswith(".conda"):
                 self.setIcon(FigIcon("launcher/anaconda3.png"))
             elif "nano" in self.name.lower():
@@ -258,6 +226,8 @@ class FigFileIcon(QToolButton):
                 self.setIcon(FigIcon("launcher/notvscode.png"))
             elif "tor" in re.split("_| |-", self.name.lower()) or self.name == ".tor":
                 self.setIcon(FigIcon("launcher/tor.png"))
+            elif self.name == ".sbt":
+                self.setIcon(FigIcon("launcher/scala.png"))
             elif self.name == ".thunderbird":
                 self.setIcon(FigIcon("launcher/thunderbird.png"))
             elif self.name == ".wine":
@@ -276,6 +246,12 @@ class FigFileIcon(QToolButton):
                 self.setIcon(FigIcon("launcher/openoffice.png"))
             elif self.name == ".cmake":
                 self.setIcon(FigIcon("launcher/cmake.svg"))
+            elif self.name == "cuda":
+                self.setIcon(FigIcon("launcher/cu.png"))
+            elif self.name in [".gnupg"]:
+                self.setIcon(FigIcon("launcher/gnu.png"))
+            elif self.path in ["/bin", "/home", "/boot", "/etc", "/opt", "/cdrom", "/proc", "/root", "/sbin", "/usr", "/dev", "/lost+found", "/var", "/tmp", "/snap", "/media", "/lib", "/lib32", "/lib64", "/mnt"]:
+                self.setIcon(FigIcon(f"dir/{self.name}.png"))
             else:    
                 self.setIcon(FigIcon("launcher/fileviewer.png"))
             return
@@ -300,7 +276,7 @@ class FigFileIcon(QToolButton):
         elif self.stem.lower() == "license":
             self.setIcon(FigIcon("launcher/license.png"))
             return      
-        elif self.stem.startswith(".bash") or self.stem.startswith("zsh"):
+        elif self.stem.startswith(".bash") or self.stem.startswith("zsh")or self.name == ".profile":
             self.setIcon(FigIcon("launcher/bashrc.png"))
             return  
         elif self.stem.startswith(".conda"):
@@ -333,9 +309,18 @@ class FigFileIcon(QToolButton):
         elif self.stem in [".scala_history"]:
             self.setIcon(FigIcon("launcher/scala.png"))
             return
+        elif self.stem in [".cling_history"]:
+            self.setIcon(FigIcon("launcher/cling.svg"))
+            return
+        elif self.stem.endswith("_history"):
+            self.setIcon(FigIcon("launcher/history.png"))
+            return
         elif self.stem in [".gitignore", ".gitconfig"]:
             self.setIcon(FigIcon("launcher/gitignore.png"))
             return
+        elif self.stem in [".gdbinit"]:
+            self.setIcon(FigIcon("launcher/gnu.png"))
+            return    
         elif ext == "":
             if subprocess.getoutput(f"file --mime-encoding {self.path}").endswith("binary"):
                 self.setIcon(FigIcon("launcher/bin.png"))    

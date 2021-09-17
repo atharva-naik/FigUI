@@ -17,7 +17,6 @@ except ImportError:
 __current_dir__ = os.path.dirname(os.path.realpath(__file__))
 __icons__ = os.path.join(__current_dir__, "../assets/icons")
 __fonts__ = os.path.join(__current_dir__, "../assets/fonts")
-launcher_icons = glob.glob(os.path.join(__icons__, "launcher/*"))
 
 def FigIcon(name, w=None, h=None):
     __current_dir__ = os.path.dirname(os.path.realpath(__file__))
@@ -74,11 +73,21 @@ class FigLauncher(QWidget):
         self.scroll.setWidgetResizable(True)
         self.scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
         self.scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
+        exclude = ["eclipse", "android", "mozilla", "kivy", "netbeans", "nano", "gnome", "tor", "openoffice", "thunderbird", "dbus", "compiz"]
 
-        for i,path in enumerate(sorted(launcher_icons, key=lambda x: x.lower() )):
+        launcher_icons = glob.glob(os.path.join(__icons__, "launcher/*"))
+        filt_launcher_icons = []
+        for icon in launcher_icons: 
+            stem = pathlib.Path(icon).stem 
+            if stem not in exclude:
+                filt_launcher_icons.append(icon)
+            else:
+                print(f"excluded icon for {stem}")
+
+        for i,path in enumerate( sorted(filt_launcher_icons, key=lambda x: x.lower()) ):
             name = pathlib.Path(path).stem
             ext = os.path.splitext(path)[1]
-            
+
             launcherButton = FigToolButton(self) # QToolButton(self)
             launcherButton.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
             launcherButton.setText(name)
@@ -111,6 +120,10 @@ class FigLauncher(QWidget):
                 if parent:
                     parent.logger.debug("connected bashrc customizer")
                 launcherButton.clicked.connect(parent.addNewBashrcViewer)
+            elif name == "license":
+                if parent:
+                    parent.logger.debug("connected license generator")
+                launcherButton.clicked.connect(lambda: parent.addNewLicenseGenerator())                
             elif name == "txt":
                 if parent:
                     parent.logger.debug("connected text editor")

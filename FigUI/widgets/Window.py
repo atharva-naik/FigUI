@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 import webbrowser, psutil, threading
-import os, sys, logging, datetime, pathlib
+import os, sys, json, datetime, pathlib
 from PyQt5.Qt import PYQT_VERSION_STR
-from PyQt5.QtCore import QThread, QUrl, QTimer, QPoint, QRegExp, QSize, Qt, QT_VERSION_STR
+from PyQt5.QtCore import QThread, QUrl, QTimer, QPoint, QRect, QSize, Qt, QT_VERSION_STR
 from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEngineProfile, QWebEngineSettings
-from PyQt5.QtGui import QIcon, QFont, QKeySequence, QTransform, QTextCharFormat, QRegExpValidator, QSyntaxHighlighter, QFontDatabase
-from PyQt5.QtWidgets import QApplication, QAction, QDialog, QPushButton, QTabWidget, QStatusBar, QToolBar, QWidget, QLineEdit, QMainWindow, QHBoxLayout, QVBoxLayout, QPlainTextEdit, QToolBar, QFrame, QSizePolicy, QTabBar, QDesktopWidget, QLabel, QToolButton
+from PyQt5.QtGui import QIcon, QFont, QKeySequence, QTransform, QTextCharFormat, QRegExpValidator, QSyntaxHighlighter, QFontDatabase, QTextFormat, QColor, QPainter, QDesktopServices
+from PyQt5.QtWidgets import QApplication, QAction, QDialog, QPushButton, QTabWidget, QStatusBar, QToolBar, QWidget, QLineEdit, QMainWindow, QHBoxLayout, QVBoxLayout, QPlainTextEdit, QToolBar, QFrame, QSizePolicy, QTabBar, QDesktopWidget, QLabel, QToolButton, QTextEdit, QComboBox, QListWidget, QListWidgetItem
 
 try:
     from Theme import FigTheme
@@ -48,6 +48,20 @@ def __font__(name):
     __current_dir__ = os.path.dirname(os.path.realpath(__file__))
     __icons__ = os.path.join(__current_dir__, "../assets/fonts")
     path = os.path.join(__icons__, name)
+
+    return path
+
+def __icon__(name):
+    __current_dir__ = os.path.dirname(os.path.realpath(__file__))
+    __icons__ = os.path.join(__current_dir__, "../assets/icons")
+    path = os.path.join(__icons__, name)
+
+    return path
+
+def __asset__(name):
+    __current_dir__ = os.path.dirname(os.path.realpath(__file__))
+    __assets__ = os.path.join(__current_dir__, "../assets")
+    path = os.path.join(__assets__, name)
 
     return path
 
@@ -211,6 +225,202 @@ class FigLogger:
 
     def error(self, msg):
         self._update_records(msg, type="ERROR")
+
+
+class QLineNumberArea(QWidget):
+    def __init__(self, editor):
+        super().__init__(editor)
+        self.textEditor = editor
+
+    def sizeHint(self):
+        return QSize(self.editor.lineNumberAreaWidth(), 0)
+
+    def paintEvent(self, event):
+        self.textEditor.lineNumberAreaPaintEvent(event)
+
+
+class QTextEditor(QPlainTextEdit):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.lineNumberArea = QLineNumberArea(self)
+        self.blockCountChanged.connect(self.updateLineNumberAreaWidth)
+        self.updateRequest.connect(self.updateLineNumberArea)
+        self.cursorPositionChanged.connect(self.highlightCurrentLine)
+        self.updateLineNumberAreaWidth(0)
+
+    def lineNumberAreaWidth(self):
+        digits = 1
+        max_value = max(1, self.blockCount())
+        while max_value >= 10:
+            max_value /= 10
+            digits += 1
+        space = 3 + self.fontMetrics().width('9') * digits
+        return space
+
+    def updateLineNumberAreaWidth(self, _):
+        self.setViewportMargins(self.lineNumberAreaWidth(), 0, 0, 0)
+
+    def updateLineNumberArea(self, rect, dy):
+        if dy:
+            self.lineNumberArea.scroll(0, dy)
+        else:
+            self.lineNumberArea.update(0, rect.y(), self.lineNumberArea.width(), rect.height())
+        if rect.contains(self.viewport().rect()):
+            self.updateLineNumberAreaWidth(0)
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        cr = self.contentsRect()
+        self.lineNumberArea.setGeometry(QRect(cr.left(), cr.top(), self.lineNumberAreaWidth(), cr.height()))
+
+    def highlightCurrentLine(self):
+        extraSelections = []
+        if not self.isReadOnly():
+            selection = QTextEdit.ExtraSelection()
+            lineColor = QColor(Qt.yellow).lighter(160)
+            selection.format.setBackground(lineColor)
+            selection.format.setProperty(QTextFormat.FullWidthSelection, True)
+            selection.cursor = self.textCursor()
+            selection.cursor.clearSelection()
+            extraSelections.append(selection)
+        self.setExtraSelections(extraSelections)
+
+    def lineNumberAreaPaintEvent(self, event):
+        painter = QPainter(self.lineNumberArea)
+
+        painter.fillRect(event.rect(), Qt.lightGray)
+
+        block = self.firstVisibleBlock()
+        blockNumber = block.blockNumber()
+        top = self.blockBoundingGeometry(block).translated(self.contentOffset()).top()
+        bottom = top + self.blockBoundingRect(block).height()
+
+        # Just to make sure I use the right font
+        height = self.fontMetrics().height()
+        while block.isValid() and (top <= event.rect().bottom()):
+            if block.isVisible() and (bottom >= event.rect().top()):
+                number = str(blockNumber + 1)
+                painter.setPen(Qt.black)
+                painter.drawText(0, top, self.lineNumberArea.width(), height, Qt.AlignRight, number)
+
+            block = block.next()
+            top = bottom
+            bottom = top + self.blockBoundingRect(block).height()
+            blockNumber += 1
+
+
+class FigLicenseGenerator(QWidget):
+    ''''''
+    def __init__(self, parent=None):
+        super(FigLicenseGenerator, self).__init__(parent)
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        topLayout = QHBoxLayout()
+        topLayout.setContentsMargins(0, 0, 0, 0)
+        self.license_templates = json.load(open(__asset__("license_templates.json")))
+        # select license type.
+        self.dropdown = QComboBox()
+        self.dropdown.addItem("Apache License 2.0")
+        self.dropdown.addItem("GNU General Public License v3.0")
+        self.dropdown.addItem("MIT License")
+        self.dropdown.addItem('BSD 2-Clause "Simplified" License')
+        self.dropdown.addItem('BSD 3-Clause "New" or "Revised" License')
+        self.dropdown.addItem("Boost Software License 1.0")
+        self.dropdown.addItem("Creative Commons Zero v1.0 Universal")
+        self.dropdown.addItem("Eclipse Public License 2.0")
+        self.dropdown.addItem("GNU Affero General Public License v3.0")
+        self.dropdown.addItem("GNU General Public License v2.0")
+        self.dropdown.addItem("GNU Lesser General Public License v2.1")
+        self.dropdown.addItem("Mozilla Public License 2.0")
+        self.dropdown.addItem("The Unlicense")
+        self.dropdown.currentIndexChanged.connect(self.onSelChange)
+        # save the file.
+        self.saveBtn = QToolButton(self)
+        self.saveBtn.setIcon(FigIcon("save.svg"))
+        # open file.
+        self.openBtn = QToolButton(self)
+        self.openBtn.setIcon(FigIcon("open.svg"))
+        # generate license from template.
+        self.genBtn = QToolButton(self)
+        self.genBtn.setIcon(FigIcon("gen.svg"))
+        # version placard.
+        self.version = QLabel()
+        # datetime placard.
+        self.timestamp = QLabel()
+        # link for more details.
+        self.learnMore = QLabel()
+        html = '''<a style="text-decoration: none; color: #42f5e3" href="https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/licensing-a-repository#disclaimer">Learn more about licenses</a>'''
+        self.learnMore.setText(html)
+        self.learnMore.setTextInteractionFlags(Qt.TextBrowserInteraction)
+        self.learnMore.linkActivated.connect(lambda: QDesktopServices.openUrl(QUrl("https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/licensing-a-repository#disclaimer")))
+        # add widgets to layout.
+        topLayout.addWidget(self.openBtn)
+        topLayout.addWidget(self.dropdown)
+        topLayout.addWidget(self.version)
+        topLayout.addWidget(self.timestamp)
+        # topLayout.addWidget(self.genBtn)
+        topLayout.addWidget(self.saveBtn)
+
+        # top bar.
+        self.topBar = QWidget()
+        self.topBar.setLayout(topLayout)
+        # edit area
+        self.textedit = QTextEditor(self)
+        self.textedit.setStyleSheet(f"background: url({__icon__('scratchpad/bg.jpg')}); color: #000")
+        self.textedit.setMinimumHeight(500)
+        # list of permissions, limitations and conditions
+        self.permList = QListWidget()
+        self.permList.addItem(QListWidgetItem("✔️ A permission",  self.permList))
+        self.permList.setFixedHeight(100)
+        self.limList = QListWidget()
+        self.limList.addItem(QListWidgetItem("❌ A limitation",  self.limList))
+        self.limList.setFixedHeight(100)
+        self.condList = QListWidget()
+        self.condList.addItem(QListWidgetItem("ⓘ A condition",  self.condList))
+        self.condList.setFixedHeight(100)
+
+        listLayout = QHBoxLayout()    
+        listLayout.addWidget(self.permList) # permissions list
+        listLayout.addWidget(self.limList) # limitations list
+        listLayout.addWidget(self.condList) # conditions list
+        
+        # stats widget.
+        self.stats = QWidget()
+        self.stats.setLayout(listLayout)
+        # preare the final layout.
+        layout.addWidget(self.topBar)
+        layout.addWidget(self.textedit)
+        layout.addWidget(self.stats)
+        layout.addWidget(self.learnMore)
+        self.setLayout(layout)
+        self.updateLicense(license_name="Apache License 2.0")
+
+    def onSelChange(self, id):
+        license_name = self.dropdown.itemText(id)
+        self.updateLicense(license_name)
+
+    def updateLicense(self, license_name):
+        license_template = self.license_templates[license_name]
+        self.textedit.setPlainText(license_template["text"])
+        # clear all lists.
+        self.permList.clear()
+        self.limList.clear()
+        self.condList.clear()
+        # populate lists.
+        # permissions.
+        for pt in license_template["permissions"]:
+            self.permList.addItem(QListWidgetItem(f"✔️ {pt}",  self.permList))
+        # limitations.
+        for pt in license_template["limitations"]:
+            self.limList.addItem(QListWidgetItem(f"❌ {pt}",  self.limList))
+        # conditions.
+        for pt in license_template["conditions"]:
+            self.condList.addItem(QListWidgetItem(f"ⓘ {pt}",  self.condList))
+        
+        version = license_template["version"]
+        timestamp = license_template["date"]
+        self.version.setText(version)
+        self.timestamp.setText(f"📅 {timestamp}")
 
 
 class WebRenderEngine(QWebEngineView):
@@ -527,6 +737,22 @@ class FigWindow(QMainWindow):
         # top spacer
         top_spacer = QWidget()
         top_spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        # stay on top
+        ontopBtn = QAction(self)
+        ontopBtn.setToolTip("always stay on top")
+        ontopBtn.setIcon(FigIcon("sysbar/ontop.svg"))
+        ontopBtn.triggered.connect(lambda: self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint))
+        # increase opacity
+        self.opacLevel = 0.99
+        opacUpBtn = QAction(self)
+        opacUpBtn.setToolTip("increase opacity")
+        opacUpBtn.setIcon(FigIcon("sysbar/opacity_up.svg"))
+        opacUpBtn.triggered.connect(self.incOpac)
+        # decrease opacity
+        opacDownBtn = QAction(self)
+        opacDownBtn.setToolTip("decrease opacity")
+        opacDownBtn.setIcon(FigIcon("sysbar/opacity_down.svg"))
+        opacDownBtn.triggered.connect(self.decOpac)
         # lower brightness.
         dimBtn = QAction("Lower Brightness", self)
         dimBtn.setToolTip("Lower screen brightness.")
@@ -546,9 +772,12 @@ class FigWindow(QMainWindow):
         settingsBtn.setToolTip("Open system settings.")
         settingsBtn.setIcon(FigIcon("sysbar/settings.svg"))
         # add actions and buttons.
-        sysbar.addWidget(top_spacer)
+        sysbar.addAction(opacUpBtn)
+        sysbar.addAction(opacDownBtn)
+        sysbar.addAction(ontopBtn)
         sysbar.addAction(dimBtn)
         sysbar.addAction(brightBtn)
+        sysbar.addWidget(top_spacer)
         sysbar.addAction(userBtn)
         sysbar.addAction(settingsBtn)
 
@@ -648,20 +877,8 @@ class FigWindow(QMainWindow):
         maximizeBtn.triggered.connect(lambda: self.maximize())
 
         ontopBtn = QAction(self)
-        ontopBtn.setToolTip("always stay on top")
-        ontopBtn.setIcon(FigIcon("ontop.svg"))
-        ontopBtn.triggered.connect(lambda: self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint))
-
-        self.opacLevel = 0.99
         opacUpBtn = QAction(self)
-        opacUpBtn.setToolTip("increase opacity")
-        opacUpBtn.setIcon(FigIcon("blue.svg"))
-        opacUpBtn.triggered.connect(self.incOpac)
-
         opacDownBtn = QAction(self)
-        opacDownBtn.setToolTip("decrease opacity")
-        opacDownBtn.setIcon(FigIcon("orange.svg"))
-        opacDownBtn.triggered.connect(self.decOpac)
 
         windowTitle = QLabel()
         windowTitle.setText("𝔽𝕚𝕘 𝕀𝕤 𝕒 𝔾𝕦𝕚") #("𝗙ig 𝗜s a 𝗚UI")
@@ -1130,6 +1347,12 @@ class FigWindow(QMainWindow):
         bashrc = os.path.join(home, ".bashrc")
         handlerWidget = self.handler.getUI(path=bashrc)
         i = self.tabs.addTab(handlerWidget, FigIcon("launcher/bashrc.png"), "\t.bashrc")
+        self.tabs.setCurrentIndex(i)
+
+    def addNewLicenseGenerator(self):
+        '''Add new license template generator.'''
+        licenseViewer = FigLicenseGenerator()
+        i = self.tabs.addTab(licenseViewer, FigIcon("launcher/license.png"), "\tLICENSE")
         self.tabs.setCurrentIndex(i)
 
     def addNewTextEditor(self):
