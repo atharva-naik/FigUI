@@ -36,6 +36,20 @@ def __font__(name):
 
     return path
 
+def notify(msg=None, icon=None):
+    import getpass
+    import platform
+
+    if msg is None: 
+        msg = f"Hello {getpass.getuser()}!"
+    if icon is None:
+        current_dir = os.path.dirname(os.path.realpath(__file__))
+        icon = os.path.join(current_dir, "../logo.png")
+        print(icon)
+    if platform.system() == "Linux":
+        # use notify send for Linux.
+        os.system(f'''notify-send "Fig" "{msg}" -i {icon}''')
+
 def getThumbnail(path):
     import pathlib, subprocess
     name = pathlib.Path(path).name 

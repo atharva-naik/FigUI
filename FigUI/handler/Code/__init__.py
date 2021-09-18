@@ -114,6 +114,9 @@ class CodeWebView(QWebEngineView):
         else:
             self.loadFinished.connect(lambda: self.page().runJavaScript(script))
 
+    def update(self, widget):
+        pass
+
     def alert(self, message):
         self.execJS(f"alert('{message}')")
 

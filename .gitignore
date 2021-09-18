@@ -133,3 +133,7 @@ logs/
 figui_wallpaper_*
 file_formats/
 FigUI.desktop
+FigUI/assets/history/
+FigUI/handler/Image/static/editor_rendered.html
+FigUI/handler/Image/static/viewer_rendered.html
+FigUI/handler/Image/static/color_histograms.json

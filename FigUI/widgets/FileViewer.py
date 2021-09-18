@@ -658,7 +658,9 @@ class FigFileViewer(QWidget):
             parent = pathlib.Path(path).parent.name
             self._parent.tabs.setTabText(i, f"{name} .../{parent}")
             self._parent.updateFolderBar(path, viewer=self)
+            self._parent.log("launcher/fileviewer.png", str(path))
         all_files = self.listFiles(path) # get list of all files and folders.
+        
         for i,path in enumerate(all_files):
             fileIcon = FigFileIcon(path, parent=self)
             fileIcon.clicked.connect(self.open)

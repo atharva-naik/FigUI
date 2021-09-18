@@ -60,9 +60,9 @@ class FigHandler:
     def getUI(self, path):
         # generate and return UI handler.
         self._set_path(path)
-        if self.parent:
-            iconPath = getThumbnail(path)
-            self.parent.langReadOut.setIcon(FigIcon(iconPath))
+        # if self.parent:
+        #     iconPath = getThumbnail(path)
+        #     self.parent.langReadOut.setIcon(FigIcon(iconPath))
             # self.parent.langReadOut.setText(self.ext[1:])
         if self.ext == ".pkl":
             self.handler = FigUI.handler.Archives.pkl.PickleHandler(self.path)

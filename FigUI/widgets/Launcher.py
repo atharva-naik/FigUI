@@ -82,7 +82,8 @@ class FigLauncher(QWidget):
             if stem not in exclude:
                 filt_launcher_icons.append(icon)
             else:
-                print(f"excluded icon for {stem}")
+                pass
+                # print(f"excluded icon for {stem}")
 
         for i,path in enumerate( sorted(filt_launcher_icons, key=lambda x: x.lower()) ):
             name = pathlib.Path(path).stem
@@ -112,6 +113,8 @@ class FigLauncher(QWidget):
                 home = str(pathlib.Path.home())
                 desktop = os.path.join(home, "Desktop")
                 launcherButton.clicked.connect(lambda: parent.addNewFileViewer(path=desktop))
+            elif name == "history":
+                launcherButton.clicked.connect(lambda: parent.addNewHistoryViewer())
             elif name == "fileviewer":
                 if parent:
                     parent.logger.debug("connected terminal launcher")

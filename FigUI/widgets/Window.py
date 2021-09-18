@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-import webbrowser, psutil, threading
-import os, sys, json, datetime, pathlib
+import os, sys
+import json, datetime, pathlib
+import psutil, webbrowser, threading
 from PyQt5.Qt import PYQT_VERSION_STR
 from PyQt5.QtCore import QThread, QUrl, QTimer, QPoint, QRect, QSize, Qt, QT_VERSION_STR
 from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEngineProfile, QWebEngineSettings
 from PyQt5.QtGui import QIcon, QFont, QKeySequence, QTransform, QTextCharFormat, QRegExpValidator, QSyntaxHighlighter, QFontDatabase, QTextFormat, QColor, QPainter, QDesktopServices
-from PyQt5.QtWidgets import QApplication, QAction, QDialog, QPushButton, QTabWidget, QStatusBar, QToolBar, QWidget, QLineEdit, QMainWindow, QHBoxLayout, QVBoxLayout, QPlainTextEdit, QToolBar, QFrame, QSizePolicy, QTabBar, QDesktopWidget, QLabel, QToolButton, QTextEdit, QComboBox, QListWidget, QListWidgetItem
+from PyQt5.QtWidgets import QApplication, QAction, QDialog, QPushButton, QTabWidget, QStatusBar, QToolBar, QWidget, QLineEdit, QMainWindow, QHBoxLayout, QVBoxLayout, QPlainTextEdit, QToolBar, QFrame, QSizePolicy, QTabBar, QDesktopWidget, QLabel, QToolButton, QTextEdit, QComboBox, QListWidget, QListWidgetItem, QScrollArea
 
 try:
     from Theme import FigTheme
@@ -16,6 +17,7 @@ try:
     from FigUI.handler import FigHandler
     # from FigUI.handler.Code import CodeEditor
     from FigUI.subSystem.Shell import FigShell
+    from FigUI.subSystem.History import HistoryLogger
     from FigUI.handler.Code.QtColorPicker import ColorPicker
     from FigUI.subSystem.system.brightness import BrightnessController
 #     from utils import *
@@ -27,6 +29,7 @@ except ImportError:
     from .FileViewer import FigFileViewer
     # from ..handler.Code import CodeEditor
     from ..subSystem.Shell import FigShell
+    from ..subSystem.History import HistoryLogger
     from ..handler.Code.QtColorPicker import ColorPicker
     from ..subSystem.system.brightness import BrightnessController
 #     from .utils import *
@@ -68,7 +71,7 @@ def __asset__(name):
 # system controllers.
 brightnessCtrl = BrightnessController()
 
-def serve_all_files(directory="/", port=3000):
+def serve_all_files(directory="/", port=3001):
     import http.server
     import socketserver
     PORT = port
@@ -237,6 +240,75 @@ class QLineNumberArea(QWidget):
 
     def paintEvent(self, event):
         self.textEditor.lineNumberAreaPaintEvent(event)
+
+
+class FigHistoryViewer(QWidget):
+    def __init__(self, logger, parent=None):
+        import getpass
+
+        super(FigHistoryViewer, self).__init__(parent)
+        # main layout.
+        layout = QVBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+
+        VLayout = QVBoxLayout()
+        VLayout.setContentsMargins(0, 0, 0, 0)
+        VLayout.setSpacing(0)
+        # load records from history log file.
+        for record in logger:
+            HLayout = QHBoxLayout()
+            HLayout.setContentsMargins(5, 10, 10, 10)
+            # icon image.
+            icon = QPushButton(self)
+            icon.setStyleSheet("border: 0px")
+            icon_path = record["handler"]
+            icon.setIcon(QIcon(icon_path))
+            icon.setIconSize(QSize(30,30))
+            HLayout.addWidget(icon)            
+            # path button.
+            path = record["path"]
+            path = path.replace(f"/home/{getpass.getuser()}", "~")
+            pathBtn = QPushButton(path)
+            pathBtn.setStyleSheet('''
+                QPushButton { 
+                    border: 0px; 
+                    color: #32a8a6; 
+                    font-weight: bold 
+                }
+
+                QPushButton:hover {
+                    color: #292929;
+                    background: #32a8a6; 
+                }
+            ''')
+            HLayout.addWidget(pathBtn)
+            # left spacer.
+            left_spacer = QWidget()
+            left_spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+            HLayout.addWidget(left_spacer)
+            # timestamp label.
+            timestamp = record["time"]
+            timeLbl = QLabel()
+            timeLbl.setText(timestamp)
+            HLayout.addWidget(timeLbl)
+            # create widget for this row.
+            rowWidget = QWidget()
+            rowWidget.setLayout(HLayout)
+            # add row widget to vertical layout.
+            VLayout.insertWidget(0, rowWidget)
+        # create history widget.
+        historyWidget = QWidget()
+        historyWidget.setLayout(VLayout)
+        # create scroll area.
+        scroll = QScrollArea()
+        scroll.setWidget(historyWidget)
+        scroll.setWidgetResizable(True)
+        scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
+        # scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
+        layout.addWidget(scroll)
+        layout.addWidget(QLabel("History"))
+        # set layout.
+        self.setLayout(layout)
 
 
 class QTextEditor(QPlainTextEdit):
@@ -429,6 +501,7 @@ class WebRenderEngine(QWebEngineView):
         self.settings().setAttribute(QWebEngineSettings.LocalContentCanAccessRemoteUrls, True)
         self.settings().setAttribute(QWebEngineSettings.ErrorPageEnabled, True)
         self.settings().setAttribute(QWebEngineSettings.PluginsEnabled, True)
+        self._parent = parent
         # self.browserZoomInAction = QAction("Zoom in", self)
         # self.browserZoomInAction.setShortcut(QKeySequence.ZoomIn)
         # self.browserZoomInAction.triggered.connect(self.zoomInEvent)
@@ -537,32 +610,9 @@ class FigBrowser(QWidget):
 class FigWindow(QMainWindow):
     def __init__(self, init_url='https://pypi.org/project/bossweb/0.0.1/', *args, **kwargs):
         os.makedirs("logs", exist_ok=True)
-        super(FigWindow, self).__init__(*args, **kwargs)        
-        self.tabs = QTabWidget() # tab widget
-        self.tabs.setDocumentMode(True) # making document mode true
-        self.tabs.tabBarDoubleClicked.connect(self.addNewTab)
-        # adding action when tab is changed
-        self.tabs.currentChanged.connect(self.onCurrentTabChange)
-        # making tabs closeable	 		
-        self.tabs.setTabsClosable(True) 	
-        self.tabs.tabCloseRequested.connect(self.onCurrentTabClose) # adding action when tab close is requested
-        self.tabs.setStyleSheet("background: #292929; color: #d4d4d4;") # TODO: theme
-        self.logger = FigLogger(path=f"logs/{datetime.datetime.now().strftime('%d_%b_%Y_%H_%M_%S')}.log")
-        self.centralWidget = QWidget()
-        self.centralWidget.layout = QHBoxLayout()
-        self.centralWidget.layout.setContentsMargins(0, 0, 0, 0)
-        self.centralWidget.layout.addWidget(self.tabs)
-        # self.centralWidget.layout.addWidget(QPushButton("Wow"))
-        self.centralWidget.setLayout(self.centralWidget.layout)
-        self.setCentralWidget(self.centralWidget) # making tabs as central widget
-        self.statusBar = QStatusBar() # creating a status bar
-        self.handler = FigHandler(self)
-        self.fig_launcher = FigLauncher(self)
-        # self.newTabBtn.clicked.connect(self.addNewTab)
-        self.tabs.addTab(self.fig_launcher, FigIcon("launcher.png"), "\tLauncher")
-        self.tabs.tabBar().setTabButton(0, QTabBar.RightSide,None) # make launcher tab unclosable.
-        self.navBarAdded = False
-        # self.setLayout(self.layout)
+        super(FigWindow, self).__init__(*args, **kwargs)  
+        self.setMouseTracking(True) # allow mouse tracking   
+
         self.bottomBar = self.initBottomBar()
         self.subSysBar1, self.subSysBar2 = self.subSystemsBar()
         self.debugBar = self.initDebugBar()
@@ -585,6 +635,33 @@ class FigWindow(QMainWindow):
         self.addToolBarBreak(Qt.BottomToolBarArea)
         self.addToolBar(Qt.BottomToolBarArea, self.packmanBar)
         self.addToolBarBreak(Qt.TopToolBarArea)
+
+        self.tabs = QTabWidget() # tab widget
+        self.tabs.setDocumentMode(True) # making document mode true
+        self.tabs.tabBarDoubleClicked.connect(self.addNewTab)
+        # adding action when tab is changed
+        self.tabs.currentChanged.connect(self.onCurrentTabChange)
+        # making tabs closeable	 		
+        self.tabs.setTabsClosable(True) 	
+        self.tabs.tabCloseRequested.connect(self.onCurrentTabClose) # adding action when tab close is requested
+        self.tabs.setStyleSheet("background: #292929; color: #d4d4d4;") # TODO: theme
+        self.logger = FigLogger(path=f"logs/{datetime.datetime.now().strftime('%d_%b_%Y_%H_%M_%S')}.log")
+        self.centralWidget = QWidget()
+        self.centralWidget.layout = QHBoxLayout()
+        self.centralWidget.layout.setContentsMargins(0, 0, 0, 0)
+        self.centralWidget.layout.addWidget(self.tabs)
+        # self.centralWidget.layout.addWidget(QPushButton("Wow"))
+        self.centralWidget.setLayout(self.centralWidget.layout)
+        self.setCentralWidget(self.centralWidget) # making tabs as central widget
+        self.statusBar = QStatusBar() # creating a status bar
+        self.handler = FigHandler(self)
+        self.fig_history = HistoryLogger()
+        self.fig_launcher = FigLauncher(self)
+        # self.newTabBtn.clicked.connect(self.addNewTab)
+        self.tabs.addTab(self.fig_launcher, FigIcon("launcher.png"), "\tLauncher")
+        self.tabs.tabBar().setTabButton(0, QTabBar.RightSide,None) # make launcher tab unclosable.
+        self.navBarAdded = False
+        # self.setLayout(self.layout)
 
     def initShortcutBar(self):
         home = str(pathlib.Path.home())
@@ -810,6 +887,11 @@ class FigWindow(QMainWindow):
         newsBtn = QAction("Newsfeed", self)
         newsBtn.setToolTip("Open news feed")
         newsBtn.setIcon(FigIcon("sidebar/news.png"))
+        # open history.
+        histBtn = QAction("History", self)
+        histBtn.setToolTip("Open history")
+        histBtn.setIcon(FigIcon("sidebar/history.png"))
+        histBtn.triggered.connect(self.addNewHistoryViewer)
         # open password manager.
         passBtn = QAction("PassMan", self)
         passBtn.setToolTip("Open password manager")
@@ -833,6 +915,7 @@ class FigWindow(QMainWindow):
         # subbar.addSeparator()
         subbar.addAction(newsBtn)
         subbar.addAction(mathBtn)
+        subbar.addAction(histBtn)
         # subbar.addSeparator()
         # subbar.addWidget(QHLine())
         # subbar.addSeparator()
@@ -1181,17 +1264,17 @@ class FigWindow(QMainWindow):
         colorpickerBtn.setIcon(FigIcon("bottombar/colorwheel.svg"))
         colorpickerBtn.triggered.connect(lambda: self.colorPickerDialog())
         # get git info.
-        gitBtn = QPushButton(" main*")
+        gitBtn = QPushButton(" undetected")
         gitBtn.setToolTip("Inspect current git branch")
         gitBtn.setIcon(FigIcon("bottombar/git-merge.svg"))
         gitBtn.setStyleSheet("color: #fff; background: #292929; border: 0px; font-family: Helvetica; font-size: 14px")
         # warnings.
-        warningBtn = QPushButton(" 10")
+        warningBtn = QPushButton(" 0")
         warningBtn.setToolTip("See warnings")
         warningBtn.setIcon(FigIcon("bottombar/warning.png"))
         warningBtn.setStyleSheet("color: #fff; background: #292929; border: 0px; font-family: Helvetica; font-size: 14px")
         # errors.
-        errorBtn = QPushButton(" 24")
+        errorBtn = QPushButton(" 0")
         errorBtn.setToolTip("See errors")
         errorBtn.setIcon(FigIcon("bottombar/error.png"))
         errorBtn.setStyleSheet("color: #fff; background: #292929; border: 0px; font-family: Helvetica; font-size: 14px")
@@ -1201,10 +1284,11 @@ class FigWindow(QMainWindow):
         rwBtn.setIcon(FigIcon("bottombar/pen.svg"))
         rwBtn.setStyleSheet("color: #fff; background: #292929; border: 0px; font-family: Helvetica; font-size: 14px")
         # show cursor location.
-        cursorBtn = QPushButton("Ln 0, Col 0")
+        cursorBtn = QPushButton("(0,0)") # QPushButton("Ln 0, Col 0")
         cursorBtn.setToolTip("Get cursor location.")
         cursorBtn.setIcon(FigIcon("bottombar/mouse.png"))
         cursorBtn.setStyleSheet("color: #fff; background: #292929; border: 0px; font-family: Helvetica; font-size: 14px")
+        self.cursorBtn = cursorBtn
         # select indentation.
         indentBtn = QPushButton("Spaces: 4")
         indentBtn.setToolTip("Select Indentation.")
@@ -1222,7 +1306,7 @@ class FigWindow(QMainWindow):
         # langBtn.setIcon(FigIcon("launcher/txt.png"))
         langBtn.setToolTip("Select Language mode.")
         langBtn.setStyleSheet("color: #fff; background: #292929; border: 0px; font-family: Helvetica; font-size: 14px")
-        self.langReadOut = langBtn
+        self.langBtn = langBtn
         # tweet.
         tweetBtn = QPushButton()
         tweetBtn.setToolTip("Tweet out any issues at me (@Atharva93149016).")
@@ -1332,11 +1416,18 @@ class FigWindow(QMainWindow):
         picked_color = colorPicker.getColor((0,0,0,50))
         print(picked_color)
 
+    def log(self, icon, path):
+        handler = __icon__(icon)
+        self.fig_history.log(handler, path)
+
     def addNewTerm(self):
         '''Add new terminal widget'''
         terminal = FigShell(parent=self)
         i = self.tabs.addTab(terminal, FigIcon("launcher/bash.png"), "\tTerminal")
         self.tabs.setCurrentIndex(i)
+        # self.tabs.setTabWhatsThis(i, "xterm (embedded)")
+        self.tabs.setTabToolTip(i, "xterm (embedded)")
+        self.log("launcher/bash.png", "Terminal")
 
     def addNewBashrcViewer(self):
         '''Add new bashrc customizer.'''
@@ -1345,18 +1436,28 @@ class FigWindow(QMainWindow):
         handlerWidget = self.handler.getUI(path=bashrc)
         i = self.tabs.addTab(handlerWidget, FigIcon("launcher/bashrc.png"), "\t.bashrc")
         self.tabs.setCurrentIndex(i)
+        self.log("launcher/bashrc.png", bashrc)
 
     def addNewLicenseGenerator(self):
         '''Add new license template generator.'''
         licenseViewer = FigLicenseGenerator()
         i = self.tabs.addTab(licenseViewer, FigIcon("launcher/license.png"), "\tLICENSE")
         self.tabs.setCurrentIndex(i)
+        self.log("launcher/license.png", "LICENSE Generator")
+
+    def addNewHistoryViewer(self):
+        '''Add new tab for viewing history.'''
+        historyViewer = FigHistoryViewer(self.fig_history)
+        i = self.tabs.addTab(historyViewer, FigIcon("launcher/history.png"), f"\t{self.fig_history.title}'s history")
+        self.tabs.setCurrentIndex(i)
+        self.log("launcher/history.png", self.fig_history.path)
 
     def addNewTextEditor(self):
         '''Add new bashrc customizer.'''
         handlerWidget = self.handler.getUI("Untitled.txt")
         i = self.tabs.addTab(handlerWidget, FigIcon("launcher/txt.png"), "\tUntitled")
         self.tabs.setCurrentIndex(i)
+        self.log("launcher/txt.png", "Untitled")
 
     def addNewHandlerTab(self):
         handlerWidget = self.handler.handle()
@@ -1373,6 +1474,7 @@ class FigWindow(QMainWindow):
         name = pathlib.Path(path).name
         i = self.tabs.addTab(fileViewer, FigIcon("launcher/fileviewer.png"), f"\t{name} {parent}")# f"\t{str(pathlib.Path.home())}")
         self.tabs.setCurrentIndex(i)
+        self.log("launcher/fileviewer.png", path)
 
     def addNewTab(self, Squrl=None, label="Blank"):
         '''method for adding new tab'''
@@ -1396,6 +1498,7 @@ class FigWindow(QMainWindow):
     def setupTab(self, i, browser):
         self.tabs.setTabText(i, "\t"+browser.page().title())
         self.tabs.setTabIcon(i, FigIcon("launcher/browser.png"))
+        self.log("launcher/browser.png", QUrl('http://www.google.com'))
 
     def tab_open_doubleclick(self, i):
         # checking index i.e and No tab under the click
@@ -1409,6 +1512,7 @@ class FigWindow(QMainWindow):
             self.update_title(self.tabs.currentWidget()) # update the title
         except AttributeError:
             pass
+        self.langBtn.setIcon(self.tabs.tabIcon(i))
 
     def onCurrentTabClose(self, i):
         '''when tab is closed'''

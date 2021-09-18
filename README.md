@@ -44,6 +44,17 @@ The aim of FigUI is to provide a single desktop application to view, edit, proce
 11) Embedded xterm Emulator
 ![Embedded xterm Emulator](screenshots/embedded-xterm.png?raw=true "Embedded xterm Emulator")
 
+## How to install
+Installation instructions for fig.
+
+### From source (only way available currently)
+1) clone the repository: ```git clone https://github.com/atharva-naik/FigUI ```
+2) Install dependencies ``` pip install -r requirements.txt ```
+
+### Setting up fig as a desktop application
+1) Modify python shebang in main.py: <br>
+Change the ```#!/home/atharva/anaconda3/envs/figui/bin/python``` to ```#!<your_python_path>```, where your_python_path is the output of the command ```which python```.
+2) [change nautilus settings](https://stackoverflow.com/questions/22262073/execute-python-script-from-linux-desktop/26439671) to allow running of main.py python script from the launcher sidebar.
 <!-- ## Package Structure
 handler -> Modality -> ext -> [formatter, highlighter, linter, parser, processor, AI, editor, widgets] 
 subSystem -> storage // storage management APIs (for files and databases)
