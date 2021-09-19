@@ -28,7 +28,7 @@ class HistoryLogger:
         ''' path can be a file path or a url '''
         if isinstance(path, QUrl):
             path = path.toString() # convert QUrl to string.
-        now = datetime.datetime.now().strftime("%a %b %d %Y %-I:%M:%S %p")
+        now = datetime.datetime.now().strftime("%-I:%M:%S %p %a %b %d %Y")
         record = {"handler": handler, "path": path, "time": now}
         # log info.
         with open(self.path, "a") as f:
@@ -39,6 +39,9 @@ class HistoryLogger:
         with open(self.path, "r") as f:
             for line in f:
                 line = line.strip()
-                record = json.loads(line)
+                try:
+                    record = json.loads(line)
+                except:
+                    record = {"handler": None, "path":"ERROR in fetching record", "time": "[MISSING]"}
 
                 yield record

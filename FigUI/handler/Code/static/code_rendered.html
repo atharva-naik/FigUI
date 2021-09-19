@@ -4,7 +4,7 @@
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
         <!-- core styling -->
-        <!-- <link rel="stylesheet" href="{{ MINIMAP_MIN_CSS }}" /> -->
+        <!-- <link rel="stylesheet" href="" /> -->
 		
         <!-- Minimap sources -->
         <link rel="stylesheet" type="text/css" href="sublimeScroll.css">
@@ -16,12 +16,12 @@
         <script src="sublimeScrollLite.js"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/jshint/2.9.5/jshint.min.js"></script>
         
-        <!-- <link rel="stylesheet" type="text/css" href="{{ SUBLIME_SCROLL_CSS }}">
-        <link rel="stylesheet" type="text/css" href="{{ SUBLIME_SCROLL_LITE_CSS }}">
-        <script src="{{ JQUERY_MIN_JS }}"></script>
-        <script src="{{ MODERNIZR_MIN_JS }}"></script>
-        <script src="{{ SUBLIME_SCROLL_JS }}"></script>
-        <script src="{{ SUBLIME_SCROLL_LITE_JS }}"></script> -->
+        <!-- <link rel="stylesheet" type="text/css" href="/home/atharva/GUI/FigUI/FigUI/handler/Code/static/sublimeScroll.css">
+        <link rel="stylesheet" type="text/css" href="/home/atharva/GUI/FigUI/FigUI/handler/Code/static/sublimeScrollLite.css">
+        <script src="/home/atharva/GUI/FigUI/FigUI/handler/Code/static/jquery.min.js"></script>
+        <script src="/home/atharva/GUI/FigUI/FigUI/handler/Code/static/modernizr.min.js"></script>
+        <script src="/home/atharva/GUI/FigUI/FigUI/handler/Code/static/sublimeScroll.js"></script>
+        <script src="/home/atharva/GUI/FigUI/FigUI/handler/Code/static/sublimeScrollLite.js"></script> -->
         <!-- <script id="script">var widgets = []
             function updateHints() {
             editor.operation(function(){
@@ -144,13 +144,47 @@
         <link rel="stylesheet" href="https://codemirror.net/addon/tern/tern.css"></link>
         <title>Code Mirror</title>
     </head>
-    <body style="background-color: {{ EDITOR_BACKGROUND_COLOR }}">
+    <body style="background-color: #292929">
         <!-- <header class="top" style='background-color: black;'>
             <div class="wrapper">
             </div>
         </header> -->
             <textarea id="codemirror">
-{{ CODE_FILE_CONTENT }}
+import copy
+import random
+import datetime
+import pandas as pd 
+# random.seed(666)
+def swap(xs, a, b):
+    xs[a], xs[b] = xs[b], xs[a]
+
+def derange(xs):
+    for a in range(1, len(xs)):
+        b = random.choice(range(0, a))
+        swap(xs, a, b)
+    return xs
+
+projects = ['Rajdeep\'s','Zishan\'s','Mithun\'s','Made with ML']
+projectsR = projects[1:]
+learn = [3*['Lecture Videos'],2*['PyTorch Tutorials'],2*['Competitive coding']] 
+learn = [item for sublist in learn for item in sublist]
+learn = random.sample(learn, len(learn))
+# print(learn)
+# projects += projects[1:]
+p1 = random.sample(projects, len(projects))
+pR = random.sample(projectsR, len(projectsR))
+p = []
+# print(p1+pR)
+# p += [p1]
+p += [copy.copy(p1+pR)]
+p += [derange(p1)+derange(pR)]
+p = list(map(list, zip(*p)))
+# print(p)
+schedule = []
+time_intervals = []
+for i in range(learn):
+
+
             </textarea>
             <div style="margin-left: auto; margin-right: auto;">
                 <p><span style="color: white; font-size: 13px">Select a theme </span>
@@ -269,9 +303,9 @@
         <script src="https://codemirror.net/addon/selection/active-line.js"></script>
         <script src="https://codemirror.net/addon/selection/mark-selection.js"></script>
         <script src="https://codemirror.net/addon/selection/selection-pointer.js"></script>
-        <!-- <script src="{{ JQUERY_JS }}"></script> -->
+        <!-- <script src=""></script> -->
         <!-- <script src="jquery.js"></script> -->
-        <!-- <script src="{{ MINIMAP_MIN_JS }}"></script> -->
+        <!-- <script src=""></script> -->
         <!-- <script src="pagemap-1.4.0.min.js"></script> -->
         <!-- <script src="minimap.js"></script> -->
         <script src="file:///home/atharva/GUI/FigUI/FigUI/handler/Code/static/qwebchannel.js"></script>
@@ -286,7 +320,7 @@
                 /* font-size: 10px; */
             }
             .CodeMirror {border: 1px solid black;}
-            .CodeMirror-activeline-gutter {background-image: url({{ HINT_IMAGE }}); background-color: purple}
+            .CodeMirror-activeline-gutter {background-image: url(/home/atharva/GUI/FigUI/FigUI/handler/Code/static/hints/fix.png); background-color: purple}
             .lint-error {font-family: arial; font-size: 70%; background: #ffa; color: #a00; padding: 2px 5px 3px; }
             .lint-error-icon {color: white; background-color: red; font-weight: bold; border-radius: 50%; padding: 0 3px; margin-right: 7px;}
        </style>
@@ -297,7 +331,7 @@
                 electricChars: true,
                 lineSeparator: null,
                 extraKeys: {"Ctrl-Q": "toggleComment"},
-                mode: "text/{{ LANGUAGE }}",
+                mode: "text/x-python",
                 indentUnit: 4,
                 styleActiveLine: true,
                 xml: true,
@@ -319,7 +353,7 @@
             //     var marker = document.createElement("div");
             //     marker.style.color = "#ff4d00";
             //     marker.style.whiteSpace = "nowrap";
-            //     marker.innerHTML = `<img width='14px' src='{{ JAR_IMAGE }}' title="hints">`;
+            //     marker.innerHTML = `<img width='14px' src='/home/atharva/GUI/FigUI/FigUI/handler/Code/static/hints/jar.png' title="hints">`;
 
             //     return marker;
             // }
@@ -327,7 +361,7 @@
                 var marker = document.createElement("div");
                 marker.style.color = "#ff4d00";
                 marker.style.whiteSpace = "nowrap";
-                marker.innerHTML = " ●" // `●<img width='14px' src='{{ HINT_IMAGE }}' title="hints">`;
+                marker.innerHTML = " ●" // `●<img width='14px' src='/home/atharva/GUI/FigUI/FigUI/handler/Code/static/hints/fix.png' title="hints">`;
                 return marker;
             }
 
@@ -400,7 +434,7 @@
         <title>HTML 5 Video Player</title>
     </head>
 
-    <body style='background-color: {{ VIDEO_WIDGET_BACKGROUND_COLOR }}'>
+    <body style='background-color: '>
         <div style="margin-left: auto; margin-right: auto; text-align: center">
             <h1 style='color: white; text-align: center'> HTML 5 Video Player </h1>
             <video id="my-video" class="video-js" controls preload="auto" width="640" height="360" data-setup='{"playbackRates": [0.5, 1, 1.5, 2]}' style="text-align: center">

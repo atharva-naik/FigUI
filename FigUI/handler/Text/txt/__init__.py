@@ -319,3 +319,12 @@ class FigTextEditor(QWidget):
         layout.addWidget(self.textEdit)
         self.setStyleSheet(f"background: url({__icon__('scratchpad/w.jpg')}); color: #000")
         self.setLayout(layout)
+        self.textEdit.cursorPositionChanged.connect(self.updateCursorPos)
+        self._parent = parent
+
+    def updateCursorPos(self):
+        if self._parent:
+            cursor = self.textEdit.textCursor()
+            line = cursor.blockNumber()+1
+            col = cursor.columnNumber()+1
+            self._parent.cursorBtn.setText(f"Ln {line}, Col {col}") 

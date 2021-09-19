@@ -125,15 +125,19 @@ venv.bak/
 .dmypy.json
 dmypy.json
 
-# Pyre type checker
+# Pyre type checker.
 .pyre/
 # ignore logs folder.
 logs/
-# ignore wallpapers
+# ignore wallpapers.
 figui_wallpaper_*
+# ignore example file formats.
 file_formats/
+# ignore .desktop file.
 FigUI.desktop
+# ignore history.
 FigUI/assets/history/
+# ignore some static files.
 FigUI/handler/Image/static/editor_rendered.html
 FigUI/handler/Image/static/viewer_rendered.html
 FigUI/handler/Image/static/color_histograms.json

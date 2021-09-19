@@ -71,7 +71,7 @@ def __asset__(name):
 # system controllers.
 brightnessCtrl = BrightnessController()
 
-def serve_all_files(directory="/", port=3001):
+def serve_all_files(directory="/", port=5000):
     import http.server
     import socketserver
     PORT = port
@@ -250,14 +250,19 @@ class FigHistoryViewer(QWidget):
         # main layout.
         layout = QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+        # layout.addStretch(True)
 
         VLayout = QVBoxLayout()
+        VLayout.setAlignment(Qt.AlignTop)
         VLayout.setContentsMargins(0, 0, 0, 0)
         VLayout.setSpacing(0)
+        VLayout.addStretch(True) # THIS IS VERY IMPORTANT.
         # load records from history log file.
         for record in logger:
             HLayout = QHBoxLayout()
             HLayout.setContentsMargins(5, 10, 10, 10)
+            HLayout.setSpacing(0)
             # icon image.
             icon = QPushButton(self)
             icon.setStyleSheet("border: 0px")
@@ -295,7 +300,7 @@ class FigHistoryViewer(QWidget):
             rowWidget = QWidget()
             rowWidget.setLayout(HLayout)
             # add row widget to vertical layout.
-            VLayout.insertWidget(0, rowWidget)
+            VLayout.insertWidget(0, rowWidget) #, Qt.AlignBottom)
         # create history widget.
         historyWidget = QWidget()
         historyWidget.setLayout(VLayout)
@@ -305,8 +310,11 @@ class FigHistoryViewer(QWidget):
         scroll.setWidgetResizable(True)
         scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
         # scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
+        title = QLabel("History")
+        title.setAlignment(Qt.AlignCenter)
+        title.setStyleSheet("font-size: 30px; font-weight: bold")
+        layout.addWidget(title)
         layout.addWidget(scroll)
-        layout.addWidget(QLabel("History"))
         # set layout.
         self.setLayout(layout)
 
