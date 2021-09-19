@@ -19,6 +19,7 @@ try:
     from FigUI.subSystem.Shell import FigShell
     from FigUI.subSystem.History import HistoryLogger
     from FigUI.handler.Code.QtColorPicker import ColorPicker
+    from FigUI.subSystem.Math.Calculator import FigCalculator
     from FigUI.subSystem.system.brightness import BrightnessController
 #     from utils import *
 except ImportError:
@@ -31,6 +32,7 @@ except ImportError:
     from ..subSystem.Shell import FigShell
     from ..subSystem.History import HistoryLogger
     from ..handler.Code.QtColorPicker import ColorPicker
+    from ..subSystem.Math.Calculator import FigCalculator
     from ..subSystem.system.brightness import BrightnessController
 #     from .utils import *
 def FigIcon(name, w=None, h=None):
@@ -70,22 +72,19 @@ def __asset__(name):
 
 # system controllers.
 brightnessCtrl = BrightnessController()
+# def serve_all_files(directory="/", port=5000):
+#     import http.server
+#     import socketserver
+#     PORT = port
+#     DIRECTORY = directory
 
-def serve_all_files(directory="/", port=5000):
-    import http.server
-    import socketserver
-    PORT = port
-    DIRECTORY = directory
+#     class Handler(http.server.SimpleHTTPRequestHandler):
+#         def __init__(self, *args, **kwargs):
+#             super().__init__(*args, directory=DIRECTORY, **kwargs)
 
-    class Handler(http.server.SimpleHTTPRequestHandler):
-        def __init__(self, *args, **kwargs):
-            super().__init__(*args, directory=DIRECTORY, **kwargs)
-
-    with socketserver.TCPServer(("", PORT), Handler) as httpd:
-        print("serving at port", PORT)
-        httpd.serve_forever()
-
-
+#     with socketserver.TCPServer(("", PORT), Handler) as httpd:
+#         print("serving at port", PORT)
+#         httpd.serve_forever()
 class QHLine(QFrame):
     def __init__(self):
         super(QHLine, self).__init__()
@@ -891,6 +890,7 @@ class FigWindow(QMainWindow):
         mathBtn = QAction("Math", self)
         mathBtn.setToolTip("Open mathematical and scientific computing software suite.")
         mathBtn.setIcon(FigIcon("sidebar/calculator.png"))
+        mathBtn.triggered.connect(FigCalculator().show)
         # open newsfeed.
         newsBtn = QAction("Newsfeed", self)
         newsBtn.setToolTip("Open news feed")
@@ -1583,7 +1583,7 @@ class FigApp(QApplication):
         self.window.setGeometry(x, y, w, h)
         self.window.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
         self.window.setWindowOpacity(self.window.opacLevel)
-        self.server_thread = threading.Thread(target=serve_all_files)
+        # self.server_thread = threading.Thread(target=serve_all_files)
         self.setWindowIcon(QIcon(icon))
         # if fontId1 < 0:
         #     self.window.logger.error("unable to load OMORI_GAME.ttf")
@@ -1606,7 +1606,7 @@ class FigApp(QApplication):
         print("window.show took:", time.time()-start)
         
         start = time.time()
-        self.server_thread.start()
+        # self.server_thread.start()
         print("server.thread.start() took:", time.time()-start)
         
         start = time.time()
@@ -1619,7 +1619,7 @@ class FigApp(QApplication):
     def __exec__(self):
         self.exec_()
         self.window.fig_launcher.gifBtn._endAnimation()
-        self.server_thread.join()
+        # self.server_thread.join()
         
 
 if __name__ == "__main__":

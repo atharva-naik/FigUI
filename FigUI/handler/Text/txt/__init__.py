@@ -18,7 +18,6 @@
 # 16. Get sentiment
 # 17. Do a DEP parse. (Spacy)
 # It also has an inbuilt note taking module. 
-import PyQt5, re
 import os, sys, pathlib
 import tempfile, random
 import textwrap, subprocess
