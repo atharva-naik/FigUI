@@ -13,8 +13,10 @@ from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEngineProfile, QWebEngi
 from PyQt5.QtWidgets import QApplication, QAction, QDialog, QPushButton, QWidget, QToolBar, QGridLayout, QLabel, QVBoxLayout, QHBoxLayout, QToolButton, QScrollArea, QLineEdit, QFrame
 try:
     from utils import *
+    from widgets.FlowLayout import FlowLayout
 except ImportError:
     from FigUI.utils import *
+    from FigUI.widgets.FlowLayout import FlowLayout
 
 
 class QVLine(QFrame):
@@ -116,7 +118,7 @@ class FigFileIcon(QToolButton):
         text = "\n".join(textwrap.wrap(self.name[:textwidth*3], width=textwidth))
         self.setAttribute(Qt.WA_TranslucentBackground, True)
         self.setText(text) # truncate at 3 times the max textwidth
-        self.setMaximumSize(QSize(*size))
+        self.setFixedSize(QSize(*size))
         self.setIconSize(QSize(size[0]-40, size[1]-40))
         self._setThumbnail()
     # def _setThumbnailMime(self):
@@ -362,7 +364,7 @@ class FigFileIcon(QToolButton):
     #     self._gifLength = self._gifMovie.n_frames
     #     self.thread.start()
 class FigFileViewer(QWidget):
-    def __init__(self, path=str(pathlib.Path.home()), parent=None, width=6, button_size=(100,100), icon_size=(60,60)):
+    def __init__(self, path=str(pathlib.Path.home()), parent=None, width=4, button_size=(100,100), icon_size=(60,60)):
         super(FigFileViewer, self).__init__(parent)   
         all_files = self.listFiles(path) # get list of all files and folders.
         self.path = path
@@ -371,8 +373,20 @@ class FigFileViewer(QWidget):
         self.scrollArea.setWidgetResizable(True)
         self.scrollArea.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
         self.scrollArea.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.gridLayout = QGridLayout()
+        self.scrollArea.setStyleSheet('''
+            QScrollBar {
+                border: 0px;
+            }
+        ''')
+        ### replace with FlowLayout ###
+        self.gridLayout = FlowLayout() # QGridLayout()
+        self.gridLayout.setContentsMargins(0, 0, 0, 0)
+        self.gridLayout.setSpacing(5)
+        ###############################
         self.layout = QVBoxLayout(self)
+        self.layout.setContentsMargins(0, 0, 0, 0)
+        self.layout.setSpacing(0)
+
         self.viewer = QWidget()
         self.history = [path]
         self.i = 0
@@ -380,13 +394,80 @@ class FigFileViewer(QWidget):
         for i,path in enumerate(all_files):
             fileIcon = FigFileIcon(path, parent=self)
             fileIcon.clicked.connect(self.open)
-            self.gridLayout.addWidget(fileIcon, i // width, i % width)        
+            ### replace with FlowLayout ###
+            self.gridLayout.addWidget(fileIcon)
+            # self.gridLayout.addWidget(fileIcon, i // width, i % width) 
+            ###############################       
         self.viewer.setLayout(self.gridLayout)
         # self.layout.addWidget(self.welcomeLabel, alignment=Qt.AlignCenter)
         self.scrollArea.setWidget(self.viewer)
-        self.navbar = QWidget()
-        self.utilbar = QWidget()
+
+        self.navbar = self.initNavBar()
+        self.utilbar = self.initUtilBar()
+
+        self.layout.addWidget(self.navbar)
+        self.layout.addWidget(self.utilbar)
+        self.layout.addWidget(self.scrollArea)
+        self.setLayout(self.layout)
+        self.width = width
+        selBtn = self.gridLayout.itemAt(0).widget()
+        selBtn.setStyleSheet("background: color(0, 0, 255, 50)")
+        self.highlight(0)
+
+        if self._parent:
+            self._parent.backNavBtn.clicked.connect(self.prevPath)
+            self._parent.nextNavBtn.clicked.connect(self.nextPath)
+
+    def initNavBar(self):
+        navbar = QWidget()
         navLayout = QHBoxLayout() 
+
+        backBtn = QToolButton()
+        backBtn.setIcon(FigIcon("stepback.svg"))
+        backBtn.clicked.connect(self.back)
+        navLayout.addWidget(backBtn)
+        
+        prevBtn = QToolButton()
+        prevBtn.setIcon(FigIcon("back.svg"))
+        prevBtn.clicked.connect(self.prevPath)
+        navLayout.addWidget(prevBtn)
+
+        nextBtn = QToolButton()
+        nextBtn.setIcon(FigIcon("forward.svg"))
+        nextBtn.clicked.connect(self.nextPath)
+        navLayout.addWidget(nextBtn)
+
+        searchBar = QLineEdit()
+        searchBar.setStyleSheet("background: #fff; color: #000")
+        navLayout.addWidget(searchBar)
+
+        # match case.
+        caseBtn = QToolButton()
+        caseBtn.setIcon(FigIcon("case-sensitive.svg"))
+        # caseBtn.clicked.connect(self.back)
+        navLayout.addWidget(caseBtn)
+        # match whole word.
+        entireBtn = QToolButton()
+        entireBtn.setIcon(FigIcon("whole-word.svg"))
+        # backBtn.clicked.connect(self.back)
+        navLayout.addWidget(entireBtn)
+        # use regex search
+        regexBtn = QToolButton()
+        regexBtn.setIcon(FigIcon("regex_search.svg"))
+        # regexBtn.clicked.connect(self.back)
+        navLayout.addWidget(regexBtn)
+        
+        searchBtn = QToolButton()
+        searchBtn.setIcon(FigIcon("search.svg"))
+        navLayout.addWidget(searchBtn)
+
+        navLayout.setContentsMargins(0, 0, 0, 0)
+        navbar.setLayout(navLayout) 
+
+        return navbar
+
+    def initUtilBar(self):
+        utilbar = QWidget()
         utilLayout = QHBoxLayout() # bookmarks, restricted view, change permissions, encrypt, zip/unzip, new folder, new file, undo/redo, cut/copy/paste, rename, open in terminal, properties.
         # bookmark files.
         bookmarkBtn = QToolButton()
@@ -480,21 +561,6 @@ class FigFileViewer(QWidget):
         redoBtn.setIcon(FigIcon("redo.svg"))
         utilLayout.addWidget(redoBtn)
         utilLayout.addWidget(QVLine())
-
-        backBtn = QToolButton()
-        backBtn.setIcon(FigIcon("stepback.svg"))
-        backBtn.clicked.connect(self.back)
-        navLayout.addWidget(backBtn)
-        
-        prevBtn = QToolButton()
-        prevBtn.setIcon(FigIcon("back.svg"))
-        prevBtn.clicked.connect(self.prevPath)
-        navLayout.addWidget(prevBtn)
-
-        nextBtn = QToolButton()
-        nextBtn.setIcon(FigIcon("forward.svg"))
-        nextBtn.clicked.connect(self.nextPath)
-        navLayout.addWidget(nextBtn)
         
         sortUpBtn = QToolButton()
         sortUpBtn.setIcon(FigIcon("sort_ascending.svg"))
@@ -518,30 +584,6 @@ class FigFileViewer(QWidget):
         utilLayout.addWidget(hideBtn)
         utilLayout.addWidget(QVLine())
 
-        searchBar = QLineEdit()
-        searchBar.setStyleSheet("background: #fff; color: #000")
-        navLayout.addWidget(searchBar)
-
-        # match case.
-        caseBtn = QToolButton()
-        caseBtn.setIcon(FigIcon("case-sensitive.svg"))
-        # caseBtn.clicked.connect(self.back)
-        navLayout.addWidget(caseBtn)
-        # match whole word.
-        entireBtn = QToolButton()
-        entireBtn.setIcon(FigIcon("whole-word.svg"))
-        # backBtn.clicked.connect(self.back)
-        navLayout.addWidget(entireBtn)
-        # use regex search
-        regexBtn = QToolButton()
-        regexBtn.setIcon(FigIcon("regex_search.svg"))
-        # regexBtn.clicked.connect(self.back)
-        navLayout.addWidget(regexBtn)
-        
-        searchBtn = QToolButton()
-        searchBtn.setIcon(FigIcon("search.svg"))
-        navLayout.addWidget(searchBtn)
-
         listViewBtn = QToolButton() # toggle list view.
         listViewBtn.setIcon(FigIcon("listview.svg"))
         utilLayout.addWidget(listViewBtn)
@@ -549,23 +591,16 @@ class FigFileViewer(QWidget):
         blockViewBtn = QToolButton() # toggle block view.
         blockViewBtn.setIcon(FigIcon("blockview.svg"))
         utilLayout.addWidget(blockViewBtn)
-
-        navLayout.setContentsMargins(0, 0, 0, 0)
+ 
         utilLayout.setContentsMargins(0, 0, 0, 0)
-        self.navbar.setLayout(navLayout)  
-        self.utilbar.setLayout(utilLayout)
-        self.layout.addWidget(self.navbar)
-        self.layout.addWidget(self.utilbar)
-        self.layout.addWidget(self.scrollArea)
-        self.setLayout(self.layout)
-        self.width = width
-        selBtn = self.gridLayout.itemAt(0).widget()
-        selBtn.setStyleSheet("background: color(0, 0, 255, 50)")
-        self.highlight(0)
+        utilbar.setLayout(utilLayout)
 
-        if self._parent:
-            self._parent.backNavBtn.clicked.connect(self.prevPath)
-            self._parent.nextNavBtn.clicked.connect(self.nextPath)
+        return utilbar
+
+    def eventFilter(self, obj, event):
+        if (event.type() == QEvent.Resize):
+            print( 'Inside event Filter')
+        return super().eventFilter(obj, event)
 
     def highlightOnClick(self):
         sendingBtn = self.sender()
@@ -675,7 +710,10 @@ class FigFileViewer(QWidget):
         for i,path in enumerate(all_files):
             fileIcon = FigFileIcon(path, parent=self)
             fileIcon.clicked.connect(self.open)
-            self.gridLayout.addWidget(fileIcon, i // self.width, i % self.width)  
+            ### replace with FlowLayout ###
+            self.gridLayout.addWidget(fileIcon)  
+            # self.gridLayout.addWidget(fileIcon, i // self.width, i % self.width)  
+            ###############################
         self.highlight(0)        
 
     def unhide(self, path):        
@@ -684,7 +722,10 @@ class FigFileViewer(QWidget):
         for i,path in enumerate(all_files):
             fileIcon = FigFileIcon(path, parent=self)
             fileIcon.clicked.connect(self.open)
-            self.gridLayout.addWidget(fileIcon, i // self.width, i % self.width)  
+            ### replace with FlowLayout ###
+            # self.gridLayout.addWidget(fileIcon, i // self.width, i % self.width)  
+            self.gridLayout.addWidget(fileIcon)
+            ###############################
         self.highlight(0)   
 
     def open(self):
