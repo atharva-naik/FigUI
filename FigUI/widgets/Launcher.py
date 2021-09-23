@@ -7,7 +7,7 @@ from PyQt5.QtPrintSupport import *
 from PyQt5.QtCore import QThread, QUrl, QSize, Qt
 from PyQt5.QtGui import QIcon, QKeySequence, QTransform, QFont, QFontDatabase, QMovie, QPixmap
 from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEngineProfile, QWebEngineSettings
-from PyQt5.QtWidgets import QApplication, QAction, QDialog, QPushButton, QWidget, QToolBar, QGridLayout, QLabel, QVBoxLayout, QToolButton, QFileDialog, QScrollArea, QFrame
+from PyQt5.QtWidgets import QApplication, QAction, QDialog, QPushButton, QWidget, QToolBar, QGridLayout, QLabel, QVBoxLayout, QToolButton, QFileDialog, QScrollArea, QFrame, QGraphicsBlurEffect
 try:
     from utils import *
 except ImportError:
@@ -69,10 +69,19 @@ class FigLauncher(QWidget):
         self.gifBtn = None
         self._parent = parent
 
+        # creating a blur effect
+        self.blur_effect = QGraphicsBlurEffect()
+        # setting blur radius
+        self.blur_effect.setBlurRadius(1.5)
+
         self.scroll = QScrollArea()
+        self.scroll.setStyleSheet("background: rgba(73, 44, 94, 0.5);")
+        self.scroll.setAttribute(Qt.WA_TranslucentBackground, True)
         self.scroll.setWidgetResizable(True)
         self.scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
         self.scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
+        # self.scroll.setGraphicsEffect(self.blur_effect)
+
         exclude = ["eclipse", "android", "mozilla", "kivy", "netbeans", "nano", "gnome", "tor", "openoffice", "thunderbird", "dbus", "compiz"]
 
         launcher_icons = glob.glob(os.path.join(__icons__, "launcher/*"))
@@ -100,7 +109,17 @@ class FigLauncher(QWidget):
             else:
                 launcherButton.setIcon(QIcon(path))
                 launcherButton.setIconSize(QSize(*icon_size))
-            launcherButton.setStyleSheet("background: #3a3d41; color: #ffffff;")
+            launcherButton.setStyleSheet('''
+            QToolButton {
+                color: #fff;
+                border: 0px;
+            }
+            QToolButton:hover { 
+                background: #734494;
+                font-weight: bold;
+                color: #292929;
+            }''')
+            # background: #42f2f5;
             if name == "browser":
                 if parent: 
                     parent.logger.debug("connected browser launcher")
@@ -144,7 +163,8 @@ class FigLauncher(QWidget):
         self.welcomeLabel = QPushButton("Welcome to FIG, launch an app!")
         figLogo = FigIcon("logo.png")
         self.welcomeLabel.setIcon(figLogo)
-        self.welcomeLabel.setStyleSheet("background: transparent; color: #734494")
+        self.welcomeLabel.setStyleSheet("color: #734494; border: 0px")
+        self.welcomeLabel.setAttribute(Qt.WA_TranslucentBackground)
         self.welcomeLabel.setIconSize(QSize(100,100))
         #self.welcomeLabel.setMaximumWidth(900)
         self.welcomeLabel.setFont(QFont('OMORI_GAME2', 40))

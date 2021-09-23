@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+from inspect import Attribute
 import PyQt5, re
 import tempfile, random
 import textwrap, subprocess
@@ -106,9 +107,14 @@ class FigFileIcon(QToolButton):
         self.path = path
         self.isfile = os.path.isfile(path)
         self.stem = pathlib.Path(path).stem
-        self.setStyleSheet("background-color: #292929; border: 0px")
+        self.setStyleSheet('''
+            QToolButton { 
+                border: 0px; background-image: none        
+        }''')
+        self.setAttribute(Qt.WA_TranslucentBackground)
         self.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
         text = "\n".join(textwrap.wrap(self.name[:textwidth*3], width=textwidth))
+        self.setAttribute(Qt.WA_TranslucentBackground, True)
         self.setText(text) # truncate at 3 times the max textwidth
         self.setMaximumSize(QSize(*size))
         self.setIconSize(QSize(size[0]-40, size[1]-40))
@@ -361,10 +367,10 @@ class FigFileViewer(QWidget):
         all_files = self.listFiles(path) # get list of all files and folders.
         self.path = path
         self._parent = parent
-        self.scroll = QScrollArea()
-        self.scroll.setWidgetResizable(True)
-        self.scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
-        self.scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.scrollArea = QScrollArea()
+        self.scrollArea.setWidgetResizable(True)
+        self.scrollArea.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
+        self.scrollArea.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.gridLayout = QGridLayout()
         self.layout = QVBoxLayout(self)
         self.viewer = QWidget()
@@ -377,7 +383,7 @@ class FigFileViewer(QWidget):
             self.gridLayout.addWidget(fileIcon, i // width, i % width)        
         self.viewer.setLayout(self.gridLayout)
         # self.layout.addWidget(self.welcomeLabel, alignment=Qt.AlignCenter)
-        self.scroll.setWidget(self.viewer)
+        self.scrollArea.setWidget(self.viewer)
         self.navbar = QWidget()
         self.utilbar = QWidget()
         navLayout = QHBoxLayout() 
@@ -550,7 +556,7 @@ class FigFileViewer(QWidget):
         self.utilbar.setLayout(utilLayout)
         self.layout.addWidget(self.navbar)
         self.layout.addWidget(self.utilbar)
-        self.layout.addWidget(self.scroll)
+        self.layout.addWidget(self.scrollArea)
         self.setLayout(self.layout)
         self.width = width
         selBtn = self.gridLayout.itemAt(0).widget()
@@ -635,12 +641,17 @@ class FigFileViewer(QWidget):
 
     def listFiles(self, path, hide=True, reverse=False):
         home = str(pathlib.Path.home())
+        # setting desktop background.
         desktop = os.path.join(home, "Desktop")
-        if path == desktop:
-            wallpaper_path = getWallpaper()
-            self.setStyleSheet(f"background-image: url({wallpaper_path});")
-        else:
-            self.setStyleSheet(f"background-image: none")
+        try:
+            if path == desktop:
+                wallpaper_path = getWallpaper()
+                self.viewer.setStyleSheet(f"background-image: url({wallpaper_path});")
+            else:
+                self.viewer.setStyleSheet("background-image: none")
+        except AttributeError:
+            pass
+        
         files = []
         try:
             for file in os.listdir(path):
@@ -697,6 +708,27 @@ class FigFileViewer(QWidget):
                 thumbnail = getThumbnail(path)
                 i = self._parent.tabs.addTab(handlerWidget, FigIcon(thumbnail), f"\t{name} {parent}")
                 self._parent.tabs.setCurrentIndex(i)
+
+
+class FigTreeFileExplorer(QWidget):
+    def __init__(self, root_path="/home/atharva", parent=None):
+        super(FigTreeFileExplorer, self).__init__(parent)
+        layout = QVBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.addWidget(QLabel(root_path))
+        self.fileRoot = root_path
+        self.setLayout(layout)
+        self.visible = False
+        self.setStyleSheet('''
+            background: #292929;
+            color: #fff;
+        ''')
+        self.hide()
+
+    def toggle(self):
+        if self.visible: self.hide()
+        else: self.show()
+        self.visible = not self.visible            
 
 
 if __name__ == "__main__":

@@ -1,24 +1,24 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-import os, sys
+import os, sys, math
 import json, datetime, pathlib
 import psutil, webbrowser, threading
 from PyQt5.Qt import PYQT_VERSION_STR
 from PyQt5.QtCore import QThread, QUrl, QTimer, QPoint, QRect, QSize, Qt, QT_VERSION_STR
 from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEngineProfile, QWebEngineSettings
-from PyQt5.QtGui import QIcon, QFont, QKeySequence, QTransform, QTextCharFormat, QRegExpValidator, QSyntaxHighlighter, QFontDatabase, QTextFormat, QColor, QPainter, QDesktopServices
-from PyQt5.QtWidgets import QApplication, QAction, QDialog, QPushButton, QTabWidget, QStatusBar, QToolBar, QWidget, QLineEdit, QMainWindow, QHBoxLayout, QVBoxLayout, QPlainTextEdit, QToolBar, QFrame, QSizePolicy, QTabBar, QDesktopWidget, QLabel, QToolButton, QTextEdit, QComboBox, QListWidget, QListWidgetItem, QScrollArea
+from PyQt5.QtGui import QIcon, QFont, QKeySequence, QTransform, QTextCharFormat, QSyntaxHighlighter, QFontDatabase, QTextFormat, QColor, QPainter, QDesktopServices
+from PyQt5.QtWidgets import QApplication, QAction, QDialog, QPushButton, QTabWidget, QStatusBar, QToolBar, QWidget, QLineEdit, QMainWindow, QHBoxLayout, QVBoxLayout, QPlainTextEdit, QToolBar, QFrame, QSizePolicy, QTabBar, QDesktopWidget, QLabel, QToolButton, QTextEdit, QComboBox, QListWidget, QListWidgetItem, QScrollArea, QDockWidget, QGraphicsBlurEffect, QSplitter
 
 try:
     from Theme import FigTheme
     from Tab import FigTabWidget
     from Launcher import FigLauncher
-    from FileViewer import FigFileViewer
     from FigUI.handler import FigHandler
     # from FigUI.handler.Code import CodeEditor
     from FigUI.subSystem.Shell import FigShell
     from FigUI.subSystem.History import HistoryLogger
     from FigUI.handler.Code.QtColorPicker import ColorPicker
+    from FileViewer import FigFileViewer, FigTreeFileExplorer
     from FigUI.subSystem.Math.Calculator import FigCalculator
     from FigUI.subSystem.system.brightness import BrightnessController
 #     from utils import *
@@ -27,12 +27,12 @@ except ImportError:
     from .Tab import FigTabWidget
     from ..handler import FigHandler
     from .Launcher import FigLauncher
-    from .FileViewer import FigFileViewer
     # from ..handler.Code import CodeEditor
     from ..subSystem.Shell import FigShell
     from ..subSystem.History import HistoryLogger
     from ..handler.Code.QtColorPicker import ColorPicker
     from ..subSystem.Math.Calculator import FigCalculator
+    from .FileViewer import FigFileViewer, FigTreeFileExplorer
     from ..subSystem.system.brightness import BrightnessController
 #     from .utils import *
 def FigIcon(name, w=None, h=None):
@@ -132,7 +132,7 @@ class BatteryDisplay(QPushButton):
         self.setText(f"({percent}%)")
         
         if pluggedIn:
-            self.setIcon(FigIcon("bottombar/plugged.svg"))
+            self.setIcon(FigIcon("bottombar/plugged.png"))
         else:
             self.setIcon(QIcon())
 
@@ -151,28 +151,89 @@ class QFolderNavBtn(QPushButton):
     def connectLauncher(self, fileViewer):
         self.fileViewer = fileViewer
         self.clicked.connect(self.callback)
+# class FigLogHiglighter(QSyntaxHighlighter):
+#     def __init__(self, parent):
+#         self._highlight_lines = dict()
+
+#     def highlight_line(self, line, fmt):
+#         if isinstance(line, int) and line >= 0 and isinstance(fmt, QTextCharFormat):
+#             self._highlight_lines[line] = fmt
+#             tb = self.document().findBlockByLineNumber(line)
+#             self.rehighlightBlock(tb)
+
+#     def clear_highlight(self):
+#         self._highlight_lines = dict()
+#         self.rehighlight()
+
+#     def highlightBlock(self, text):
+#         line = self.currentBlock().blockNumber()
+#         fmt = self._highlight_lines.get(line)
+#         if fmt is not None:
+#             self.setFormat(0, len(text), fmt)
+class FigTabWidget(QTabWidget):
+    '''
+    https://forum.qt.io/topic/67542/drag-tabs-between-qtabwidgets/6
+    '''
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.parent = parent
+        self.setAcceptDrops(True)
+        self.tabBar = self.tabBar()
+        self.tabBar.setMouseTracking(True)
+        self.indexTab = None
+        self.setMovable(True)
+
+        # self.addTab(QWidget(self), 'Tab One')
+        # self.addTab(QWidget(self), 'Tab Two')
+
+    def mouseMoveEvent(self, e):
+        if e.buttons() != Qt.RightButton:
+            return
+
+        globalPos = self.mapToGlobal(e.pos())
+        tabBar = self.tabBar
+        posInTab = tabBar.mapFromGlobal(globalPos)
+        self.indexTab = tabBar.tabAt(e.pos())
+        tabRect = tabBar.tabRect(self.indexTab)
+
+        pixmap = QPixmap(tabRect.size())
+        tabBar.render(pixmap,QPoint(),QRegion(tabRect))
+        mimeData = QMimeData()
+        drag = QDrag(tabBar)
+        drag.setMimeData(mimeData)
+        drag.setPixmap(pixmap)
+        cursor = QCursor(Qt.OpenHandCursor)
+        drag.setHotSpot(e.pos() - posInTab)
+        drag.setDragCursor(cursor.pixmap(),Qt.MoveAction)
+        dropAction = drag.exec_(Qt.MoveAction)
 
 
-class FigLogHiglighter(QSyntaxHighlighter):
-    def __init__(self, parent):
-        self._highlight_lines = dict()
+    def dragEnterEvent(self, e):
+        e.accept()
+        if e.source().parentWidget() != self:
+            return
 
-    def highlight_line(self, line, fmt):
-        if isinstance(line, int) and line >= 0 and isinstance(fmt, QTextCharFormat):
-            self._highlight_lines[line] = fmt
-            tb = self.document().findBlockByLineNumber(line)
-            self.rehighlightBlock(tb)
+        print(self.indexOf(self.widget(self.indexTab)))
+        self.parent.TABINDEX = self.indexOf(self.widget(self.indexTab))
 
-    def clear_highlight(self):
-        self._highlight_lines = dict()
-        self.rehighlight()
 
-    def highlightBlock(self, text):
-        line = self.currentBlock().blockNumber()
-        fmt = self._highlight_lines.get(line)
-        if fmt is not None:
-            self.setFormat(0, len(text), fmt)
+    def dragLeaveEvent(self,e):
+        e.accept()
 
+
+    def dropEvent(self, e):
+        print(self.parent.TABINDEX)
+        if e.source().parentWidget() == self:
+            return
+
+        e.setDropAction(Qt.MoveAction)
+        e.accept()
+        counter = self.count()
+
+        if counter == 0:
+            self.addTab(e.source().parentWidget().widget(self.parent.TABINDEX),e.source().tabText(self.parent.TABINDEX))
+        else:
+            self.insertTab(counter + 1 ,e.source().parentWidget().widget(self.parent.TABINDEX),e.source().tabText(self.parent.TABINDEX))
 
 class FigLogger:
     def __init__(self, path="system.log"):
@@ -620,6 +681,9 @@ class FigWindow(QMainWindow):
         super(FigWindow, self).__init__(*args, **kwargs)  
         self.setMouseTracking(True) # allow mouse tracking   
 
+        # initialize file tree.
+        self.fileTree = FigTreeFileExplorer()
+
         self.bottomBar = self.initBottomBar()
         self.subSysBar1, self.subSysBar2 = self.subSystemsBar()
         self.debugBar = self.initDebugBar()
@@ -628,7 +692,11 @@ class FigWindow(QMainWindow):
         self.titleBar = self.initTitleBar()
         self.folderBar = self.folderNavBar()
         self.shortcutBar = self.initShortcutBar()
-        self.packmanBar = self.packageManagerBar()
+
+        # package manager launcher
+        self.packmanBar = self.initPackmanBar()
+        self.packmanBar.setMinimumSize(QSize(300,400))
+
         self.addToolBar(Qt.TopToolBarArea, self.titleBar)
         self.addToolBarBreak(Qt.TopToolBarArea)
         self.addToolBar(Qt.TopToolBarArea, self.folderBar)
@@ -636,11 +704,12 @@ class FigWindow(QMainWindow):
         self.addToolBar(Qt.LeftToolBarArea, self.debugBar)
         self.addToolBar(Qt.LeftToolBarArea, self.mediaBar)
         self.addToolBar(Qt.LeftToolBarArea, self.systemBar)
+        self.addToolBarBreak(Qt.LeftToolBarArea)
+        # self.addToolBar(Qt.LeftToolBarArea, self.packmanBar)
         self.addToolBar(Qt.RightToolBarArea, self.subSysBar1)
         self.addToolBar(Qt.RightToolBarArea, self.subSysBar2)
         self.addToolBar(Qt.BottomToolBarArea, self.bottomBar)
         self.addToolBarBreak(Qt.BottomToolBarArea)
-        self.addToolBar(Qt.BottomToolBarArea, self.packmanBar)
         self.addToolBarBreak(Qt.TopToolBarArea)
 
         self.tabs = QTabWidget() # tab widget
@@ -651,14 +720,23 @@ class FigWindow(QMainWindow):
         # making tabs closeable	 		
         self.tabs.setTabsClosable(True) 	
         self.tabs.tabCloseRequested.connect(self.onCurrentTabClose) # adding action when tab close is requested
-        self.tabs.setStyleSheet("background: #292929; color: #d4d4d4;") # TODO: theme
+        # self.tabs.setGraphicsEffect(self.blur_effect)
+        self.tabs.setStyleSheet('''
+            border-color: orange; 
+            background: #292929; 
+            color: #d4d4d4;
+        ''') # TODO: theme
         self.logger = FigLogger(path=f"logs/{datetime.datetime.now().strftime('%d_%b_%Y_%H_%M_%S')}.log")
-        self.centralWidget = QWidget()
-        self.centralWidget.layout = QHBoxLayout()
-        self.centralWidget.layout.setContentsMargins(0, 0, 0, 0)
-        self.centralWidget.layout.addWidget(self.tabs)
+        self.centralWidget = QSplitter(Qt.Horizontal)
+        # self.centralWidget.layout = QHBoxLayout()
+        # self.centralWidget.layout.setContentsMargins(0, 0, 0, 0)
+        # side bar with hierarchical file explorer.
+        # self.centralWidget.layout.addWidget(self.fileTree)
+        # self.centralWidget.layout.addWidget(self.tabs)
+        self.centralWidget.addWidget(self.fileTree)
+        self.centralWidget.addWidget(self.tabs)
         # self.centralWidget.layout.addWidget(QPushButton("Wow"))
-        self.centralWidget.setLayout(self.centralWidget.layout)
+        # self.centralWidget.setLayout(self.centralWidget.layout)
         self.setCentralWidget(self.centralWidget) # making tabs as central widget
         self.statusBar = QStatusBar() # creating a status bar
         self.handler = FigHandler(self)
@@ -666,9 +744,14 @@ class FigWindow(QMainWindow):
         self.fig_launcher = FigLauncher(self)
         # self.newTabBtn.clicked.connect(self.addNewTab)
         self.tabs.addTab(self.fig_launcher, FigIcon("launcher.png"), "\tLauncher")
+        self.tabs.setStyleSheet('''
+            background: rgba(29, 29, 29, 0.95);
+            color: #fff;
+        ''')
         self.tabs.tabBar().setTabButton(0, QTabBar.RightSide,None) # make launcher tab unclosable.
         self.navBarAdded = False
         # self.setLayout(self.layout)
+        self.setAttribute(Qt.WA_TranslucentBackground, True) # NOTE: need for rounded corners
 
     def initShortcutBar(self):
         home = str(pathlib.Path.home())
@@ -681,7 +764,7 @@ class FigWindow(QMainWindow):
 
         sysbar = QToolBar()
         sysbar.setIconSize(QSize(22,22))
-        sysbar.setStyleSheet("background: #292929; color: #fff")   
+        sysbar.setStyleSheet("background: #292929; color: #fff; border: 0px")   
         sysbar.setMovable(False)
         # left spacer.
         left_spacer = QWidget()
@@ -743,6 +826,11 @@ class FigWindow(QMainWindow):
         sysbar.setIconSize(QSize(22,22))
         sysbar.setStyleSheet("background: #292929; color: #fff") 
         sysbar.setMovable(False)       
+        # file explorer.
+        fileTreeBtn = QAction("Explorer", self)
+        fileTreeBtn.setToolTip("file explorer.")
+        fileTreeBtn.setIcon(FigIcon("sysbar/explorer.svg"))
+        fileTreeBtn.triggered.connect(self.fileTree.toggle)
         # debugging.
         bugBtn = QAction("Debug", self)
         bugBtn.setToolTip("start debugging.")
@@ -759,6 +847,8 @@ class FigWindow(QMainWindow):
         runBtn = QAction("Run Code", self)
         runBtn.setToolTip("Run code for testing.") 
         runBtn.setIcon(FigIcon("sysbar/run.svg"))
+
+        sysbar.addAction(fileTreeBtn)
         sysbar.addAction(bugBtn)
         sysbar.addAction(labBtn)
         sysbar.addAction(gitHubBtn)
@@ -866,74 +956,203 @@ class FigWindow(QMainWindow):
 
     def subSystemsBar(self):
         subbar = QToolBar()
-        subbar.setIconSize(QSize(25,25))
+        # # creating a blur effect
+        # self.blur_effect = QGraphicsBlurEffect()
+        # # setting blur radius
+        # self.blur_effect.setBlurRadius(1.2)
+        # subbar.setGraphicsEffect(self.blur_effect)
         subbar.setStyleSheet('''
         QToolBar { 
             border: 0px; 
-            background: #292929; 
-            color: #fff 
-        } ''')
-        
+            color: #fff;
+            background: rgba(37, 21, 47, 0.90);
+        } 
+        QPushButton {
+            border: 0px;
+            background: transparent;
+            padding-top: 2px;
+            padding-bottom: 2px;
+        }
+        QToolBar::separator {
+            background: #734494;
+        }
+        QPushButton::hover { 
+            background: #734494;
+        }
+        ''')
+        # subbar.setAttribute(Qt.WA_TranslucentBackground)
         sysbar = QToolBar()
-        sysbar.setIconSize(QSize(25,25))
-        sysbar.setStyleSheet("QToolBar { border: 0px; background: #292929; color: #fff }")
+        # sysbar.setIconSize(QSize(25,25))
+        sysbar.setStyleSheet('''
+        QToolBar { 
+            border: 0px; 
+            color: #fff; 
+            background: rgba(37, 21, 47, 0.90);
+        }
+        QPushButton {
+            background: transparent;
+            border: 0px;
+            padding-top: 2px;
+            padding-bottom: 2px;
+        }
+        QPushButton::hover { 
+            background: #734494;
+        }
+        ''')
         sysbar.setMovable(False)
+        # sysbar.setAttribute(Qt.WA_TranslucentBackground)
         # open email client.
-        emailBtn = QAction("Email", self)
+        size = QSize(25,25) 
+        btnSize = QSize(25,25)
+        emailBtn = QPushButton()
         emailBtn.setToolTip("Open email client")
         emailBtn.setIcon(FigIcon("sidebar/email.png"))
+        emailBtn.setIconSize(btnSize)
+        # open notes.
+        notesBtn = QPushButton()
+        notesBtn.setToolTip("Open note taking app")
+        notesBtn.setIcon(FigIcon("sidebar/notes.png"))
+        notesBtn.setIconSize(btnSize)
+        # open translator.
+        transBtn = QPushButton()#("Translator", self)
+        transBtn.setToolTip("Open translator")
+        transBtn.setIcon(FigIcon("sidebar/translate.png"))
+        transBtn.setIconSize(btnSize)
+        # open text to speech.
+        ttsBtn = QPushButton()#("Text2Speech", self)
+        ttsBtn.setToolTip("Open text to speech")
+        ttsBtn.setIcon(FigIcon("sidebar/tts.png"))
+        ttsBtn.setIconSize(btnSize)
+        # open optical character recognition.
+        ocrBtn = QPushButton()#("OCR", self)
+        ocrBtn.setToolTip("Open optical character recognition")
+        ocrBtn.setIcon(FigIcon("sidebar/ocr.png"))
+        ocrBtn.setIconSize(btnSize)
         # open p2p chat server.
-        chatBtn = QAction("Chat", self)
+        chatBtn = QPushButton()#("Chat", self)
         chatBtn.setToolTip("Open chat server")
         chatBtn.setIcon(FigIcon("sidebar/chat.png"))
+        chatBtn.setIconSize(btnSize)
+        # open assitant.
+        asstBtn = QPushButton()#("Assistant", self)
+        asstBtn.setToolTip("Open assitant")
+        asstBtn.setIcon(FigIcon("sidebar/assistant.png"))
+        asstBtn.setIconSize(btnSize)
         # open math package.
-        mathBtn = QAction("Math", self)
+        mathBtn = QPushButton()#("Math", self)
         mathBtn.setToolTip("Open mathematical and scientific computing software suite.")
         mathBtn.setIcon(FigIcon("sidebar/calculator.png"))
-        mathBtn.triggered.connect(FigCalculator().show)
+        mathBtn.clicked.connect(FigCalculator().show)
+        mathBtn.setIconSize(btnSize)
         # open newsfeed.
-        newsBtn = QAction("Newsfeed", self)
+        newsBtn = QPushButton()#("Newsfeed", self)
         newsBtn.setToolTip("Open news feed")
         newsBtn.setIcon(FigIcon("sidebar/news.png"))
+        newsBtn.setIconSize(btnSize)
+        # whiteboard.
+        wbBtn = QPushButton()#("Whiteboard", self)
+        wbBtn.setToolTip("Open whiteboard")
+        wbBtn.setIcon(FigIcon("sidebar/whiteboard.png"))
+        wbBtn.setIconSize(btnSize)
+        # illustrator
+        illuBtn = QPushButton()#("Illustrator", self)
+        illuBtn.setToolTip("Open illustrator")
+        illuBtn.setIcon(FigIcon("sidebar/illustrator.png"))
+        illuBtn.setIconSize(btnSize)
+        # kanban board.
+        kanbanBtn = QPushButton()#("Kanban Board", self)
+        kanbanBtn.setToolTip("Open kanban board")
+        kanbanBtn.setIcon(FigIcon("sidebar/kanban.png"))
+        kanbanBtn.setIconSize(btnSize)
         # open history.
-        histBtn = QAction("History", self)
+        histBtn = QPushButton()#("History", self)
         histBtn.setToolTip("Open history")
         histBtn.setIcon(FigIcon("sidebar/history.png"))
-        histBtn.triggered.connect(self.addNewHistoryViewer)
+        histBtn.clicked.connect(self.addNewHistoryViewer)
+        histBtn.setIconSize(btnSize)
         # open password manager.
-        passBtn = QAction("PassMan", self)
+        passBtn = QPushButton()#("PassMan", self)
         passBtn.setToolTip("Open password manager")
         passBtn.setIcon(FigIcon("sidebar/password.png"))
+        passBtn.setIconSize(size)
         # open hardware monitoring software package.
-        hardwareBtn = QAction("Hardware Manager", self)
+        hardwareBtn = QPushButton()#("Hardware Manager", self)
         hardwareBtn.setToolTip("Open hardware manager")
         hardwareBtn.setIcon(FigIcon("sidebar/hardware.svg"))
+        hardwareBtn.setIconSize(size)
         # open date and time.
-        calBtn = QAction("Calendar", self)
+        calBtn = QPushButton()#("Calendar", self)
         calBtn.setToolTip("Open date/time widget")
         calBtn.setIcon(FigIcon("sidebar/calendar.png"))
+        calBtn.setIconSize(btnSize)
+        # open clock
+        clockBtn = QPushButton()#("Clock", self)
+        clockBtn.setToolTip("Open clock")
+        clockBtn.setIcon(FigIcon("sidebar/clock.png"))
+        clockBtn.setIconSize(btnSize)
+        # open weather
+        weatherBtn = QPushButton()#("Weather", self)
+        weatherBtn.setToolTip("Open weather forecast")
+        weatherBtn.setIcon(FigIcon("sidebar/weather.png"))
+        weatherBtn.setIconSize(btnSize)
         # trash.
-        trash = QAction("Trash", self)
+        trash = QPushButton()#("Trash", self)
         trash.setToolTip("Open trash folder.")
         trash.setIcon(FigIcon("sidebar/trash.png"))
+        trash.setIconSize(size)
+        
+        b1 = QPushButton()#("Weather", self)
+        b1.setToolTip("Open weather forecast")
+        b1.setIcon(FigIcon("sidebar/lolxd.png"))
+        b1.setIconSize(btnSize)
+        
+        b2 = QPushButton()#("Weather", self)
+        b2.setToolTip("Open weather forecast")
+        b2.setIcon(FigIcon("sidebar/lolxd.png"))
+        b2.setIconSize(btnSize)
+        
+        b3 = QPushButton()#("Weather", self)
+        b3.setToolTip("Open weather forecast")
+        b3.setIcon(FigIcon("sidebar/lolxd.png"))
+        b3.setIconSize(btnSize)
+        
+        b4 = QPushButton()#("Weather", self)
+        b4.setToolTip("Open weather forecast")
+        b4.setIcon(FigIcon("sidebar/lolxd.png"))
+        b4.setIconSize(btnSize)
+
         # add actions.
-        subbar.addAction(emailBtn)
-        subbar.addAction(chatBtn)
-        subbar.addAction(calBtn)
-        # subbar.addSeparator()
-        subbar.addAction(newsBtn)
-        subbar.addAction(mathBtn)
-        subbar.addAction(histBtn)
+        subbar.addWidget(emailBtn)
+        subbar.addWidget(notesBtn)
+        subbar.addWidget(transBtn)
+        subbar.addWidget(ttsBtn)
+        subbar.addWidget(ocrBtn)
+        subbar.addWidget(b1)
+        subbar.addWidget(chatBtn)
+        subbar.addWidget(asstBtn)
+        subbar.addWidget(b2)
+        subbar.addWidget(mathBtn)
+        subbar.addWidget(calBtn)
+        subbar.addWidget(clockBtn)
+        subbar.addWidget(weatherBtn)
+        subbar.addWidget(newsBtn)
+        subbar.addWidget(b3)
+        subbar.addWidget(wbBtn)
+        subbar.addWidget(illuBtn)
+        subbar.addWidget(kanbanBtn)
+        subbar.addWidget(b4)
+        subbar.addWidget(histBtn)
         # subbar.addSeparator()
         # subbar.addWidget(QHLine())
         # subbar.addSeparator()
         top_spacer = QWidget()
+        top_spacer.setAttribute(Qt.WA_TranslucentBackground)
         top_spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
         sysbar.addWidget(top_spacer)
-        sysbar.addAction(hardwareBtn)
-        sysbar.addAction(passBtn)
-        sysbar.addAction(trash)
+        sysbar.addWidget(hardwareBtn)
+        sysbar.addWidget(passBtn)
+        sysbar.addWidget(trash)
 
         return subbar, sysbar
 
@@ -945,41 +1164,87 @@ class FigWindow(QMainWindow):
 
     def initTitleBar(self):
         toolbar = QToolBar()
-        toolbar.setStyleSheet("margin: 0px; padding-top: 1px; border: 0px")
-        toolbar.setIconSize(QSize(22,22))
+        toolbar.setStyleSheet('''
+        QToolBar {
+            margin: 0px; 
+            border: 0px; 
+            color: #fff;
+            border-top-left-radius: 10px;
+            border-top-right-radius: 10px;
+            background: qlineargradient(x1 : 0, y1 : 0, x2 : 0, y2 : 1, stop : 0.0 #6e6e6e, stop : 0.8 #4a4a4a, stop : 1.0 #292929);
+        }''')
+        toolbar.setIconSize(QSize(20,20))
         toolbar.setMovable(False)
 
-        closeBtn = QAction(self)
+        closeBtn = QToolButton(self)
         closeBtn.setToolTip("close window")
         closeBtn.setIcon(FigIcon("close.svg")) 
-        closeBtn.triggered.connect(lambda: self.close()) # closing logic.
+        closeBtn.setStyleSheet('''
+        QToolButton {
+            margin: 0px;
+        }
+        QToolButton:hover {
+            border: 0px;
+            border-top-left-radius: 10px;
+            border-top-right-radius: 10px;
+        }
+        ''')
+        closeBtn.clicked.connect(lambda: self.close()) # closing logic.
 
-        minimizeBtn = QAction(self)
+        minimizeBtn = QToolButton(self)
         minimizeBtn.setToolTip("minimize window")
         minimizeBtn.setIcon(FigIcon("minimize.svg"))
-        minimizeBtn.triggered.connect(lambda: self.showMinimized())
+        minimizeBtn.clicked.connect(lambda: self.showMinimized())
+        minimizeBtn.setStyleSheet('''
+        QToolButton {
+            margin: 0px;
+        }
+        QToolButton:hover {
+            border: 0px;
+            border-top-left-radius: 10px;
+            border-top-right-radius: 10px;
+        }
+        ''')
 
-        maximizeBtn = QAction(self)
+        maximizeBtn = QToolButton(self)
         maximizeBtn.setToolTip("maximize window")
         maximizeBtn.setIcon(FigIcon("maximize.svg"))
-        maximizeBtn.triggered.connect(lambda: self.maximize())
+        maximizeBtn.clicked.connect(lambda: self.maximize())
+        maximizeBtn.setStyleSheet('''
+        QToolButton {
+            margin: 0px;
+        }
+        QToolButton:hover {
+            border: 0px;
+            border-top-left-radius: 10px;
+            border-top-right-radius: 10px;
+        }
+        ''')
 
         ontopBtn = QAction(self)
+        ontop1Btn = QToolButton(self)
+        ontop1Btn.setStyleSheet('''
+            QToolButton {
+                margin: -8px;
+                padding: -1px;
+            }
+        ''')
         opacUpBtn = QAction(self)
         opacDownBtn = QAction(self)
 
         windowTitle = QLabel()
-        windowTitle.setText("𝔽𝕚𝕘 𝕀𝕤 𝕒 𝔾𝕦𝕚") #("𝗙ig 𝗜s a 𝗚UI")
-
+        windowTitle.setText("") # ("𝔽𝕚𝕘 𝕀𝕤 𝕒 𝔾𝕦𝕚") #("𝗙ig 𝗜s a 𝗚UI")
+        windowTitle.setStyleSheet("color: #fff; font-size: 16px")
         # for center alignment.
         left_spacer = QWidget()
         left_spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         right_spacer = QWidget()
         right_spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
-        toolbar.addAction(closeBtn)
-        toolbar.addAction(minimizeBtn)
-        toolbar.addAction(maximizeBtn)
+        toolbar.addWidget(ontop1Btn)
+        toolbar.addWidget(closeBtn)
+        toolbar.addWidget(minimizeBtn)
+        toolbar.addWidget(maximizeBtn)
         toolbar.addWidget(left_spacer)
         toolbar.addWidget(windowTitle)
         toolbar.addWidget(right_spacer)
@@ -1172,8 +1437,11 @@ class FigWindow(QMainWindow):
             background: #292929; 
             padding: 2px;
         }
-        QPushButton:hover { background: red }
+        QPushButton:hover { 
+            background: red;
+        }
         ''')
+        toolbar.setMovable(False)
         # apt package manager.s
         aptBtn = QPushButton()#(" apt ")
         aptBtn.setToolTip("Open a UI for apt/pacman.")
@@ -1252,7 +1520,17 @@ class FigWindow(QMainWindow):
         toolbar.addWidget(cargoBtn)   
         toolbar.addWidget(right_spacer)  
 
-        return toolbar
+        return dockToolBar
+
+
+    def initPackmanBar(self):
+        label = QLabel()
+        label.setText("THIS IS A LABEL")
+        dockPMLauncher = QDockWidget("Package Manager Launcher", self)
+        dockPMLauncher.setWidget(label)
+        dockPMLauncher.setGeometry(100, 0, 200, 30)
+
+        return dockPMLauncher
 
     def initBottomBar(self):
         toolbar = QToolBar()
@@ -1272,7 +1550,7 @@ class FigWindow(QMainWindow):
         colorpickerBtn.setIcon(FigIcon("bottombar/colorwheel.svg"))
         colorpickerBtn.triggered.connect(lambda: self.colorPickerDialog())
         # get git info.
-        gitBtn = QPushButton(" undetected")
+        gitBtn = QPushButton(" main*")
         gitBtn.setToolTip("Inspect current git branch")
         gitBtn.setIcon(FigIcon("bottombar/git-merge.svg"))
         gitBtn.setStyleSheet("color: #fff; background: #292929; border: 0px; font-family: Helvetica; font-size: 14px")
@@ -1292,7 +1570,7 @@ class FigWindow(QMainWindow):
         rwBtn.setIcon(FigIcon("bottombar/pen.svg"))
         rwBtn.setStyleSheet("color: #fff; background: #292929; border: 0px; font-family: Helvetica; font-size: 14px")
         # show cursor location.
-        cursorBtn = QPushButton("(0,0)") # QPushButton("Ln 0, Col 0")
+        cursorBtn = QPushButton("Ln 0, Col 0")
         cursorBtn.setToolTip("Get cursor location.")
         cursorBtn.setIcon(FigIcon("bottombar/mouse.png"))
         cursorBtn.setStyleSheet("color: #fff; background: #292929; border: 0px; font-family: Helvetica; font-size: 14px")
@@ -1302,7 +1580,7 @@ class FigWindow(QMainWindow):
         indentBtn.setToolTip("Select Indentation.")
         indentBtn.setStyleSheet("color: #fff; background: #292929; border: 0px; font-family: Helvetica; font-size: 14px")
         # select encoding.
-        encBtn = QPushButton("UTF")
+        encBtn = QPushButton("UTF-8")
         encBtn.setToolTip("Select Encoding.")
         encBtn.setStyleSheet("color: #fff; background: #292929; border: 0px; font-family: Helvetica; font-size: 14px")
         # select end of sequence.
@@ -1324,7 +1602,7 @@ class FigWindow(QMainWindow):
         # notifications.
         notifBtn = QPushButton()
         notifBtn.setToolTip("Open notifications.")
-        notifBtn.setIcon(FigIcon("bottombar/bell.png"))
+        notifBtn.setIcon(FigIcon("bottombar/bell.svg"))
         notifBtn.setStyleSheet("color: #fff; background: #292929; border: 0px; font-family: Helvetica; font-size: 14px")
         # apt package manager.
         aptBtn = QPushButton("apt")
@@ -1405,7 +1683,7 @@ class FigWindow(QMainWindow):
         # toolbar.addWidget(npmBtn)
         # toolbar.addWidget(mvnBtn)
         # toolbar.addSeparator() 
-        toolbar.addWidget(coffeeBtn)
+        # toolbar.addWidget(coffeeBtn)
         toolbar.addSeparator()
         toolbar.addWidget(right_spacer)
         toolbar.addSeparator()
@@ -1582,6 +1860,7 @@ class FigApp(QApplication):
         self.window = FigWindow(*args, **kwargs)
         self.window.setGeometry(x, y, w, h)
         self.window.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
+        # self.window.setWindowFlags(Qt.FramelessWindowHint)
         self.window.setWindowOpacity(self.window.opacLevel)
         # self.server_thread = threading.Thread(target=serve_all_files)
         self.setWindowIcon(QIcon(icon))
@@ -1621,6 +1900,5 @@ class FigApp(QApplication):
         self.window.fig_launcher.gifBtn._endAnimation()
         # self.server_thread.join()
         
-
 if __name__ == "__main__":
     pass

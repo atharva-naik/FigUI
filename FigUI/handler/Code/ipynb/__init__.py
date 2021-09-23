@@ -2,7 +2,7 @@
 import sys, subprocess, signal, logging, threading
 from PyQt5.QtCore import pyqtSlot, QSettings, QTimer, QUrl, QDir
 from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEnginePage
-from PyQt5.QtWidgets import QMainWindow, QFileDialog, QMessageBox, QApplication
+from PyQt5.QtWidgets import QMainWindow, QFileDialog, QMessageBox, QApplication, QWidget
 # logfileformat = '[%(levelname)s] (%(threadName)-10s) %(message)s'
 # logging.basicConfig(level=logging.DEBUG, format=logfileformat)
 
@@ -45,9 +45,9 @@ class CustomWebView(QWebEngineView):
         event.accept()
 
 
-class MainWindow(QMainWindow):
+class FigJupyterNB(QWidget):
     def __init__(self, parent=None, homepage=None):
-        super(MainWindow, self).__init__(parent)
+        super(FigJupyterNB, self).__init__(parent)
         self.homepage = homepage
         self.windows = []
 
@@ -56,7 +56,6 @@ class MainWindow(QMainWindow):
         # if val is not None:
         #     self.restoreGeometry(val)
         self.setGeometry(300, 300, 1050, 850)
-
         self.basewebview = CustomWebView(self, main=True)
         self.setCentralWidget(self.basewebview)
         QTimer.singleShot(0, self.initialload)
