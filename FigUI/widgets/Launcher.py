@@ -10,8 +10,10 @@ from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEngineProfile, QWebEngi
 from PyQt5.QtWidgets import QApplication, QAction, QDialog, QPushButton, QWidget, QToolBar, QGridLayout, QLabel, QVBoxLayout, QToolButton, QFileDialog, QScrollArea, QFrame, QGraphicsBlurEffect
 try:
     from utils import *
+    from FlowLayout import FlowLayout
 except ImportError:
     from FigUI.utils import *
+    from FigUI.widgets.FlowLayout import FlowLayout
 
 
 __current_dir__ = os.path.dirname(os.path.realpath(__file__))
@@ -27,9 +29,10 @@ def FigIcon(name, w=None, h=None):
 
 
 class FigToolButton(QToolButton):
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, size=(100,100)):
         super(FigToolButton, self).__init__(parent)
         self.keep_running = True
+        self.setFixedSize(QSize(*size))
 
     def _animateMovie(self):
         import time
@@ -61,7 +64,7 @@ class FigToolButton(QToolButton):
 class FigLauncher(QWidget):
     def __init__(self, parent=None, width=8, button_size=(100,100), icon_size=(70,70)):
         super(FigLauncher, self).__init__(parent)
-        layout = QGridLayout()
+        layout = FlowLayout() # QGridLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         self.layout = QVBoxLayout(self)
         self.layout.setContentsMargins(0, 0, 0, 0)
@@ -154,7 +157,8 @@ class FigLauncher(QWidget):
                 if parent:
                     parent.logger.debug(f"connected FigHandler instance to '{name}' button")
                     launcherButton.clicked.connect(parent.addNewHandlerTab)
-            layout.addWidget(launcherButton, i // width, i % width)
+            layout.addWidget(launcherButton)
+            # layout.addWidget(launcherButton, i // width, i % width)
             launcherButton.clicked.connect(self._clickHandler)
         
         self.launcherWidget.setLayout(layout)
