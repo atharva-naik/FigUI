@@ -1,4 +1,5 @@
 Xlib
+parse
 PyQt5
 spacy
 jinja2

@@ -19,6 +19,7 @@ try:
     from FigUI.subSystem.History import HistoryLogger
     from FigUI.handler.Code.QtColorPicker import ColorPicker
     from FileViewer import FigFileViewer, FigTreeFileExplorer
+    from FigUI.subSystem.system.network import NetworkHandler
     from FigUI.subSystem.Math.Calculator import FigCalculator
     from FigUI.subSystem.system.brightness import BrightnessController
 #     from utils import *
@@ -31,6 +32,7 @@ except ImportError:
     from ..subSystem.Shell import FigShell
     from ..subSystem.History import HistoryLogger
     from ..handler.Code.QtColorPicker import ColorPicker
+    from ..subSystem.system.network import NetworkHandler
     from ..subSystem.Math.Calculator import FigCalculator
     from .FileViewer import FigFileViewer, FigTreeFileExplorer
     from ..subSystem.system.brightness import BrightnessController
@@ -135,6 +137,23 @@ class BatteryDisplay(QPushButton):
             self.setIcon(FigIcon("bottombar/plugged.png"))
         else:
             self.setIcon(QIcon())
+
+
+class NetDisplay(QPushButton):
+    def __init__(self, parent=None):
+        super(NetDisplay, self).__init__(parent)
+        self.timer = QTimer()
+        self.timer.timeout.connect(self._updateWifiInfo)
+        self.timer.start(1000)
+        self.net_handler = NetworkHandler()
+        self.setStyleSheet("color: #fff; background: #292929; border: 0px; font-family: Helvetica; font-size: 14px")
+        self.setIcon(FigIcon("bottombar/wifi.svg"))
+
+    def _updateWifiInfo(self):
+        info = self.net_handler.manager.net_info
+        net_name = info.name
+        # print(info.name)
+        self.setText(net_name)
 
 
 class QFolderNavBtn(QPushButton):
@@ -1647,6 +1666,7 @@ class FigWindow(QMainWindow):
         # time label.
         timeLbl = TimeDisplay(self)
         batLbl = BatteryDisplay(self)
+        netLbl = NetDisplay(self)
         # for center alignment.
         left_spacer = QWidget()
         left_spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
@@ -1689,7 +1709,9 @@ class FigWindow(QMainWindow):
         toolbar.addSeparator()
         toolbar.addWidget(tweetBtn)
         toolbar.addSeparator()
-        toolbar.addWidget(notifBtn)       
+        toolbar.addWidget(notifBtn)
+        toolbar.addSeparator()       
+        toolbar.addWidget(netLbl)
         toolbar.addSeparator()
         toolbar.addWidget(batLbl)
         toolbar.addSeparator()
@@ -1862,6 +1884,7 @@ class FigApp(QApplication):
         self.window.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
         # self.window.setWindowFlags(Qt.FramelessWindowHint)
         self.window.setWindowOpacity(self.window.opacLevel)
+        self.window.clipboard = self.clipboard() 
         # self.server_thread = threading.Thread(target=serve_all_files)
         self.setWindowIcon(QIcon(icon))
         # if fontId1 < 0:

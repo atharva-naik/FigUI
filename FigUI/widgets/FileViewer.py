@@ -10,7 +10,8 @@ from PyQt5.QtPrintSupport import *
 from PyQt5.QtCore import QThread, QUrl, QSize, Qt, QEvent, pyqtSlot, pyqtSignal
 from PyQt5.QtGui import QIcon, QKeySequence, QTransform, QFont, QFontDatabase, QMovie, QPixmap
 from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEngineProfile, QWebEngineSettings
-from PyQt5.QtWidgets import QApplication, QAction, QDialog, QPushButton, QWidget, QToolBar, QGridLayout, QLabel, QVBoxLayout, QHBoxLayout, QToolButton, QScrollArea, QLineEdit, QFrame
+from PyQt5.QtWidgets import QApplication, QAction, QDialog, QPushButton, QWidget, QToolBar, QGridLayout, QLabel, QVBoxLayout, QHBoxLayout, QToolButton, QScrollArea, QLineEdit, QFrame, QSizePolicy
+
 try:
     from utils import *
     from widgets.FlowLayout import FlowLayout
@@ -77,34 +78,53 @@ def __font__(name):
     path = os.path.join(__icons__, name)
 
     return path
-# def getThumbnail(path):
-#     name = pathlib.Path(path).name 
-#     _,ext = os.path.splitext(name)
-#     stem = pathlib.Path(path).stem
-#     # print(self.name, self.stem, ext, os.path.isfile(self.path))
-#     ext = ext[1:]
-#     if name.lower() == "todo": return "launcher/todo.png"
-#     # elif ext in ["png","jpg"]: # display standard thumbnail for png/jpg.
-#     #     return path
-#     elif stem == "README": return "launcher/README.png"
-#     elif stem == "requirements": return "launcher/requirements.png"
-#     elif stem.lower() == "license": return "launcher/license.png"
-#     elif stem == ".gitignore": return "launcher/gitignore.png"
-#     elif ext == "":
-#         if subprocess.getoutput(f"file --mime-encoding {path}").endswith("binary"):
-#             return "launcher/bin.png"
-#         else:
-#             return "launcher/txt.png"
-#     if os.path.exists(__icon__(f"launcher/{ext}.png")): # check if png file for the ext
-#         return f"launcher/{ext}.png"
-#     else:
-#         if os.path.exists(__icon__(f"launcher/{ext}.svg")): 
-#             return f"launcher/{ext}.svg"
-#         else: 
-#             return f"launcher/txt.png" # if ext is not recognized set it to txt
+
+STDLinuxFolders = ["/bin", "/home", "/boot", "/etc", "/opt", "/cdrom", "/proc", "/root", "/sbin", "/usr", "/dev", "/lost+found", "/var", "/tmp", "/snap", "/media", "/lib", "/lib32", "/lib64", "/mnt"]
+ThumbPhrases = ["android", "gnome", "nano", "eclipse", "cache", "java", "cargo", "compiz", "aiml", "kivy", "mozilla"]
+# map for getting filenames for thumbnails given the folder name.
+ThumbMap = {
+            "cuda": "cu.png",
+            ".sbt": "scala.png",
+            ".cmake": "cmake.svg",
+        }
+
+for folder in ["openoffice", "ssh", "npm", "wine", "dbus", "thunderbird", "gradle"]:
+    ThumbMap["."+folder] = folder + '.png'
+for folder in ["Videos", "Desktop", "Documents", "Downloads", "Pictures"]:
+    ThumbMap[folder] = folder + ".png"
+
+ThumbMap["Music"] = "Music.svg"
+ThumbMap[".rstudio-desktop"] = "R.png"
+ThumbMap[".python-eggs"] = "python-eggs.png"
+
+StemMap = {
+    "requirements": "requirements.png",
+    ".cling_history": "cling.png",
+    ".scala_history": "scala.png",
+    ".gitignore": "gitignore.png", 
+    ".gitconfig": "gitignore.png",
+    ".python_history": "py.png",
+    ".julia_history": "jl.png",
+    "README": "README.png",
+    ".gdbinit": "gnu.png",
+    ".Rhistory": "R.png",
+    ".pypirc": "py.png", 
+}
+
+PrefixMap = {
+    ".python_history": "py.png",
+    ".conda": "anaconda3.png",
+    ".bash": "bashrc.png",
+    "rstudio-": "R.png",
+    ".nvidia": "cu.png",
+    "nvidia-": "cu.png",
+    "zsh": "bashrc.png",
+}
+
 class FigFileIcon(QToolButton):
-    def __init__(self, path, parent=None, size=(100,120), textwidth=10):
+    def __init__(self, path, parent=None, size=(120,120), textwidth=10):
         super(FigFileIcon, self).__init__(parent)
+        self._parent = parent
         self.name = pathlib.Path(path).name
         self.path = path
         self.isfile = os.path.isfile(path)
@@ -119,59 +139,9 @@ class FigFileIcon(QToolButton):
         self.setAttribute(Qt.WA_TranslucentBackground, True)
         self.setText(text) # truncate at 3 times the max textwidth
         self.setFixedSize(QSize(*size))
-        self.setIconSize(QSize(size[0]-40, size[1]-40))
+        self.setIconSize(QSize(size[0]-60, size[1]-60))
         self._setThumbnail()
-    # def _setThumbnailMime(self):
-    #     _,ext = os.path.splitext(self.name)
-    #     # print(self.name, self.stem, ext, os.path.isfile(self.path))
-    #     ext = ext[1:]
-    #     if self.name == ".git":
-    #         self.setIcon(FigIcon("launcher/git.png"))
-    #         return
-    #     elif self.name == "pom.xml":
-    #         self.setIcon(FigIcon("launcher/pom.png"))
-    #         return
-    #     elif self.name.lower() == "todo":
-    #         self.setIcon(FigIcon("launcher/todo.png"))
-    #         return
-    #     elif not self.isfile:
-    #         for phrase in ["nano", "eclipse", "cache", "java", "cargo", "compiz", "aiml", "kivy", "netbeans", "mozilla"]:
-    #             if phrase in self.name.lower():
-    #                 self.setIcon(FigIcon(f"launcher/{phrase}.png"))
-    #                 return
-    #         if self.name == "Music":
-    #             self.setIcon(FigIcon("launcher/Music.svg"))
-    #         elif self.name in ["Videos", "Desktop", "Documents", "Downloads", "Pictures"]:
-    #             self.setIcon(FigIcon(f"launcher/{self.name}.png"))
-    #         elif self.name.startswith(".git"):
-    #             self.setIcon(FigIcon("launcher/git.png"))
-    #         elif self.name in [".rstudio-desktop"]:
-    #             self.setIcon(FigIcon("launcher/R.png"))
-    #         elif self.name in [".python-eggs"]:
-    #             self.setIcon(FigIcon("launcher/python-eggs.png"))
-    #         elif "android" in self.name.lower():
-    #             self.setIcon(FigIcon("launcher/android.png"))
-    #         elif "gnome" in self.name.lower():
-    #             self.setIcon(FigIcon("launcher/gnome.png"))
-    #         elif "anaconda" in self.name.lower() or self.name.startswith(".conda"):
-    #             self.setIcon(FigIcon("launcher/anaconda3.png"))
-    #         elif "jupyter" in self.name.lower() or "ipython" in self.name.lower() or "ipynb" in self.name.lower():
-    #             self.setIcon(FigIcon("launcher/ipynb.png"))
-    #         elif "julia" in self.name.lower():
-    #             self.setIcon(FigIcon("launcher/jl.png"))
-    #         elif "vscode" in self.name.lower():
-    #             self.setIcon(FigIcon("launcher/notvscode.png"))
-    #         elif "tor" in re.split("_| |-", self.name.lower()) or self.name == ".tor":
-    #             self.setIcon(FigIcon("launcher/tor.png"))
-    #         elif self.name in [".thunderbird", ".wine", ".dbus", ".ssh", ".npm", ".gradle", ".openoffice"]:
-    #             self.setIcon(FigIcon(f"launcher/{self.name[1:]}.png"))
-    #         elif self.name == ".linuxbrew" or self.name == "Homebrew":
-    #             self.setIcon(FigIcon("launcher/brew.png"))
-    #         elif self.name == ".cmake":
-    #             self.setIcon(FigIcon("launcher/cmake.svg"))
-    #         else:    
-    #             self.setIcon(FigIcon("launcher/fileviewer.png"))
-    #         return        
+
     def _setThumbnail(self):
         _,ext = os.path.splitext(self.name)
         # print(self.name, self.stem, ext, os.path.isfile(self.path))
@@ -185,80 +155,46 @@ class FigFileIcon(QToolButton):
         elif self.name.lower() == "todo":
             self.setIcon(FigIcon("launcher/todo.png"))
             return
-        elif not self.isfile:
-            if self.name == "Music":
-                self.setIcon(FigIcon("launcher/Music.svg"))
-            elif self.name in ["Videos", "Desktop", "Documents", "Downloads", "Pictures"]:
-                self.setIcon(FigIcon(f"launcher/{self.name}.png"))
+        elif not self.isfile:            
+            # phrase contained case.
+            for phrase in ThumbPhrases:
+                if phrase in self.name.lower():
+                    self.setIcon(FigIcon(f"launcher/{phrase}.png")); return 
+            
+            if self.name in ThumbMap:
+                filename = ThumbMap[self.name]
+                self.setIcon(FigIcon(f"launcher/{filename}"))
+            # elif self.name == ".sbt":
+            #     self.setIcon(FigIcon("launcher/scala.png"))
             elif self.name.startswith(".git"):
                 self.setIcon(FigIcon("launcher/git.png"))
-            elif self.name in [".rstudio-desktop"]:
-                self.setIcon(FigIcon("launcher/R.png"))
-            elif self.name in [".python-eggs"]:
-                self.setIcon(FigIcon("launcher/python-eggs.png"))
-            elif "android" in self.name.lower():
-                self.setIcon(FigIcon("launcher/android.png"))
-            elif "gnome" in self.name.lower():
-                self.setIcon(FigIcon("launcher/gnome.png"))
+
+            elif "julia" in self.name.lower():
+                self.setIcon(FigIcon("launcher/jl.png"))
+            elif "netbeans" in self.name.lower():
+                self.setIcon(FigIcon("launcher/netbeans.svg"))
+            elif "vscode" in self.name.lower():
+                self.setIcon(FigIcon("launcher/notvscode.png"))
+
             elif self.stem == ".gconf":
                 self.setIcon(FigIcon("launcher/gnome.png"))
             elif self.stem == ".fontconfig":
                 self.setIcon(FigIcon("launcher/ttf.svg"))
             elif "anaconda" in self.name.lower() or self.name.startswith(".conda"):
                 self.setIcon(FigIcon("launcher/anaconda3.png"))
-            elif "nano" in self.name.lower():
-                self.setIcon(FigIcon("launcher/nano.png"))
-            elif "eclipse" in self.name.lower():
-                self.setIcon(FigIcon("launcher/eclipse.png"))
+
             elif "jupyter" in self.name.lower() or "ipython" in self.name.lower() or "ipynb" in self.name.lower():
                 self.setIcon(FigIcon("launcher/ipynb.png"))
-            elif "cache" in self.name.lower():
-                self.setIcon(FigIcon("launcher/cache.png"))
-            elif "java" in self.name.lower():
-                self.setIcon(FigIcon("launcher/java.png"))
-            elif "julia" in self.name.lower():
-                self.setIcon(FigIcon("launcher/jl.png"))
-            elif "cargo" in self.name.lower():
-                self.setIcon(FigIcon("launcher/cargo.png"))
-            elif "compiz" in self.name.lower():
-                self.setIcon(FigIcon("launcher/compiz.png"))
-            elif "aiml" in self.name.lower():
-                self.setIcon(FigIcon("launcher/aiml.png"))
-            elif "kivy" in self.name.lower():
-                self.setIcon(FigIcon("launcher/kivy.png"))
-            elif "netbeans" in self.name.lower():
-                self.setIcon(FigIcon("launcher/netbeans.svg"))
-            elif "mozilla" in self.name.lower():
-                self.setIcon(FigIcon("launcher/mozilla.png"))
-            elif "vscode" in self.name.lower():
-                self.setIcon(FigIcon("launcher/notvscode.png"))
+
             elif "tor" in re.split("_| |-", self.name.lower()) or self.name == ".tor":
                 self.setIcon(FigIcon("launcher/tor.png"))
-            elif self.name == ".sbt":
-                self.setIcon(FigIcon("launcher/scala.png"))
-            elif self.name == ".thunderbird":
-                self.setIcon(FigIcon("launcher/thunderbird.png"))
-            elif self.name == ".wine":
-                self.setIcon(FigIcon("launcher/wine.png"))
-            elif self.name == ".dbus":
-                self.setIcon(FigIcon("launcher/dbus.png"))
-            elif self.name == ".ssh":
-                self.setIcon(FigIcon("launcher/ssh.png"))
-            elif self.name == ".npm":
-                self.setIcon(FigIcon("launcher/npm.png"))
-            elif self.name == ".gradle":
-                self.setIcon(FigIcon("launcher/gradle.png"))
             elif self.name == ".linuxbrew" or self.name == "Homebrew":
                 self.setIcon(FigIcon("launcher/brew.png"))
-            elif self.name == ".openoffice":
-                self.setIcon(FigIcon("launcher/openoffice.png"))
-            elif self.name == ".cmake":
-                self.setIcon(FigIcon("launcher/cmake.svg"))
-            elif self.name == "cuda":
-                self.setIcon(FigIcon("launcher/cu.png"))
+            # elif self.name == "cuda":
+            #     self.setIcon(FigIcon("launcher/cu.png"))
             elif self.name in [".gnupg"]:
                 self.setIcon(FigIcon("launcher/gnu.png"))
-            elif self.path in ["/bin", "/home", "/boot", "/etc", "/opt", "/cdrom", "/proc", "/root", "/sbin", "/usr", "/dev", "/lost+found", "/var", "/tmp", "/snap", "/media", "/lib", "/lib32", "/lib64", "/mnt"]:
+            elif self.path in STDLinuxFolders:
                 self.setIcon(FigIcon(f"dir/{self.name}.png"))
             else:    
                 self.setIcon(FigIcon("launcher/fileviewer.png"))
@@ -275,60 +211,46 @@ class FigFileIcon(QToolButton):
         #         self.setIcon(QIcon(temp.name+'.jpg'))
         #         os.rename(temp.name+'.jpg', temp.name)
         #     return
-        elif self.stem == "README":
-            self.setIcon(FigIcon("launcher/README.png"))
-            return
-        elif self.stem == "requirements":
-            self.setIcon(FigIcon("launcher/requirements.png"))
-            return
+        # elif self.stem in ["README", "requirements"]:
+        #     self.setIcon(FigIcon(f"launcher/{self.stem}.png"))
+        #     return
+        elif self.name == ".profile":
+            self.setIcon(FigIcon("launcher/bashrc.png"))
+            return  
         elif self.stem.lower() == "license":
             self.setIcon(FigIcon("launcher/license.png"))
-            return      
-        elif self.stem.startswith(".bash") or self.stem.startswith("zsh")or self.name == ".profile":
+            return              
+        # REMOVE #
+        elif self.stem.startswith(".bash"):
+            self.setIcon(FigIcon("launcher/bashrc.png"))
+            return  
+        elif self.stem.startswith("zsh"):
             self.setIcon(FigIcon("launcher/bashrc.png"))
             return  
         elif self.stem.startswith(".conda"):
             self.setIcon(FigIcon("launcher/anaconda3.png"))
             return
-        elif self.stem.startswith("rstudio-"):
-            self.setIcon(FigIcon("launcher/R.png"))
-            return
         elif self.stem.startswith("nvidia-"):
             self.setIcon(FigIcon("launcher/cu.png"))
-            return
-        elif self.stem in [".julia_history"]:
-            self.setIcon(FigIcon("launcher/jl.png"))
-            return   
-        elif self.stem in [".Rhistory"]:
-            self.setIcon(FigIcon("launcher/R.png"))
-            return 
-        elif self.stem in [".pypirc", ".python_history"]:
-            self.setIcon(FigIcon("launcher/py.png"))
-            return 
-        elif self.stem.startswith(".python_history"):
-            self.setIcon(FigIcon("launcher/py.png"))
-            return 
-        elif self.name.startswith(".") and "cookie" in self.name:
-            self.setIcon(FigIcon("launcher/cookie.png"))
             return
         elif self.name.startswith(".nvidia"):
             self.setIcon(FigIcon("launcher/cu.png"))
             return
-        elif self.stem in [".scala_history"]:
-            self.setIcon(FigIcon("launcher/scala.png"))
+        # REMOVE #
+        elif self.name.startswith(".") and "cookie" in self.name:
+            self.setIcon(FigIcon("launcher/cookie.png"))
             return
-        elif self.stem in [".cling_history"]:
-            self.setIcon(FigIcon("launcher/cling.svg"))
-            return
+
+        elif self.stem in StemMap:
+            filename = StemMap[self.stem]
+            self.setIcon(FigIcon(f"launcher/{filename}"))
+            return    
+
         elif self.stem.endswith("_history"):
             self.setIcon(FigIcon("launcher/history.png"))
             return
-        elif self.stem in [".gitignore", ".gitconfig"]:
-            self.setIcon(FigIcon("launcher/gitignore.png"))
-            return
-        elif self.stem in [".gdbinit"]:
-            self.setIcon(FigIcon("launcher/gnu.png"))
-            return    
+   
+        # txt/bin classification.
         elif ext == "":
             if subprocess.getoutput(f"file --mime-encoding {self.path}").endswith("binary"):
                 self.setIcon(FigIcon("launcher/bin.png"))    
@@ -336,6 +258,12 @@ class FigFileIcon(QToolButton):
                 self.setIcon(FigIcon("launcher/txt.png"))
             return
 
+        for prefix in PrefixMap:
+            if self.stem.startswith(prefix):
+                filename = PrefixMap[prefix]
+                self.setIcon(FigIcon(f"launcher/{filename}")) 
+                return
+        # check for .ext kind of files.
         if os.path.exists(__icon__(f"launcher/{ext}.png")): # check if png file for the ext
             self.setIcon(FigIcon(f"launcher/{ext}.png"))
         else:
@@ -344,6 +272,7 @@ class FigFileIcon(QToolButton):
             else: 
                 # print(self.name)
                 self.setIcon(FigIcon(f"launcher/txt.png")) # if ext is not recognized set it to txt
+    
     # def _animateMovie(self):
     #     import time
     #     while True:
@@ -363,6 +292,7 @@ class FigFileIcon(QToolButton):
     #     self._gifMovie = Image.open(path)
     #     self._gifLength = self._gifMovie.n_frames
     #     self.thread.start()
+
 class FigFileViewer(QWidget):
     def __init__(self, path=str(pathlib.Path.home()), parent=None, width=4, button_size=(100,100), icon_size=(60,60)):
         super(FigFileViewer, self).__init__(parent)   
@@ -403,10 +333,15 @@ class FigFileViewer(QWidget):
         self.scrollArea.setWidget(self.viewer)
 
         self.navbar = self.initNavBar()
-        self.utilbar = self.initUtilBar()
-
+        self.propbar = self.initPropBar()
+        self.editbar = self.initEditBar()
+        self.viewbar = self.initViewBar()
+        # self.utilbar = self.initUtilBar()
         self.layout.addWidget(self.navbar)
-        self.layout.addWidget(self.utilbar)
+        self.layout.addWidget(self.editbar)
+        self.layout.addWidget(self.propbar)
+        self.layout.addWidget(self.viewbar)
+        # self.layout.addWidget(self.utilbar)
         self.layout.addWidget(self.scrollArea)
         self.setLayout(self.layout)
         self.width = width
@@ -421,178 +356,328 @@ class FigFileViewer(QWidget):
     def initNavBar(self):
         navbar = QWidget()
         navLayout = QHBoxLayout() 
-
-        backBtn = QToolButton()
-        backBtn.setIcon(FigIcon("stepback.svg"))
-        backBtn.clicked.connect(self.back)
-        navLayout.addWidget(backBtn)
+        # backBtn = QToolButton()
+        # backBtn.setIcon(FigIcon("stepback.svg"))
+        # backBtn.clicked.connect(self.back)
+        # navLayout.addWidget(backBtn)
         
-        prevBtn = QToolButton()
-        prevBtn.setIcon(FigIcon("back.svg"))
-        prevBtn.clicked.connect(self.prevPath)
-        navLayout.addWidget(prevBtn)
+        # prevBtn = QToolButton()
+        # prevBtn.setIcon(FigIcon("back.svg"))
+        # prevBtn.clicked.connect(self.prevPath)
+        # navLayout.addWidget(prevBtn)
 
-        nextBtn = QToolButton()
-        nextBtn.setIcon(FigIcon("forward.svg"))
-        nextBtn.clicked.connect(self.nextPath)
-        navLayout.addWidget(nextBtn)
-
+        # nextBtn = QToolButton()
+        # nextBtn.setIcon(FigIcon("forward.svg"))
+        # nextBtn.clicked.connect(self.nextPath)
+        # navLayout.addWidget(nextBtn)
         searchBar = QLineEdit()
         searchBar.setStyleSheet("background: #fff; color: #000")
         navLayout.addWidget(searchBar)
-
-        # match case.
-        caseBtn = QToolButton()
-        caseBtn.setIcon(FigIcon("case-sensitive.svg"))
-        # caseBtn.clicked.connect(self.back)
-        navLayout.addWidget(caseBtn)
-        # match whole word.
-        entireBtn = QToolButton()
-        entireBtn.setIcon(FigIcon("whole-word.svg"))
-        # backBtn.clicked.connect(self.back)
-        navLayout.addWidget(entireBtn)
-        # use regex search
-        regexBtn = QToolButton()
-        regexBtn.setIcon(FigIcon("regex_search.svg"))
-        # regexBtn.clicked.connect(self.back)
-        navLayout.addWidget(regexBtn)
         
         searchBtn = QToolButton()
-        searchBtn.setIcon(FigIcon("search.svg"))
+        searchBtn.setIcon(FigIcon("fileviewer/search.png"))
+        searchBtn.setStyleSheet("border: 0px")
         navLayout.addWidget(searchBtn)
 
-        navLayout.setContentsMargins(0, 0, 0, 0)
+        navLayout.setContentsMargins(5, 0, 5, 0)
         navbar.setLayout(navLayout) 
 
         return navbar
 
-    def initUtilBar(self):
-        utilbar = QWidget()
-        utilLayout = QHBoxLayout() # bookmarks, restricted view, change permissions, encrypt, zip/unzip, new folder, new file, undo/redo, cut/copy/paste, rename, open in terminal, properties.
+    def initPropBar(self):
+        '''
+        Initialize properties bar.
+        Properties bar contains:
+        1. Bookmarking
+        2. View bookmarked files
+        3. Restricting file visibility (TODO)
+        4. Changing user's file access permissions
+        5. Changing read/write/execute permissions
+        6. Open properties
+        7. Open in terminal
+        8. Open with xdg-open (for linux)
+        9. Encrypt
+        10. Decrypt
+        11. Zip folder/file
+        12. Unzip zip file
+        13. Add/Edit/View note
+        14. Add/Edit/View tags
+        '''
+        propbar = QWidget()
+        propLayout = QHBoxLayout()
+        # left spacer.
+        left_spacer = QWidget()
+        left_spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        propLayout.addWidget(left_spacer)
         # bookmark files.
         bookmarkBtn = QToolButton()
-        bookmarkBtn.setIcon(FigIcon("bookmark.svg"))
-        utilLayout.addWidget(bookmarkBtn)
+        bookmarkBtn.setIcon(FigIcon("fileviewer/bookmark.svg"))
+        propLayout.addWidget(bookmarkBtn) 
+        # view bookmarked files.
+        bookmarkedBtn = QToolButton()
+        bookmarkedBtn.setIcon(FigIcon("fileviewer/bookmarked.svg"))
+        propLayout.addWidget(bookmarkedBtn)        
         # restrict files from other users.
         # restrictBtn = QToolButton()
         # restrictBtn.setIcon(FigIcon("bookmark.svg"))
-        # utilLayout.addWidget(restrictBtn)
+        # propLayout.addWidget(restrictBtn)
         # change permissions (user access group.)
         userpermBtn = QToolButton()
-        userpermBtn.setIcon(FigIcon("user_permissions.svg")) 
-        utilLayout.addWidget(userpermBtn) 
+        userpermBtn.setIcon(FigIcon("fileviewer/user_permissions.svg")) 
+        propLayout.addWidget(userpermBtn) 
         # change r/w/x permissions.
         rwxpermBtn = QToolButton()
-        rwxpermBtn.setIcon(FigIcon("permissions.svg"))
-        utilLayout.addWidget(rwxpermBtn)
-        utilLayout.addWidget(QVLine())
-        # encrypt
-        encryptBtn = QToolButton()
-        encryptBtn.setIcon(FigIcon("encrypt.svg"))
-        utilLayout.addWidget(encryptBtn)
-        # decrypt 
-        decryptBtn = QToolButton()
-        decryptBtn.setIcon(FigIcon("decrypt.svg"))
-        utilLayout.addWidget(decryptBtn)
-        utilLayout.addWidget(QVLine())
-        # zip
-        zipBtn = QToolButton()
-        zipBtn.setIcon(FigIcon("zip.svg"))
-        utilLayout.addWidget(zipBtn)
-        # unzip
-        unzipBtn = QToolButton()
-        unzipBtn.setIcon(FigIcon("zip.svg"))
-        utilLayout.addWidget(unzipBtn)
-        utilLayout.addWidget(QVLine())
-        # new file
-        newFileBtn = QToolButton()
-        newFileBtn.setIcon(FigIcon("new_file.svg"))
-        utilLayout.addWidget(newFileBtn)
-        # file share
-        fileShareBtn = QToolButton()
-        fileShareBtn.setIcon(FigIcon("file_share.svg"))
-        utilLayout.addWidget(fileShareBtn)
-        # new folder
-        newFolderBtn = QToolButton()
-        newFolderBtn.setIcon(FigIcon("new_folder.svg"))
-        utilLayout.addWidget(newFolderBtn)
-        # email file/folder.
-        emailBtn = QToolButton()
-        emailBtn.setIcon(FigIcon("email.svg"))
-        utilLayout.addWidget(emailBtn)
-        # rename
-        renameBtn = QToolButton()
-        renameBtn.setIcon(FigIcon("rename.svg"))
-        utilLayout.addWidget(renameBtn)
-        # delete
-        delBtn = QToolButton()
-        delBtn.setIcon(FigIcon("delete.svg"))
-        utilLayout.addWidget(delBtn)
+        rwxpermBtn.setIcon(FigIcon("fileviewer/permissions.svg"))
+        propLayout.addWidget(rwxpermBtn)
+        propLayout.addWidget(QVLine())
         # properties of selected file/folder.
-        utilLayout.addWidget(QVLine())
         propBtn = QToolButton()
-        propBtn.setIcon(FigIcon("properties.svg"))
-        utilLayout.addWidget(propBtn)
+        propBtn.setIcon(FigIcon("fileviewer/properties.svg"))
+        propLayout.addWidget(propBtn)
         # open in terminal
         openInTermBtn = QToolButton()
-        openInTermBtn.setIcon(FigIcon("open_in_terminal.svg"))
-        utilLayout.addWidget(openInTermBtn)
+        openInTermBtn.setIcon(FigIcon("fileviewer/open_in_terminal.svg"))
+        propLayout.addWidget(openInTermBtn)
         # open with.
         openBtn = QToolButton()
-        openBtn.setIcon(FigIcon("open.svg"))
-        utilLayout.addWidget(openBtn)
-        utilLayout.addWidget(QVLine())
+        openBtn.setIcon(FigIcon("fileviewer/open.svg"))
+        propLayout.addWidget(openBtn)
+        propLayout.addWidget(QVLine())
+        # encrypt
+        encryptBtn = QToolButton()
+        encryptBtn.setIcon(FigIcon("fileviewer/encrypt.svg"))
+        propLayout.addWidget(encryptBtn)
+        # decrypt 
+        decryptBtn = QToolButton()
+        decryptBtn.setIcon(FigIcon("fileviewer/decrypt.svg"))
+        propLayout.addWidget(decryptBtn)
+        propLayout.addWidget(QVLine())
+        # zip
+        zipBtn = QToolButton()
+        zipBtn.setIcon(FigIcon("fileviewer/zip.svg"))
+        propLayout.addWidget(zipBtn)
+        # unzip
+        unzipBtn = QToolButton()
+        unzipBtn.setIcon(FigIcon("fileviewer/zip.svg"))
+        propLayout.addWidget(unzipBtn)
+        # notes
+        noteBtn = QToolButton()
+        noteBtn.setIcon(FigIcon("fileviewer/add_note.svg"))
+        propLayout.addWidget(noteBtn)
+        # tags
+        tagsBtn = QToolButton()
+        tagsBtn.setIcon(FigIcon("fileviewer/tags.svg"))
+        propLayout.addWidget(tagsBtn)
+        # right spacer.
+        right_spacer = QWidget()
+        right_spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        propLayout.addWidget(right_spacer)
+
+        propLayout.setContentsMargins(5, 0, 5, 0)
+        propbar.setLayout(propLayout)        
+
+        return propbar
+
+    def initEditBar(self):
+        '''
+        Initialize edit bar.
+        Edit bar contains:
+        1. Go back a folder
+        2. Prev item in history (nav)
+        3. Next item in history (nav)
+        4. Cut 
+        5. Copy
+        6. Paste
+        7. Undo
+        8. Redo
+        9. Create new file
+        10. Create new folder
+        11. Rename
+        12. Delete
+        13. Share file
+        14. Email file
+        15. Match case
+        16. Match whole phrase
+        17. Regex pattern matching for search
+        '''    
+        editbar = QWidget()
+        editLayout = QHBoxLayout()
+        # left spacer.
+        left_spacer = QWidget()
+        left_spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        editLayout.addWidget(left_spacer)
+        # step back one folder.
+        backBtn = QToolButton()
+        backBtn.setIcon(FigIcon("fileviewer/stepback.svg"))
+        backBtn.clicked.connect(self.back)
+        editLayout.addWidget(backBtn)
+        # prev item
+        prevBtn = QToolButton()
+        prevBtn.setIcon(FigIcon("fileviewer/back.svg"))
+        prevBtn.clicked.connect(self.prevPath)
+        editLayout.addWidget(prevBtn)
+        # next item
+        nextBtn = QToolButton()
+        nextBtn.setIcon(FigIcon("fileviewer/forward.svg"))
+        nextBtn.clicked.connect(self.nextPath)
+        editLayout.addWidget(nextBtn)
+        editLayout.addWidget(QVLine())
         # cut/copy/paste
         cutBtn = QToolButton()
-        cutBtn.setIcon(FigIcon("cut.svg"))
-        utilLayout.addWidget(cutBtn)
+        cutBtn.setIcon(FigIcon("fileviewer/cut.svg"))
+        editLayout.addWidget(cutBtn)
         copyBtn = QToolButton()
-        copyBtn.setIcon(FigIcon("copy.svg"))
-        utilLayout.addWidget(copyBtn)
+        copyBtn.setIcon(FigIcon("fileviewer/copy.svg"))
+        editLayout.addWidget(copyBtn)
         pasteBtn = QToolButton()
-        pasteBtn.setIcon(FigIcon("paste.svg"))
-        utilLayout.addWidget(pasteBtn)
-        utilLayout.addWidget(QVLine())
+        pasteBtn.setIcon(FigIcon("fileviewer/paste.svg"))
+        editLayout.addWidget(pasteBtn)
+        editLayout.addWidget(QVLine())
         # undo/redo
         undoBtn = QToolButton()
-        undoBtn.setIcon(FigIcon("undo.svg"))
-        utilLayout.addWidget(undoBtn)
+        undoBtn.setIcon(FigIcon("fileviewer/undo.svg"))
+        editLayout.addWidget(undoBtn)
         redoBtn = QToolButton()
-        redoBtn.setIcon(FigIcon("redo.svg"))
-        utilLayout.addWidget(redoBtn)
-        utilLayout.addWidget(QVLine())
-        
+        redoBtn.setIcon(FigIcon("fileviewer/redo.svg"))
+        editLayout.addWidget(redoBtn)
+        editLayout.addWidget(QVLine()) 
+        # new file
+        newFileBtn = QToolButton()
+        newFileBtn.setIcon(FigIcon("fileviewer/new_file.svg"))
+        editLayout.addWidget(newFileBtn)
+        # new folder
+        newFolderBtn = QToolButton()
+        newFolderBtn.setIcon(FigIcon("fileviewer/new_folder.svg"))
+        editLayout.addWidget(newFolderBtn)
+        editLayout.addWidget(QVLine())
+        # new softlink
+        newLinkBtn = QToolButton()
+        newLinkBtn.setIcon(FigIcon("fileviewer/softlink.svg"))
+        editLayout.addWidget(newLinkBtn)
+        # rename
+        renameBtn = QToolButton()
+        renameBtn.setIcon(FigIcon("fileviewer/rename.svg"))
+        editLayout.addWidget(renameBtn)
+        # delete
+        delBtn = QToolButton()
+        delBtn.setIcon(FigIcon("fileviewer/delete.svg"))
+        editLayout.addWidget(delBtn)  
+        editLayout.addWidget(QVLine())
+        # file share.
+        fileShareBtn = QToolButton()
+        fileShareBtn.setIcon(FigIcon("fileviewer/file_share.svg"))
+        editLayout.addWidget(fileShareBtn)
+        # email file/folder.
+        emailBtn = QToolButton()
+        emailBtn.setIcon(FigIcon("fileviewer/email.svg"))
+        editLayout.addWidget(emailBtn)
+        # copy absolute path.
+        copyPathBtn = QToolButton()
+        copyPathBtn.setIcon(FigIcon("fileviewer/copy_path.svg"))
+        copyPathBtn.clicked.connect(self.copyPathToClipboard)
+        editLayout.addWidget(copyPathBtn)
+        editLayout.addWidget(QVLine())
+        # match case.
+        caseBtn = QToolButton()
+        caseBtn.setIcon(FigIcon("fileviewer/case-sensitive.svg"))
+        # caseBtn.clicked.connect(self.back)
+        editLayout.addWidget(caseBtn)
+        # match whole word.
+        entireBtn = QToolButton()
+        entireBtn.setIcon(FigIcon("fileviewer/whole-word.svg"))
+        # backBtn.clicked.connect(self.back)
+        editLayout.addWidget(entireBtn)
+        # use regex search
+        regexBtn = QToolButton()
+        regexBtn.setIcon(FigIcon("fileviewer/regex_search.svg"))
+        # regexBtn.clicked.connect(self.back)
+        editLayout.addWidget(regexBtn)
+        # right spacer.
+        right_spacer = QWidget()
+        right_spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        editLayout.addWidget(left_spacer)
+
+        editLayout.setContentsMargins(5, 0, 5, 0)
+        editbar.setLayout(editLayout)
+
+        return editbar
+
+    def copyPathToClipboard(self):
+        '''
+        Check which file/folder is currently selected and copy it's path to the clipboard.
+        '''
+        selBtn = self.gridLayout.itemAt(self.j).widget()
+        # print(selBtn.path)
+        if self._parent:
+            self._parent.clipboard.setText(selBtn.path)
+
+    def initViewBar(self):
+        '''
+        Initialize view bar.
+        View bar contains:
+        1. Sort ascending
+        2. Sort descending
+        3. Recently accessed
+        4. Show hidden files (linux: . prefix)
+        5. Hide hidden files
+        6. Toggle list view
+        7. Toggle block view
+        '''
+        viewbar = QWidget()
+        viewLayout = QHBoxLayout()
+        # left spacer.
+        left_spacer = QWidget()
+        left_spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        viewLayout.addWidget(left_spacer)
+        # sort ascending.
         sortUpBtn = QToolButton()
-        sortUpBtn.setIcon(FigIcon("sort_ascending.svg"))
+        sortUpBtn.setIcon(FigIcon("fileviewer/sort_ascending.svg"))
         # sortUpBtn.clicked.connect(self.nextPath)
-        utilLayout.addWidget(sortUpBtn)
-
+        viewLayout.addWidget(sortUpBtn)
+        # sort descending.
         sortDownBtn = QToolButton()
-        sortDownBtn.setIcon(FigIcon("sort_descending.svg"))
+        sortDownBtn.setIcon(FigIcon("fileviewer/sort_descending.svg"))
         # sortUpBtn.clicked.connect(self.nextPath)
-        utilLayout.addWidget(sortDownBtn)
-        utilLayout.addWidget(QVLine())
-
+        viewLayout.addWidget(sortDownBtn)
+        # viewLayout.addWidget(QVLine())
+        # recently accessed files.
+        recentBtn = QToolButton()
+        recentBtn.setIcon(FigIcon("fileviewer/recent.svg"))
+        # sortUpBtn.clicked.connect(self.nextPath)
+        viewLayout.addWidget(recentBtn)
+        # view hidden files.
         unhideBtn = QToolButton()
-        unhideBtn.setIcon(FigIcon("unhide.svg"))
+        unhideBtn.setIcon(FigIcon("fileviewer/unhide.svg"))
         unhideBtn.clicked.connect(lambda: self.unhide(self.path))
-        utilLayout.addWidget(unhideBtn)
+        viewLayout.addWidget(unhideBtn)
 
         hideBtn = QToolButton()
-        hideBtn.setIcon(FigIcon("hide.svg"))
+        hideBtn.setIcon(FigIcon("fileviewer/hide.svg"))
         hideBtn.clicked.connect(lambda: self.refresh(self.path))
-        utilLayout.addWidget(hideBtn)
-        utilLayout.addWidget(QVLine())
-
+        viewLayout.addWidget(hideBtn)
+        # viewLayout.addWidget(QVLine())
         listViewBtn = QToolButton() # toggle list view.
-        listViewBtn.setIcon(FigIcon("listview.svg"))
-        utilLayout.addWidget(listViewBtn)
+        listViewBtn.setIcon(FigIcon("fileviewer/listview.svg"))
+        viewLayout.addWidget(listViewBtn)
 
         blockViewBtn = QToolButton() # toggle block view.
-        blockViewBtn.setIcon(FigIcon("blockview.svg"))
-        utilLayout.addWidget(blockViewBtn)
- 
-        utilLayout.setContentsMargins(0, 0, 0, 0)
+        blockViewBtn.setIcon(FigIcon("fileviewer/blockview.svg"))
+        viewLayout.addWidget(blockViewBtn)        
+        # right spacer.
+        right_spacer = QWidget()
+        right_spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        viewLayout.addWidget(right_spacer)
+
+        viewLayout.setContentsMargins(5, 0, 5, 0)
+        viewbar.setLayout(viewLayout)
+
+        return viewbar
+
+    def initUtilBar(self):
+        utilbar = QWidget()
+        utilLayout = QHBoxLayout() # bookmarks, restricted view, change permissions, encrypt, zip/unzip, new folder, new file, undo/redo, cut/copy/paste, rename, open in terminal, properties.
+
+        utilLayout.setContentsMargins(5, 0, 5, 0)
         utilbar.setLayout(utilLayout)
 
         return utilbar
@@ -774,3 +859,80 @@ class FigTreeFileExplorer(QWidget):
 
 if __name__ == "__main__":
     FigFileViewer("/home/atharva/GUI/FigUI")
+    # def _setThumbnailMime(self):
+    #     _,ext = os.path.splitext(self.name)
+    #     # print(self.name, self.stem, ext, os.path.isfile(self.path))
+    #     ext = ext[1:]
+    #     if self.name == ".git":
+    #         self.setIcon(FigIcon("launcher/git.png"))
+    #         return
+    #     elif self.name == "pom.xml":
+    #         self.setIcon(FigIcon("launcher/pom.png"))
+    #         return
+    #     elif self.name.lower() == "todo":
+    #         self.setIcon(FigIcon("launcher/todo.png"))
+    #         return
+    #     elif not self.isfile:
+    #         for phrase in ["nano", "eclipse", "cache", "java", "cargo", "compiz", "aiml", "kivy", "netbeans", "mozilla"]:
+    #             if phrase in self.name.lower():
+    #                 self.setIcon(FigIcon(f"launcher/{phrase}.png"))
+    #                 return
+    #         if self.name == "Music":
+    #             self.setIcon(FigIcon("launcher/Music.svg"))
+    #         elif self.name in ["Videos", "Desktop", "Documents", "Downloads", "Pictures"]:
+    #             self.setIcon(FigIcon(f"launcher/{self.name}.png"))
+    #         elif self.name.startswith(".git"):
+    #             self.setIcon(FigIcon("launcher/git.png"))
+    #         elif self.name in [".rstudio-desktop"]:
+    #             self.setIcon(FigIcon("launcher/R.png"))
+    #         elif self.name in [".python-eggs"]:
+    #             self.setIcon(FigIcon("launcher/python-eggs.png"))
+    #         elif "android" in self.name.lower():
+    #             self.setIcon(FigIcon("launcher/android.png"))
+    #         elif "gnome" in self.name.lower():
+    #             self.setIcon(FigIcon("launcher/gnome.png"))
+    #         elif "anaconda" in self.name.lower() or self.name.startswith(".conda"):
+    #             self.setIcon(FigIcon("launcher/anaconda3.png"))
+    #         elif "jupyter" in self.name.lower() or "ipython" in self.name.lower() or "ipynb" in self.name.lower():
+    #             self.setIcon(FigIcon("launcher/ipynb.png"))
+    #         elif "julia" in self.name.lower():
+    #             self.setIcon(FigIcon("launcher/jl.png"))
+    #         elif "vscode" in self.name.lower():
+    #             self.setIcon(FigIcon("launcher/notvscode.png"))
+    #         elif "tor" in re.split("_| |-", self.name.lower()) or self.name == ".tor":
+    #             self.setIcon(FigIcon("launcher/tor.png"))
+    #         elif self.name in [".thunderbird", ".wine", ".dbus", ".ssh", ".npm", ".gradle", ".openoffice"]:
+    #             self.setIcon(FigIcon(f"launcher/{self.name[1:]}.png"))
+    #         elif self.name == ".linuxbrew" or self.name == "Homebrew":
+    #             self.setIcon(FigIcon("launcher/brew.png"))
+    #         elif self.name == ".cmake":
+    #             self.setIcon(FigIcon("launcher/cmake.svg"))
+    #         else:    
+    #             self.setIcon(FigIcon("launcher/fileviewer.png"))
+    #         return      
+
+# def getThumbnail(path):
+#     name = pathlib.Path(path).name 
+#     _,ext = os.path.splitext(name)
+#     stem = pathlib.Path(path).stem
+#     # print(self.name, self.stem, ext, os.path.isfile(self.path))
+#     ext = ext[1:]
+#     if name.lower() == "todo": return "launcher/todo.png"
+#     # elif ext in ["png","jpg"]: # display standard thumbnail for png/jpg.
+#     #     return path
+#     elif stem == "README": return "launcher/README.png"
+#     elif stem == "requirements": return "launcher/requirements.png"
+#     elif stem.lower() == "license": return "launcher/license.png"
+#     elif stem == ".gitignore": return "launcher/gitignore.png"
+#     elif ext == "":
+#         if subprocess.getoutput(f"file --mime-encoding {path}").endswith("binary"):
+#             return "launcher/bin.png"
+#         else:
+#             return "launcher/txt.png"
+#     if os.path.exists(__icon__(f"launcher/{ext}.png")): # check if png file for the ext
+#         return f"launcher/{ext}.png"
+#     else:
+#         if os.path.exists(__icon__(f"launcher/{ext}.svg")): 
+#             return f"launcher/{ext}.svg"
+#         else: 
+#             return f"launcher/txt.png" # if ext is not recognized set it to txt
