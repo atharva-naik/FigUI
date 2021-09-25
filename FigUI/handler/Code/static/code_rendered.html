@@ -150,41 +150,316 @@
             </div>
         </header> -->
             <textarea id="codemirror">
-import copy
-import random
-import datetime
-import pandas as pd 
-# random.seed(666)
-def swap(xs, a, b):
-    xs[a], xs[b] = xs[b], xs[a]
+# ~/.bashrc: executed by bash(1) for non-login shells.
+# see /usr/share/doc/bash/examples/startup-files (in the package bash-doc)
+# for examples
+brightness() {
+    # specifically for HDMI connected monitor
+    xrandr --output HDMI-1-1 --brightness $1
+}
+bashrc() {
+    code ~/.bashrc
+}
+lines() {
+    cat "$1" | wc -l
+}
+version() {
+    /home/atharva/.version.py $1
+}
+/usr/bin/amixer -c 0 sset "Auto-Mute Mode" Disabled
+clear
+# If not running interactively, don't do anything
+case $- in
+    *i*) ;;
+      *) return;;
+esac
 
-def derange(xs):
-    for a in range(1, len(xs)):
-        b = random.choice(range(0, a))
-        swap(xs, a, b)
-    return xs
+# don't put duplicate lines or lines starting with space in the history.
+# See bash(1) for more options
+HISTCONTROL=ignoreboth
 
-projects = ['Rajdeep\'s','Zishan\'s','Mithun\'s','Made with ML']
-projectsR = projects[1:]
-learn = [3*['Lecture Videos'],2*['PyTorch Tutorials'],2*['Competitive coding']] 
-learn = [item for sublist in learn for item in sublist]
-learn = random.sample(learn, len(learn))
-# print(learn)
-# projects += projects[1:]
-p1 = random.sample(projects, len(projects))
-pR = random.sample(projectsR, len(projectsR))
-p = []
-# print(p1+pR)
-# p += [p1]
-p += [copy.copy(p1+pR)]
-p += [derange(p1)+derange(pR)]
-p = list(map(list, zip(*p)))
-# print(p)
-schedule = []
-time_intervals = []
-for i in range(learn):
+# append to the history file, don't overwrite it
+shopt -s histappend
+
+# for setting history length see HISTSIZE and HISTFILESIZE in bash(1)
+HISTSIZE=1000
+HISTFILESIZE=2000
+
+# check the window size after each command and, if necessary,
+# update the values of LINES and COLUMNS.
+shopt -s checkwinsize
+
+# If set, the pattern "**" used in a pathname expansion context will
+# match all files and zero or more directories and subdirectories.
+#shopt -s globstar
+
+# make less more friendly for non-text input files, see lesspipe(1)
+[ -x /usr/bin/lesspipe ] && eval "$(SHELL=/bin/sh lesspipe)"
+
+# set variable identifying the chroot you work in (used in the prompt below)
+if [ -z "${debian_chroot:-}" ] && [ -r /etc/debian_chroot ]; then
+    debian_chroot=$(cat /etc/debian_chroot)
+fi
+
+# set a fancy prompt (non-color, unless we know we "want" color)
+case "$TERM" in
+    xterm-color|*-256color) color_prompt=yes;;
+esac
+
+# uncomment for a colored prompt, if the terminal has the capability; turned
+# off by default to not distract the user: the focus in a terminal window
+# should be on the output of commands, not on the prompt
+#force_color_prompt=yes
+
+if [ -n "$force_color_prompt" ]; then
+    if [ -x /usr/bin/tput ] && tput setaf 1 >&/dev/null; then
+	# We have color support; assume it's compliant with Ecma-48
+	# (ISO/IEC-6429). (Lack of such support is extremely rare, and such
+	# a case would tend to support setf rather than setaf.)
+	color_prompt=yes
+    else
+	color_prompt=
+    fi
+fi
+color_prompt=yes
+if [ "$color_prompt" = yes ]; then
+    PS1='${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\$ '
+else
+    PS1='${debian_chroot:+($debian_chroot)}\u@\h:\w\$ '
+fi
+unset color_prompt force_color_prompt
+
+# If this is an xterm set the title to user@host:dir
+case "$TERM" in
+xterm*|rxvt*)
+    PS1="\[\e]0;${debian_chroot:+($debian_chroot)}\u@\h: \w\a\]$PS1"
+    ;;
+*)
+    ;;
+esac
+
+# enable color support of ls and also add handy aliases
+if [ -x /usr/bin/dircolors ]; then
+    test -r ~/.dircolors && eval "$(dircolors -b ~/.dircolors)" || eval "$(dircolors -b)"
+    alias ls='ls --color=auto'
+    # alias bashrc='code ~/.bashrc'
+    #alias dir='dir --color=auto'
+    #alias vdir='vdir --color=auto'
+
+    alias grep='grep --color=auto'
+    alias fgrep='fgrep --color=auto'
+    alias egrep='egrep --color=auto'
+fi
+
+# colored GCC warnings and errors
+#export GCC_COLORS='error=01;31:warning=01;35:note=01;36:caret=01;32:locus=01:quote=01'
+
+# some more ls aliases
+alias ll='ls -alF'
+alias la='ls -A'
+alias l='ls -CF'
+export ICONS_PATH="/usr/share/icons/gnome/"
+export PATH="/usr/bin:$PATH"
+export MANPATH="/usr/local/man:/usr/local/share/man:/usr/share/man"
+export CATALINA_HOME='/home/atharva/apache-tomcat-8.5.53'
+export JAVA_HOME='/usr/lib/jvm/java-8-openjdk-amd64' 
+export PATH=$PATH:'/home/atharva/chromedriver'
+# export HTTP_PROXY='http://172.16.2.30:8080/'
+# export HTTPS_PROXY='http://172.16.2.30:8080/'
+# export FTP_PROXY='http://172.16.2.30:8080/'
+export UE4_ROOT=~/UE_4.22
+export CARLA_SERVER=~/CARLA_0.9.6/CarlaUE4.sh
+export no_proxy='localhost,10.5.18.110'
+# Add an "alert" alias for long running commands.  Use like so:
+#   sleep 10; alert
+alias alert='notify-send --urgency=low -i "$([ $? = 0 ] && echo terminal || echo error)" "$(history|tail -n1|sed -e '\''s/^\s*[0-9]\+\s*//;s/[;&|]\s*alert$//'\'')"'
+
+#alias update='sudo apt-get update'
+#alias upgrade='sudo apt-get upgrade'
+alias daal='sudo apt-get install'
+alias cm='catkin_make'
+alias deps='rosdep install --from-paths src --ignore-src -r -y'
+alias car='roslaunch car_demo demo.launch'
+alias fren='roslaunch frenet_planner frenet_planner.launch'
+alias fren-rl='roslaunch frenet_planner frenet_rl_planner.launch'
+alias mit='python /home/atharva/catkin_ws/src/tracking_control/src/scripts/controllers/PID_MIT_velocity_controller.py'
+alias pb="rostopic pub -1 /cmd_vel geometry_msgs/Twist -- '[2.0, 0.0, 0.0]' '[0.0, 0.0, 0.0]'"
+alias pp='python /home/atharva/catkin_ws/src/tracking_control/src/scripts/tracking_Methods/pure_pursuit.py'
+alias virtenv='. ~/.virtualenvs/pywork3/bin/activate'
+alias run-carla=' cd CARLA_0.9.6; ./CarlaUE4.sh'
+alias blank-carla=' cd CARLA_0.9.6; ./CarlaUE4.sh --no-rendering'
+alias manual=' cd CARLA_0.9.6/PythonAPI/examples; python manual_control.py'
+alias man_ego=' cd CARLA_0.9.6/PythonAPI/examples; python manual_control.py --rolename=ego_vehicle'
+alias bridge-test='rostopic pub /carla/ego_vehicle/vehicle_control_cmd carla_msgs/CarlaEgoVehicleControl "{throttle: 1.0, steer: 0.0}" -r 10'
+alias ego='roslaunch carla_ros_bridge carla_ros_bridge_with_example_ego_vehicle.launch'
+alias ack='roslaunch carla_ackermann_control carla_ackermann_control.launch'
+alias ack-bridge='roslaunch carla_ackermann_control carla_ros_bridge_with_ackermann_control.launch'
+alias ctcevc='python Control_to_CarlaEgoVehicleControl.py'
+
+##################################################################################################
+#alias sdc='~/catkin_ws/devel/setup.bash'
+#alias sdr='~/rl_ws/devel/setup.bash'
+# Alias definitions.
+# You may want to put all your additions into a separate file like
+# ~/.bash_aliases, instead of adding them here directly.
+# See /usr/share/doc/bash-doc/examples in the bash-doc package.
+
+if [ -f ~/.bash_aliases ]; then
+    . ~/.bash_aliases
+fi
+
+# enable programmable completion features (you don't need to enable
+# this, if it's already enabled in /etc/bash.bashrc and /etc/profile
+# sources /etc/bash.bashrc).
 
 
+if ! shopt -oq posix; then
+  if [ -f /usr/share/bash-completion/bash_completion ]; then
+    . /usr/share/bash-completion/bash_completion
+  elif [ -f /etc/bash_completion ]; then
+    . /etc/bash_completion
+  fi
+fi
+
+# export PYTHONPATH=$PYTHONPATH:/home/atharva/CARLA_0.9.6/PythonAPI/carla/dist/carla-0.9.6-py2.7-linux-x86_64.egg
+
+# source /opt/ros/kinetic/setup.bash
+# source ~/catkin_ws/devel/setup.bash #so that frenet_planner of rl_ws can be detetcted
+#source ~/rl_ws/devel/setup.bash
+#source ~/frenet_ws/devel/setup.bash
+# source ~/carla-ros-bridge/catkin_ws/devel/setup.bash
+#source ~/sim_ws/devel/setup.bash
+# for file in `find /home/atharva/ -name "stanford-english-corenlp-2018-10-05-models.jar"`; do export
+# CLASSPATH="$CLASSPATH:`realpath $file`"; done
+# export PYTHONPATH="./.local/lib/python3.5/site-packages:$PYTHONPATH"
+# export PYTHONPATH="./usr/local/lib/python3.5/dist-packages:$PYTHONPATH"
+# export PYTHONPATH="./.local/lib/python2.7/site-packages:$PYTHONPATH"
+# export PYTHONPATH="./usr/local/lib/python2.7/dist-packages:$PYTHONPATH"
+export PATH=/home/atharva/anaconda3/bin:$PATH
+export PYTHONPATH=$PYTHONPATH:/usr/lib/python2/dist-packages/lib/python2.7/site-packages/
+export PYTHONPATH=$PYTHONPATH:/usr/lib/python3/dist-packages/lib/python3.5/site-packages/
+
+# >>> conda initialize >>>
+# !! Contents within this block are managed by 'conda init' !!
+__conda_setup="$('/home/atharva/anaconda3/bin/conda' 'shell.bash' 'hook' 2> /dev/null)"
+if [ $? -eq 0 ]; then
+    eval "$__conda_setup"
+else
+    if [ -f "/home/atharva/anaconda3/etc/profile.d/conda.sh" ]; then
+        . "/home/atharva/anaconda3/etc/profile.d/conda.sh"
+    else
+        export PATH="/home/atharva/anaconda3/bin:$PATH"
+    fi
+fi
+unset __conda_setup
+# <<< conda initialize <<<
+
+export EDITOR='vscode'
+
+# Virtual Environment Wrapper
+# source /usr/local/bin/virtualenvwrapper.sh
+export PATH=$HOME/pintos/src/utils:$PATH
+# btplogin() {
+#     ssh atharva-bishal@10.5.30.155 -p 8201 -D 9050 -J atharva-bishal@cnerg.iitkgp.ac.in:8201
+# }
+# set path variable for spark
+export SPARK_HOME=/opt/spark
+export PATH=$SPARK_HOME/bin:$PATH
+export GIT="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"
+export GIT_FIG="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"
+cclogin() {
+    sshpass -p "I<3Myself" ssh -o StrictHostKeyChecking=no atharva2@cedar.computecanada.ca
+}
+cclogin() {
+    sshpass -p "I<3Myself" ssh -o StrictHostKeyChecking=no atharva2@cedar.computecanada.ca
+}
+mangalogin() {
+    sshpass -p "7BWydczJ4n4kV.zahKXNzard" ssh -o StrictHostKeyChecking=no atharva@amii-manga.cs.ualberta.ca
+}
+mkdisk() {
+    cd 
+    echo -e "\x1b[34;1mentering userprog directory in pintos\x1b[0m"
+    cd pintos/src/userprog/
+    make
+    echo -e "\x1b[32;1mmaking userprog directory\x1b[0m"
+    cd build/
+    echo -e "\x1b[32;1mmaking disk\x1b[0m"
+    pintos-mkdisk filesys.dsk --filesys-size=2
+    echo -e "\x1b[31;1mformatting disk\x1b[0m"
+    pintos -f -q
+    # pintos -p ../../examples/echo -a echo -- -q
+    }
+fig() {
+    /home/atharva/GUI/FigUI/main.py
+}
+# notes() {
+#     editor="code"
+#     dir=$PWD
+#     cd 
+#     cd /home/atharva/cuda/notes/
+
+#     case "$1" in 
+#         -n)
+#             cmd="touch '$2.txt'";;
+#         -o)
+#             cmd="$editor '$2.txt'";;
+#         -d)
+#             cmd="$rm '$2.txt'";;
+#         *)
+#             if [ "$1" = "" ]; then 
+#                 cmd="ls"
+#             else
+#                 cmd="cat '$1.txt'" 
+#             fi;; 
+#     esac 
+#     eval $cmd
+#     cd "$dir"
+#     }
+
+# xcowfortune &
+
+source /home/atharva/boss/ipod.sh
+source /home/atharva/boss/kindle.sh
+source /home/atharva/boss/gags.sh
+source /home/atharva/boss/games.sh
+source /home/atharva/boss/schd.sh
+source /home/atharva/boss/now.sh
+source /home/atharva/boss/eqns.sh
+source /home/atharva/boss/mausam.sh
+boss() { 
+        python /home/atharva/boss/shell.py "$PWD"
+    }
+boss2() {
+    /home/atharva/boss\ v2.0/boss/frontend/main.py
+}
+# /home/atharva/boss\ v2.0/launch &
+# boss2 &
+#Comment this to revert to normal terminal
+# boss
+source /home/atharva/boss/pasm.sh
+source /home/atharva/boss/extract.sh
+source /home/atharva/boss/os.sh
+source /home/atharva/boss/bs.sh
+source /home/atharva/boss/dl.sh
+source /home/atharva/boss/sem.sh
+source /home/atharva/boss/net.sh
+source /home/atharva/boss/bots.sh
+source /home/atharva/boss/tvid.sh
+source /home/atharva/boss/ihtml.sh
+source /home/atharva/boss/shorten.sh
+source /home/atharva/boss/tran.sh
+source /home/atharva/boss/tdvd.sh
+source /home/atharva/boss/tui.sh
+source /home/atharva/Semester\ 6/OS/Lab/integrity.sh
+
+# brew stuff 
+echo 'eval $(/home/linuxbrew/.linuxbrew/bin/brew shellenv)' >> /home/atharva/.profile
+eval $(/home/linuxbrew/.linuxbrew/bin/brew shellenv)
+# end of brew stuff
+#THIS MUST BE AT THE END OF THE FILE FOR SDKMAN TO WORK!!!
+export SDKMAN_DIR="$HOME/.sdkman"
+[[ -s "$HOME/.sdkman/bin/sdkman-init.sh" ]] && source "$HOME/.sdkman/bin/sdkman-init.sh"
+# export PS1="🎅\[\e[33;41m\][\[\e[m\]\[\e[32m\]\u\[\e[m\]\[\e[36m\]@\[\e[m\]\[\e[34m\]\h\[\e[m\]\[\e[33;41m\]]\[\e[m\]🎄 "
             </textarea>
             <div style="margin-left: auto; margin-right: auto;">
                 <p><span style="color: white; font-size: 13px">Select a theme </span>
@@ -331,7 +606,7 @@ for i in range(learn):
                 electricChars: true,
                 lineSeparator: null,
                 extraKeys: {"Ctrl-Q": "toggleComment"},
-                mode: "text/x-python",
+                mode: "text/x-sh",
                 indentUnit: 4,
                 styleActiveLine: true,
                 xml: true,

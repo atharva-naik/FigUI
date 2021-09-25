@@ -10,7 +10,7 @@ import os, sys, logging, datetime, pathlib
 from PyQt5.QtPrintSupport import *
 from PyQt5.QtCore import QThread, QUrl, QSize, Qt, QProcess
 from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEngineProfile, QWebEngineSettings
-from PyQt5.QtGui import QIcon, QFont, QKeySequence, QTransform, QTextCharFormat, QRegExpValidator, QSyntaxHighlighter, QFontDatabase
+from PyQt5.QtGui import QIcon, QFont, QKeySequence, QTransform, QTextCharFormat, QRegExpValidator, QSyntaxHighlighter, QFontDatabase, QWindow
 from PyQt5.QtWidgets import QApplication, QAction, QDialog, QPushButton, QStatusBar, QToolBar, QWidget, QLineEdit, QMainWindow, QHBoxLayout, QVBoxLayout, QPlainTextEdit, QToolBar, QFrame, QSizePolicy, QTextEdit, QToolButton, QLabel
 try:
     from . import CodeEditor
@@ -20,7 +20,7 @@ except ImportError:
     from FigUI.handler.Code.QtColorPicker import ColorPicker
 
 
-class VisualizerShell(QWidget):
+class VisualizerShell(QMainWindow):
     '''You can display images with lsix.'''
     def __init__(self, parent=None, height=2):
         super(VisualizerShell, self).__init__()
@@ -35,7 +35,7 @@ class VisualizerShell(QWidget):
                                     '-background', '#300a24'])
         # print(int(window.winId()))
         # self.terminal = QWidget.createWindowContainer(window, parent=self)
-        blankWindow = QTextEdit()
+        blankWindow = QTextEdit(self)
         blankWindow.setReadOnly(True)
         blankWindow.setFixedHeight(20*height+20)
         # loggerWindow.setLineWrapColumnOrWidth(200)
@@ -46,7 +46,9 @@ class PromptEditor(QWidget):
         super(PromptEditor, self).__init__(parent)
         layout = QVBoxLayout()
         self.editor = QLineEdit()
-        self.viewer = VisualizerShell()
+        self.shell = VisualizerShell()
+        window = QWindow.fromWinId(self.shell.winId())
+        self.viewer = QWidget.createWindowContainer(window)
         layout.addWidget(self.editor)
         layout.addWidget(self.viewer)
         self.setLayout(layout)

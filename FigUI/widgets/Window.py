@@ -6,7 +6,7 @@ import psutil, webbrowser, threading
 from PyQt5.Qt import PYQT_VERSION_STR
 from PyQt5.QtCore import QThread, QUrl, QTimer, QPoint, QRect, QSize, Qt, QT_VERSION_STR
 from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEngineProfile, QWebEngineSettings
-from PyQt5.QtGui import QIcon, QFont, QKeySequence, QTransform, QTextCharFormat, QSyntaxHighlighter, QFontDatabase, QTextFormat, QColor, QPainter, QDesktopServices
+from PyQt5.QtGui import QIcon, QFont, QKeySequence, QTransform, QTextCharFormat, QSyntaxHighlighter, QFontDatabase, QTextFormat, QColor, QPainter, QDesktopServices, QWindow
 from PyQt5.QtWidgets import QApplication, QAction, QDialog, QPushButton, QTabWidget, QStatusBar, QToolBar, QWidget, QLineEdit, QMainWindow, QHBoxLayout, QVBoxLayout, QPlainTextEdit, QToolBar, QFrame, QSizePolicy, QTabBar, QDesktopWidget, QLabel, QToolButton, QTextEdit, QComboBox, QListWidget, QListWidgetItem, QScrollArea, QDockWidget, QGraphicsBlurEffect, QSplitter
 
 try:
@@ -17,11 +17,12 @@ try:
     # from FigUI.handler.Code import CodeEditor
     from FigUI.subSystem.Shell import FigShell
     from FigUI.subSystem.History import HistoryLogger
+    from FigUI.widgets.ActivityPanel import FigActivityPanel
     from FigUI.handler.Code.QtColorPicker import ColorPicker
     from FileViewer import FigFileViewer, FigTreeFileExplorer
-    from FigUI.subSystem.system.network import NetworkHandler
+    from FigUI.subSystem.System.Network import NetworkHandler
     from FigUI.subSystem.Math.Calculator import FigCalculator
-    from FigUI.subSystem.system.brightness import BrightnessController
+    from FigUI.subSystem.System.Display import BrightnessController
 #     from utils import *
 except ImportError:
     from .Theme import FigTheme
@@ -30,12 +31,13 @@ except ImportError:
     from .Launcher import FigLauncher
     # from ..handler.Code import CodeEditor
     from ..subSystem.Shell import FigShell
+    from .ActivityPanel import FigActivityPanel
     from ..subSystem.History import HistoryLogger
     from ..handler.Code.QtColorPicker import ColorPicker
-    from ..subSystem.system.network import NetworkHandler
+    from ..subSystem.System.Network import NetworkHandler
     from ..subSystem.Math.Calculator import FigCalculator
     from .FileViewer import FigFileViewer, FigTreeFileExplorer
-    from ..subSystem.system.brightness import BrightnessController
+    from ..subSystem.System.Display import BrightnessController
 #     from .utils import *
 def FigIcon(name, w=None, h=None):
     __current_dir__ = os.path.dirname(os.path.realpath(__file__))
@@ -275,6 +277,8 @@ class FigLogger:
                 widget.setText("<br>".join(self.html))
             except AttributeError:
                 pass # if setText is not possible.
+            except RuntimeError:
+                self.error("deleted window")
 
     def _write(self):
         with open(self.path, "a") as f:
@@ -702,6 +706,8 @@ class FigWindow(QMainWindow):
 
         # initialize file tree.
         self.fileTree = FigTreeFileExplorer()
+        # initialize activity panel.
+        self.activity = FigActivityPanel(parent=self)
 
         self.bottomBar = self.initBottomBar()
         self.subSysBar1, self.subSysBar2 = self.subSystemsBar()
@@ -754,6 +760,8 @@ class FigWindow(QMainWindow):
         # self.centralWidget.layout.addWidget(self.tabs)
         self.centralWidget.addWidget(self.fileTree)
         self.centralWidget.addWidget(self.tabs)
+        self.centralWidget.addWidget(self.activity)
+        self.centralWidget.setStyleSheet("background: #292929")
         # self.centralWidget.layout.addWidget(QPushButton("Wow"))
         # self.centralWidget.setLayout(self.centralWidget.layout)
         self.setCentralWidget(self.centralWidget) # making tabs as central widget
@@ -781,7 +789,7 @@ class FigWindow(QMainWindow):
         documents = os.path.join(home, "Documents")
         downloads = os.path.join(home, "Downloads")
 
-        sysbar = QToolBar()
+        sysbar = QToolBar("Shortcuts Bar Visibility")
         sysbar.setIconSize(QSize(22,22))
         sysbar.setStyleSheet("background: #292929; color: #fff; border: 0px")   
         sysbar.setMovable(False)
@@ -841,15 +849,26 @@ class FigWindow(QMainWindow):
         return sysbar
 
     def initDebugBar(self):
-        sysbar = QToolBar()
+        sysbar = QToolBar("Coding ToolBar Visibility")
         sysbar.setIconSize(QSize(22,22))
-        sysbar.setStyleSheet("background: #292929; color: #fff") 
+        sysbar.setStyleSheet('''
+            padding: 1px; 
+            margin: 0px; 
+            background: #292929; 
+            color: #fff; 
+            border: 0px
+        ''')
         sysbar.setMovable(False)       
         # file explorer.
         fileTreeBtn = QAction("Explorer", self)
         fileTreeBtn.setToolTip("file explorer.")
         fileTreeBtn.setIcon(FigIcon("sysbar/explorer.svg"))
         fileTreeBtn.triggered.connect(self.fileTree.toggle)
+        # activity panel.
+        activityBtn = QAction("Activity", self)
+        activityBtn.setToolTip("Check activity panel.")
+        activityBtn.setIcon(FigIcon("sysbar/activity.svg"))
+        activityBtn.triggered.connect(self.activity.toggle)
         # debugging.
         bugBtn = QAction("Debug", self)
         bugBtn.setToolTip("start debugging.")
@@ -868,6 +887,7 @@ class FigWindow(QMainWindow):
         runBtn.setIcon(FigIcon("sysbar/run.svg"))
 
         sysbar.addAction(fileTreeBtn)
+        sysbar.addAction(activityBtn)
         sysbar.addAction(bugBtn)
         sysbar.addAction(labBtn)
         sysbar.addAction(gitHubBtn)
@@ -876,9 +896,15 @@ class FigWindow(QMainWindow):
         return sysbar
 
     def initMediaBar(self):
-        sysbar = QToolBar()
+        sysbar = QToolBar("Media Controls Bar Visibility")
         sysbar.setIconSize(QSize(22,22))
-        sysbar.setStyleSheet("background: #292929; color: #fff")        
+        sysbar.setStyleSheet('''
+            padding: 1px; 
+            margin: 0px; 
+            background: #292929; 
+            color: #fff; 
+            border: 0px
+        ''')
         # decrease volume .
         volMinusBtn = QAction("Volume Minus", self)
         volMinusBtn.setToolTip("Decrease volume.")
@@ -909,6 +935,7 @@ class FigWindow(QMainWindow):
         nextBtn.setToolTip("Next media.")
         nextBtn.setIcon(FigIcon("sysbar/next.svg"))
         nextBtn.triggered.connect(lambda: os.system("xdotool key XF86AudioNext"))
+        blankBtn = QAction("", self)
         # add actions.
         sysbar.addAction(prevBtn)
         sysbar.addAction(nextBtn)
@@ -916,13 +943,20 @@ class FigWindow(QMainWindow):
         sysbar.addAction(volMinusBtn)
         sysbar.addAction(muteBtn)
         sysbar.addAction(playBtn)
+        sysbar.addAction(blankBtn)
 
         return sysbar
 
     def systemBar(self):
-        sysbar = QToolBar()
+        sysbar = QToolBar("System Controls Bar Visibility")
         sysbar.setIconSize(QSize(22,22))
-        sysbar.setStyleSheet("background: #292929; color: #fff")
+        sysbar.setStyleSheet('''
+            padding: 1px; 
+            margin: 0px; 
+            background: #292929; 
+            color: #fff; 
+            border: 0px
+        ''')
         sysbar.setMovable(False)
         # top spacer
         top_spacer = QWidget()
@@ -931,6 +965,8 @@ class FigWindow(QMainWindow):
         ontopBtn = QAction(self)
         ontopBtn.setToolTip("always stay on top")
         ontopBtn.setIcon(FigIcon("sysbar/ontop.svg"))
+        
+        # flag to stay on top
         ontopBtn.triggered.connect(lambda: self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint))
         # increase opacity
         self.opacLevel = 0.99
@@ -974,7 +1010,7 @@ class FigWindow(QMainWindow):
         return sysbar
 
     def subSystemsBar(self):
-        subbar = QToolBar()
+        subbar = QToolBar("App Launcher Bar Visibility")
         # # creating a blur effect
         # self.blur_effect = QGraphicsBlurEffect()
         # # setting blur radius
@@ -1000,7 +1036,7 @@ class FigWindow(QMainWindow):
         }
         ''')
         # subbar.setAttribute(Qt.WA_TranslucentBackground)
-        sysbar = QToolBar()
+        sysbar = QToolBar("System Management Bar Visibility")
         # sysbar.setIconSize(QSize(25,25))
         sysbar.setStyleSheet('''
         QToolBar { 
@@ -1013,6 +1049,8 @@ class FigWindow(QMainWindow):
             border: 0px;
             padding-top: 2px;
             padding-bottom: 2px;
+            padding-left: 5px;
+            padding-right: 5px;
         }
         QPushButton::hover { 
             background: #734494;
@@ -1181,8 +1219,157 @@ class FigWindow(QMainWindow):
         else:
             self.showMaximized()
 
+    def colorPickerDialog(self):
+        colorPicker = ColorPicker(useAlpha=True)
+        picked_color = colorPicker.getColor((0,0,0,50))
+        print(picked_color)
+
+    def log(self, icon, path):
+        handler = __icon__(icon)
+        self.fig_history.log(handler, path)
+
+    def addNewTerm(self, path=None):
+        '''Add new terminal widget'''
+        if path:
+            terminal = FigShell(parent=self, cmd=f"cd '{path}'; bash")
+        else:
+            terminal = FigShell(parent=self)
+        # self.terminals = []
+        # main_window = QMainWindow()
+        # main_window.setCentralWidget(terminal)
+        # main_window.show()
+        # self.terminals.append(main_window)
+        # window = QWindow.fromWinId(main_window.winId())
+        # shell = QWidget.createWindowContainer(window)
+        i = self.tabs.addTab(terminal, FigIcon("launcher/bash.png"), "\tTerminal")
+        self.tabs.setCurrentIndex(i)
+        # self.tabs.setTabWhatsThis(i, "xterm (embedded)")
+        self.tabs.setTabToolTip(i, "xterm (embedded)")
+        self.log("launcher/bash.png", "Terminal")
+
+    def addNewBashrcViewer(self):
+        '''Add new bashrc customizer.'''
+        home = pathlib.Path.home()
+        bashrc = os.path.join(home, ".bashrc")
+        handlerWidget = self.handler.getUI(path=bashrc)
+        i = self.tabs.addTab(handlerWidget, FigIcon("launcher/bashrc.png"), "\t.bashrc")
+        self.tabs.setCurrentIndex(i)
+        self.log("launcher/bashrc.png", bashrc)
+
+    def addNewLicenseGenerator(self):
+        '''Add new license template generator.'''
+        licenseViewer = FigLicenseGenerator()
+        i = self.tabs.addTab(licenseViewer, FigIcon("launcher/license.png"), "\tLICENSE")
+        self.tabs.setCurrentIndex(i)
+        self.log("launcher/license.png", "LICENSE Generator")
+
+    def addNewHistoryViewer(self):
+        '''Add new tab for viewing history.'''
+        historyViewer = FigHistoryViewer(self.fig_history)
+        i = self.tabs.addTab(historyViewer, FigIcon("launcher/history.png"), f"\t{self.fig_history.title}'s history")
+        self.tabs.setCurrentIndex(i)
+        self.log("launcher/history.png", self.fig_history.path)
+
+    def addNewTextEditor(self):
+        '''Add new bashrc customizer.'''
+        handlerWidget = self.handler.getUI("Untitled.txt")
+        i = self.tabs.addTab(handlerWidget, FigIcon("launcher/txt.png"), "\tUntitled")
+        self.tabs.setCurrentIndex(i)
+        self.log("launcher/txt.png", "Untitled")
+
+    def addNewHandlerTab(self):
+        handlerWidget = self.handler.handle()
+        i = self.tabs.addTab(handlerWidget, "New Tab")
+        self.tabs.setCurrentIndex(i)
+
+    def addNewFileViewer(self, path):
+        if path:
+            fileViewer = FigFileViewer(path=path, parent=self)
+        else:
+            fileViewer = FigFileViewer(parent=self)
+            path = str(pathlib.Path.home())
+        parent = ".../" + pathlib.Path(path).parent.name
+        name = pathlib.Path(path).name
+        i = self.tabs.addTab(fileViewer, FigIcon("launcher/fileviewer.png"), f"\t{name} {parent}")# f"\t{str(pathlib.Path.home())}")
+        self.tabs.setCurrentIndex(i)
+        self.log("launcher/fileviewer.png", path)
+
+    def addNewTab(self, Squrl=None, label="Blank"):
+        '''method for adding new tab'''
+        qurl = QUrl('http://www.google.com') # show bossweb homepage
+        browser = FigBrowser(self) # creating a WebRenderEngine object
+        dev_view = QWebEngineView()
+        browser.browser.page().setDevToolsPage(dev_view.page())		
+        browser.browser.setUrl(qurl) 
+        # browser.execJS("document.location.href='https://developer.mozilla.org/en-US/docs/Web/API/document.location';") # setting url to browser
+		# setting tab index
+        self.navBarAdded = True
+        i = self.tabs.addTab(browser, label)
+        self.tabs.setCurrentIndex(i)
+        self.logger.info(f"browser opened into a window with id: {int(self.winId())}")
+		# adding action to the browser when url is changed, update the url
+        # browser.urlChanged.connect(lambda qurl, browser = browser: self.update_urlbar(qurl, browser))
+        # adding action to the browser when loading is finished and set the tab title
+        browser.browser.loadFinished.connect(lambda _, i = i, browser = browser:
+									self.setupTab(i, browser.browser))
+
+    def setupTab(self, i, browser):
+        self.tabs.setTabText(i, "\t"+browser.page().title())
+        self.tabs.setTabIcon(i, FigIcon("launcher/browser.png"))
+        self.log("launcher/browser.png", QUrl('http://www.google.com'))
+
+    def tab_open_doubleclick(self, i):
+        # checking index i.e and No tab under the click
+        if i == -1: self.addNewTab() # creating a new tab
+    
+    def onCurrentTabChange(self, i):
+        '''when tab is changed.'''
+        try:
+            qurl = self.tabs.currentWidget().url() # get the curl
+		    # self.update_urlbar(qurl, self.tabs.currentWidget()) # update the url 
+            self.update_title(self.tabs.currentWidget()) # update the title
+        except AttributeError:
+            pass
+        self.langBtn.setIcon(self.tabs.tabIcon(i))
+
+    def onCurrentTabClose(self, i):
+        '''when tab is closed'''
+		# if there is only one tab
+        if self.tabs.count() < 2:
+            return # do nothing
+        self.tabs.removeTab(i) # else remove the tab
+
+    def update_title(self, browser):
+        '''method for update_title'''
+        # if signal is not from the current tab
+        if browser != self.tabs.currentWidget(): return # do nothing
+        title = self.tabs.currentWidget().page().title() # get the page title
+        self.setWindowTitle(title) # set the window title
+
+    def navigate_to_url(self):
+        '''method for navigating to the url.'''
+        # get the line edit text and convert it to QUrl object
+        q = QUrl(self.urlbar.text())
+        if q.scheme() == "": # if scheme is blank
+            q.setScheme("http") # set the scheme to
+        self.tabs.currentWidget().setUrl(q) # set the url
+
+    def center(self):
+        qr = self.frameGeometry()
+        cp = QDesktopWidget().availableGeometry().center()
+        qr.moveCenter(cp)
+        self.move(qr.topLeft())
+
+    def mousePressEvent(self, event):
+        self.oldPos = event.globalPos()
+
+    def mouseMoveEvent(self, event):
+        delta = QPoint(event.globalPos() - self.oldPos)
+        self.move(self.x() + delta.x(), self.y() + delta.y())
+        self.oldPos = event.globalPos()
+
     def initTitleBar(self):
-        toolbar = QToolBar()
+        toolbar = QToolBar("Title Bar Visibility")
         toolbar.setStyleSheet('''
         QToolBar {
             margin: 0px; 
@@ -1405,7 +1592,7 @@ class FigWindow(QMainWindow):
         #         color: #ff9100;
         # }
         # '''
-        toolbar = QToolBar()
+        toolbar = QToolBar("Folder Navigation Bar Visibility")
         toolbar.setStyleSheet("color: #fff; background: #292929; border: 0px; padding: 2px;")
         toolbar.setIconSize(QSize(22,22))
         toolbar.setMovable(False)
@@ -1441,7 +1628,7 @@ class FigWindow(QMainWindow):
         return toolbar
 
     def packageManagerBar(self):
-        toolbar = QToolBar()
+        toolbar = QToolBar("Package Manager Bar Visibility")
         toolbar.setContentsMargins(0, 0, 0, 0)
         toolbar.setIconSize(QSize(25,25))
         toolbar.setStyleSheet('''
@@ -1552,7 +1739,7 @@ class FigWindow(QMainWindow):
         return dockPMLauncher
 
     def initBottomBar(self):
-        toolbar = QToolBar()
+        toolbar = QToolBar("Status Bar Visibility")
         toolbar.setContentsMargins(0, 0, 0, 0)
         toolbar.setIconSize(QSize(22,22))
         toolbar.setStyleSheet("background: #292929; color: #fff; margin: 0px; border: 0px")
@@ -1719,145 +1906,6 @@ class FigWindow(QMainWindow):
 
         return toolbar
 
-    def colorPickerDialog(self):
-        colorPicker = ColorPicker(useAlpha=True)
-        picked_color = colorPicker.getColor((0,0,0,50))
-        print(picked_color)
-
-    def log(self, icon, path):
-        handler = __icon__(icon)
-        self.fig_history.log(handler, path)
-
-    def addNewTerm(self):
-        '''Add new terminal widget'''
-        terminal = FigShell(parent=self)
-        i = self.tabs.addTab(terminal, FigIcon("launcher/bash.png"), "\tTerminal")
-        self.tabs.setCurrentIndex(i)
-        # self.tabs.setTabWhatsThis(i, "xterm (embedded)")
-        self.tabs.setTabToolTip(i, "xterm (embedded)")
-        self.log("launcher/bash.png", "Terminal")
-
-    def addNewBashrcViewer(self):
-        '''Add new bashrc customizer.'''
-        home = pathlib.Path.home()
-        bashrc = os.path.join(home, ".bashrc")
-        handlerWidget = self.handler.getUI(path=bashrc)
-        i = self.tabs.addTab(handlerWidget, FigIcon("launcher/bashrc.png"), "\t.bashrc")
-        self.tabs.setCurrentIndex(i)
-        self.log("launcher/bashrc.png", bashrc)
-
-    def addNewLicenseGenerator(self):
-        '''Add new license template generator.'''
-        licenseViewer = FigLicenseGenerator()
-        i = self.tabs.addTab(licenseViewer, FigIcon("launcher/license.png"), "\tLICENSE")
-        self.tabs.setCurrentIndex(i)
-        self.log("launcher/license.png", "LICENSE Generator")
-
-    def addNewHistoryViewer(self):
-        '''Add new tab for viewing history.'''
-        historyViewer = FigHistoryViewer(self.fig_history)
-        i = self.tabs.addTab(historyViewer, FigIcon("launcher/history.png"), f"\t{self.fig_history.title}'s history")
-        self.tabs.setCurrentIndex(i)
-        self.log("launcher/history.png", self.fig_history.path)
-
-    def addNewTextEditor(self):
-        '''Add new bashrc customizer.'''
-        handlerWidget = self.handler.getUI("Untitled.txt")
-        i = self.tabs.addTab(handlerWidget, FigIcon("launcher/txt.png"), "\tUntitled")
-        self.tabs.setCurrentIndex(i)
-        self.log("launcher/txt.png", "Untitled")
-
-    def addNewHandlerTab(self):
-        handlerWidget = self.handler.handle()
-        i = self.tabs.addTab(handlerWidget, "New Tab")
-        self.tabs.setCurrentIndex(i)
-
-    def addNewFileViewer(self, path):
-        if path:
-            fileViewer = FigFileViewer(path=path, parent=self)
-        else:
-            fileViewer = FigFileViewer(parent=self)
-            path = str(pathlib.Path.home())
-        parent = ".../" + pathlib.Path(path).parent.name
-        name = pathlib.Path(path).name
-        i = self.tabs.addTab(fileViewer, FigIcon("launcher/fileviewer.png"), f"\t{name} {parent}")# f"\t{str(pathlib.Path.home())}")
-        self.tabs.setCurrentIndex(i)
-        self.log("launcher/fileviewer.png", path)
-
-    def addNewTab(self, Squrl=None, label="Blank"):
-        '''method for adding new tab'''
-        qurl = QUrl('http://www.google.com') # show bossweb homepage
-        browser = FigBrowser(self) # creating a WebRenderEngine object
-        dev_view = QWebEngineView()
-        browser.browser.page().setDevToolsPage(dev_view.page())		
-        browser.browser.setUrl(qurl) 
-        # browser.execJS("document.location.href='https://developer.mozilla.org/en-US/docs/Web/API/document.location';") # setting url to browser
-		# setting tab index
-        self.navBarAdded = True
-        i = self.tabs.addTab(browser, label)
-        self.tabs.setCurrentIndex(i)
-        self.logger.info(f"browser opened into a window with id: {int(self.winId())}")
-		# adding action to the browser when url is changed, update the url
-        # browser.urlChanged.connect(lambda qurl, browser = browser: self.update_urlbar(qurl, browser))
-        # adding action to the browser when loading is finished and set the tab title
-        browser.browser.loadFinished.connect(lambda _, i = i, browser = browser:
-									self.setupTab(i, browser.browser))
-
-    def setupTab(self, i, browser):
-        self.tabs.setTabText(i, "\t"+browser.page().title())
-        self.tabs.setTabIcon(i, FigIcon("launcher/browser.png"))
-        self.log("launcher/browser.png", QUrl('http://www.google.com'))
-
-    def tab_open_doubleclick(self, i):
-        # checking index i.e and No tab under the click
-        if i == -1: self.addNewTab() # creating a new tab
-    
-    def onCurrentTabChange(self, i):
-        '''when tab is changed.'''
-        try:
-            qurl = self.tabs.currentWidget().url() # get the curl
-		    # self.update_urlbar(qurl, self.tabs.currentWidget()) # update the url 
-            self.update_title(self.tabs.currentWidget()) # update the title
-        except AttributeError:
-            pass
-        self.langBtn.setIcon(self.tabs.tabIcon(i))
-
-    def onCurrentTabClose(self, i):
-        '''when tab is closed'''
-		# if there is only one tab
-        if self.tabs.count() < 2:
-            return # do nothing
-        self.tabs.removeTab(i) # else remove the tab
-
-    def update_title(self, browser):
-        '''method for update_title'''
-        # if signal is not from the current tab
-        if browser != self.tabs.currentWidget(): return # do nothing
-        title = self.tabs.currentWidget().page().title() # get the page title
-        self.setWindowTitle(title) # set the window title
-
-    def navigate_to_url(self):
-        '''method for navigating to the url.'''
-        # get the line edit text and convert it to QUrl object
-        q = QUrl(self.urlbar.text())
-        if q.scheme() == "": # if scheme is blank
-            q.setScheme("http") # set the scheme to
-        self.tabs.currentWidget().setUrl(q) # set the url
-
-    def center(self):
-        qr = self.frameGeometry()
-        cp = QDesktopWidget().availableGeometry().center()
-        qr.moveCenter(cp)
-        self.move(qr.topLeft())
-
-    def mousePressEvent(self, event):
-        self.oldPos = event.globalPos()
-
-    def mouseMoveEvent(self, event):
-        delta = QPoint(event.globalPos() - self.oldPos)
-        self.move(self.x() + delta.x(), self.y() + delta.y())
-        self.oldPos = event.globalPos()
-
 
 class FigApp(QApplication):
     def __init__(self, argv, 
@@ -1881,8 +1929,14 @@ class FigApp(QApplication):
 
         self.window = FigWindow(*args, **kwargs)
         self.window.setGeometry(x, y, w, h)
-        self.window.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
-        # self.window.setWindowFlags(Qt.FramelessWindowHint)
+        
+        # TODO: always stay on top (from commandline).
+        FigStayOnTop = True
+        if FigStayOnTop:
+            self.window.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
+        else:
+            self.window.setWindowFlags(Qt.FramelessWindowHint)
+        
         self.window.setWindowOpacity(self.window.opacLevel)
         self.window.clipboard = self.clipboard() 
         # self.server_thread = threading.Thread(target=serve_all_files)

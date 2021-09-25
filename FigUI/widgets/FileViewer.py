@@ -10,7 +10,7 @@ from PyQt5.QtPrintSupport import *
 from PyQt5.QtCore import QThread, QUrl, QSize, Qt, QEvent, pyqtSlot, pyqtSignal
 from PyQt5.QtGui import QIcon, QKeySequence, QTransform, QFont, QFontDatabase, QMovie, QPixmap
 from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEngineProfile, QWebEngineSettings
-from PyQt5.QtWidgets import QApplication, QAction, QDialog, QPushButton, QWidget, QToolBar, QGridLayout, QLabel, QVBoxLayout, QHBoxLayout, QToolButton, QScrollArea, QLineEdit, QFrame, QSizePolicy
+from PyQt5.QtWidgets import QApplication, QAction, QDialog, QPushButton, QWidget, QToolBar, QGridLayout, QLabel, QVBoxLayout, QHBoxLayout, QToolButton, QScrollArea, QLineEdit, QFrame, QSizePolicy, QMessageBox
 
 try:
     from utils import *
@@ -304,10 +304,31 @@ class FigFileViewer(QWidget):
         self.scrollArea.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
         self.scrollArea.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.scrollArea.setStyleSheet('''
-            QScrollBar {
-                border: 0px;
+            QScrollArea {
+                background-color: rgba(73, 44, 94, 0.5);
             }
-        ''')
+            QScrollBar:vertical {
+                border: 0px solid #999999;
+                width:14px;    
+                margin: 0px 0px 0px 3px;
+                background-color: rgba(73, 44, 94, 0.5);
+            }
+            QScrollBar::handle:vertical {         
+                min-height: 0px;
+                border: 0px solid red;
+                border-radius: 5px;
+                background-color: rgb(92, 95, 141);
+            }
+            QScrollBar::add-line:vertical {       
+                height: 0px;
+                subcontrol-position: bottom;
+                subcontrol-origin: margin;
+            }
+            QScrollBar::sub-line:vertical {
+                height: 0 px;
+                subcontrol-position: top;
+                subcontrol-origin: margin;
+            }''')
         ### replace with FlowLayout ###
         self.gridLayout = FlowLayout() # QGridLayout()
         self.gridLayout.setContentsMargins(0, 0, 0, 0)
@@ -340,7 +361,7 @@ class FigFileViewer(QWidget):
         self.layout.addWidget(self.navbar)
         self.layout.addWidget(self.editbar)
         self.layout.addWidget(self.propbar)
-        self.layout.addWidget(self.viewbar)
+        # self.layout.addWidget(self.viewbar)
         # self.layout.addWidget(self.utilbar)
         self.layout.addWidget(self.scrollArea)
         self.setLayout(self.layout)
@@ -375,7 +396,7 @@ class FigFileViewer(QWidget):
         navLayout.addWidget(searchBar)
         
         searchBtn = QToolButton()
-        searchBtn.setIcon(FigIcon("fileviewer/search.png"))
+        searchBtn.setIcon(FigIcon("fileviewer/search.svg"))
         searchBtn.setStyleSheet("border: 0px")
         navLayout.addWidget(searchBtn)
 
@@ -437,6 +458,7 @@ class FigFileViewer(QWidget):
         # open in terminal
         openInTermBtn = QToolButton()
         openInTermBtn.setIcon(FigIcon("fileviewer/open_in_terminal.svg"))
+        openInTermBtn.clicked.connect(self.openInTermTab)
         propLayout.addWidget(openInTermBtn)
         # open with.
         openBtn = QToolButton()
@@ -468,6 +490,45 @@ class FigFileViewer(QWidget):
         tagsBtn = QToolButton()
         tagsBtn.setIcon(FigIcon("fileviewer/tags.svg"))
         propLayout.addWidget(tagsBtn)
+        propLayout.addWidget(QVLine())
+
+        #####
+        # sort ascending.
+        sortUpBtn = QToolButton()
+        sortUpBtn.setIcon(FigIcon("fileviewer/sort_ascending.svg"))
+        sortUpBtn.clicked.connect(lambda: self.refresh(self.path, reverse=False))
+        propLayout.addWidget(sortUpBtn)
+        # sort descending.
+        sortDownBtn = QToolButton()
+        sortDownBtn.setIcon(FigIcon("fileviewer/sort_descending.svg"))
+        sortDownBtn.clicked.connect(lambda: self.refresh(self.path, reverse=True))
+        propLayout.addWidget(sortDownBtn)
+        # viewLayout.addWidget(QVLine())
+        # recently accessed files.
+        recentBtn = QToolButton()
+        recentBtn.setIcon(FigIcon("fileviewer/recent.svg"))
+        # sortUpBtn.clicked.connect(self.nextPath)
+        propLayout.addWidget(recentBtn)
+        # view hidden files.
+        unhideBtn = QToolButton()
+        unhideBtn.setIcon(FigIcon("fileviewer/unhide.svg"))
+        unhideBtn.clicked.connect(lambda: self.unhide(self.path))
+        propLayout.addWidget(unhideBtn)
+
+        hideBtn = QToolButton()
+        hideBtn.setIcon(FigIcon("fileviewer/hide.svg"))
+        hideBtn.clicked.connect(lambda: self.refresh(self.path))
+        propLayout.addWidget(hideBtn)
+        # viewLayout.addWidget(QVLine())
+        listViewBtn = QToolButton() # toggle list view.
+        listViewBtn.setIcon(FigIcon("fileviewer/listview.svg"))
+        propLayout.addWidget(listViewBtn)
+
+        blockViewBtn = QToolButton() # toggle block view.
+        blockViewBtn.setIcon(FigIcon("fileviewer/blockview.svg"))
+        propLayout.addWidget(blockViewBtn) 
+        #####
+
         # right spacer.
         right_spacer = QWidget()
         right_spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
@@ -602,14 +663,31 @@ class FigFileViewer(QWidget):
 
         return editbar
 
+    def openInTermTab(self):
+        '''
+        Check which file/folder is currently selected and open it in a new term tab.
+        '''        
+        selBtn = self.gridLayout.itemAt(self.j).widget()
+        # accessing the FigWindow
+        if self._parent:
+            self._parent.addNewTerm(path=selBtn.path)
+
     def copyPathToClipboard(self):
         '''
         Check which file/folder is currently selected and copy it's path to the clipboard.
         '''
         selBtn = self.gridLayout.itemAt(self.j).widget()
-        # print(selBtn.path)
+        # accessing the FigWindow
         if self._parent:
             self._parent.clipboard.setText(selBtn.path)
+        msg = QMessageBox()
+        msg.setIcon(QMessageBox.Information) # set icon
+        msg.setText("Path copied to clipboard") # set text
+        msg.setInformativeText(f"{selBtn.path} copied to clipboard !")
+        msg.setWindowTitle("Fig::FileViewer")
+        msg.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
+        msg.setGeometry(200, 200, 500, 50)
+        _ = msg.exec_()
 
     def initViewBar(self):
         '''
@@ -632,12 +710,12 @@ class FigFileViewer(QWidget):
         # sort ascending.
         sortUpBtn = QToolButton()
         sortUpBtn.setIcon(FigIcon("fileviewer/sort_ascending.svg"))
-        # sortUpBtn.clicked.connect(self.nextPath)
+        sortUpBtn.clicked.connect(lambda: self.refresh(self.path, reverse=False))
         viewLayout.addWidget(sortUpBtn)
         # sort descending.
         sortDownBtn = QToolButton()
         sortDownBtn.setIcon(FigIcon("fileviewer/sort_descending.svg"))
-        # sortUpBtn.clicked.connect(self.nextPath)
+        sortDownBtn.clicked.connect(lambda: self.refresh(self.path, reverse=True))
         viewLayout.addWidget(sortDownBtn)
         # viewLayout.addWidget(QVLine())
         # recently accessed files.
@@ -774,6 +852,7 @@ class FigFileViewer(QWidget):
         
         files = []
         try:
+            print("reverse:", reverse)
             for file in os.listdir(path):
                 if not(file.startswith(".") and hide):
                     files.append(os.path.join(path, file))
@@ -781,7 +860,7 @@ class FigFileViewer(QWidget):
         except PermissionError:
             return files
 
-    def refresh(self, path):
+    def refresh(self, path, reverse=False):
         self.clear()
         if self._parent:
             i = self._parent.tabs.currentIndex()
@@ -790,7 +869,7 @@ class FigFileViewer(QWidget):
             self._parent.tabs.setTabText(i, f"{name} .../{parent}")
             self._parent.updateFolderBar(path, viewer=self)
             self._parent.log("launcher/fileviewer.png", str(path))
-        all_files = self.listFiles(path) # get list of all files and folders.
+        all_files = self.listFiles(path, reverse=reverse) # get list of all files and folders.
         
         for i,path in enumerate(all_files):
             fileIcon = FigFileIcon(path, parent=self)

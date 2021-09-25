@@ -79,7 +79,8 @@ class CursorPosHandler(QObject):
         self.cursorPos[0] = line
         if self.parent:
             # get parent (CodeWebView) of parent (CodeEditor)
-            self.parent._parent.cursorBtn.setText(f"Ln {line+1}, Col {col+1}")
+            if self.parent._parent:
+                self.parent._parent.cursorBtn.setText(f"Ln {line+1}, Col {col+1}")
 
 
 class CodeWebView(QWebEngineView):

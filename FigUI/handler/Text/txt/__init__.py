@@ -71,6 +71,7 @@ class QTextEditor(QPlainTextEdit):
         self.updateRequest.connect(self.updateLineNumberArea)
         self.cursorPositionChanged.connect(self.highlightCurrentLine)
         self.updateLineNumberAreaWidth(0)
+        self.setLineWrapMode(QPlainTextEdit.NoWrap)
 
     def lineNumberAreaWidth(self):
         digits = 1

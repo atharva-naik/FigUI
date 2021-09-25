@@ -69,6 +69,7 @@ class FigLauncher(QWidget):
         self.layout = QVBoxLayout(self)
         self.layout.setContentsMargins(0, 0, 0, 0)
         self.launcherWidget = QWidget()
+        self.launcherWidget.setStyleSheet('''background-color: rgba(73, 44, 94, 0.5);''')
         self.gifBtn = None
         self._parent = parent
 
@@ -78,11 +79,38 @@ class FigLauncher(QWidget):
         self.blur_effect.setBlurRadius(1.5)
 
         self.scroll = QScrollArea()
-        self.scroll.setStyleSheet("background: rgba(73, 44, 94, 0.5);")
+        # self.scroll.setStyleSheet("background: rgba(73, 44, 94, 0.5);")
         self.scroll.setAttribute(Qt.WA_TranslucentBackground, True)
         self.scroll.setWidgetResizable(True)
         self.scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
-        self.scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
+        self.scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.scroll.setStyleSheet('''
+            QScrollArea {
+                background-color: rgba(73, 44, 94, 0.5);
+            }
+            QScrollBar:vertical {
+                border: 0px solid #999999;
+                width:14px;    
+                margin: 0px 0px 0px 3px;
+                background-color: rgba(73, 44, 94, 0.5);
+            }
+            QScrollBar::handle:vertical {         
+                min-height: 0px;
+                border: 0px solid red;
+                border-radius: 5px;
+                background-color: rgb(92, 95, 141);
+            }
+            QScrollBar::add-line:vertical {       
+                height: 0px;
+                subcontrol-position: bottom;
+                subcontrol-origin: margin;
+            }
+            QScrollBar::sub-line:vertical {
+                height: 0 px;
+                subcontrol-position: top;
+                subcontrol-origin: margin;
+            }''')
+        # self.scroll.setStyleSheet('''background: rgba(73, 44, 94, 0.5);''')
         # self.scroll.setGraphicsEffect(self.blur_effect)
 
         exclude = ["eclipse", "android", "mozilla", "kivy", "netbeans", "nano", "gnome", "tor", "openoffice", "thunderbird", "dbus", "compiz"]
