@@ -21,7 +21,7 @@ Some of the many stack overflow answers, github repos and
 
 ## Attributions for icons 
 **coming soon!**
-For now, see: ![attributions.md](FigUI/assets/attributions.md "Attributions")
+For now, see: [attributions.md](FigUI/assets/attributions.md)
 
 ## Screenshots of the UI:
 

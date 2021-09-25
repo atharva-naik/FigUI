@@ -95,12 +95,17 @@ class ClockWebView(QWebEngineView):
                 "rendered": self.linker.static("clock_rendered.html"),
                 "url": self.linker.staticUrl("clock_rendered.html"),
             },
-            # "StopWatch": {
-            #     "html": self.linker.staticUrl("stopwatch.html"),
-            #     "params": {
-            #         # "": ""
-            #     },
-            # }
+            "Timer": {
+                "index": self.linker.static("timer.html"),
+                "params": {
+                    "TIMER_JS": self.linker.staticUrl("timer.js").toString(),
+                    "TIMER_CSS": self.linker.staticUrl("timer.css").toString(),
+                    "JQUERY_JS": self.linker.staticUrl("jquery.js").toString(),
+                    "JQUERY_MOUSEWHEEL_JS": self.linker.staticUrl("jquery.mousewheel.min.js").toString(),
+                },
+                "rendered": self.linker.static("timer_rendered.html"),
+                "url": self.linker.staticUrl("timer_rendered.html"),
+            } 
         }
 
         # NOTE: get parent (CodeEditor) 
@@ -160,6 +165,9 @@ class ClockWebView(QWebEngineView):
 
     def showStopWatch(self):
         self.Load("StopWatch")
+
+    def showTimer(self):
+        self.Load("Timer")
 
 
 class FigClock(QWidget):
@@ -226,6 +234,7 @@ class FigClock(QWidget):
         clockBtn.setIcon(self.linker.FigIcon("clock/clock.svg"))
         clockBtn.setIconSize(QSize(*icon_size))
         clockBtn.setToolTip("open analog clock")
+        clockBtn.clicked.connect(self.clockView.showAnalogClock)
         layout.addWidget(clockBtn) 
         # stop watch utility
         stopWatchBtn = QToolButton(self)
@@ -238,6 +247,7 @@ class FigClock(QWidget):
         timerBtn.setIcon(self.linker.FigIcon("clock/timer.svg"))
         timerBtn.setIconSize(QSize(*icon_size))
         timerBtn.setToolTip("set timer")
+        timerBtn.clicked.connect(self.clockView.showTimer)
         layout.addWidget(timerBtn) 
         # time-zone conversion utility
         globeBtn = QToolButton(self)
