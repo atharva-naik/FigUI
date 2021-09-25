@@ -15,6 +15,7 @@ try:
     from Launcher import FigLauncher
     from FigUI.handler import FigHandler
     # from FigUI.handler.Code import CodeEditor
+    from FigUI.subSystem.Clock import FigClock
     from FigUI.subSystem.Shell import FigShell
     from FigUI.subSystem.History import HistoryLogger
     from FigUI.widgets.ActivityPanel import FigActivityPanel
@@ -30,6 +31,7 @@ except ImportError:
     from ..handler import FigHandler
     from .Launcher import FigLauncher
     # from ..handler.Code import CodeEditor
+    from ..subSystem.Clock import FigClock
     from ..subSystem.Shell import FigShell
     from .ActivityPanel import FigActivityPanel
     from ..subSystem.History import HistoryLogger
@@ -1246,6 +1248,14 @@ class FigWindow(QMainWindow):
         # self.tabs.setTabWhatsThis(i, "xterm (embedded)")
         self.tabs.setTabToolTip(i, "xterm (embedded)")
         self.log("launcher/bash.png", "Terminal")
+
+    def addNewClock(self):
+        '''Add new clock window'''
+        clockApp = FigClock()
+        i = self.tabs.addTab(clockApp, FigIcon("sidebar/clock.png"), "\tClock")
+        self.tabs.setCurrentIndex(i)
+        self.tabs.setTabToolTip(i, "clock app")
+        self.log("sidebar/clock.png", "Terminal")
 
     def addNewBashrcViewer(self):
         '''Add new bashrc customizer.'''

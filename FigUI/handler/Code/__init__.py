@@ -47,7 +47,6 @@ __highlight_map__ = {
     ".md" : "markdown",
     ".bashrc" : "shell",
 }
-
 # def serve(path):
 #     '''give relative path and get absolute static path.'''
 #     __current_dir__ = os.path.dirname(os.path.realpath(__file__))
@@ -56,7 +55,6 @@ __highlight_map__ = {
 #     path = f"http://localhost:3000{path}"
 
 #     return path
-
 def static(path):
     '''give relative path and get absolute static path.'''
     __current_dir__ = os.path.dirname(os.path.realpath(__file__))
