@@ -12,6 +12,17 @@ The aim of FigUI is to provide a single desktop application to view, edit, proce
 6) **Video:** (mp4, mov, webm etc.)
 7) **Archives:** (zip, 7zip etc)
 
+## Credits to some really great JS and Python repos/code snippets:
+Some of the many stack overflow answers, github repos and 
+(This list is incomplete I keep adding to it periodically, however since the repo is highly unstable and I am constantly changing up stuff, if your code was used, but you weren't credited, please let me know)
+
+1. [rolling selector](https://codepen.io/Shikkediel/pen/qpjGyq)
+2. [toast-ui image editor](https://ui.toast.com/tui-image-editor)
+
+## Attributions for icons 
+**coming soon!**
+For now, see: ![attributions.md](FigUI/assets/attributions.md "Attributions")
+
 ## Screenshots of the UI:
 
 1) App Launcher

@@ -143,3 +143,4 @@ FigUI/handler/Image/static/viewer_rendered.html
 FigUI/handler/Image/static/color_histograms.json
 # rendered files
 FigUI/handler/Code/static/code_rendered.html
+FigUI/subSystem/Clock/static/code_rendered.html

@@ -1149,6 +1149,7 @@ class FigWindow(QMainWindow):
         clockBtn.setToolTip("Open clock")
         clockBtn.setIcon(FigIcon("sidebar/clock.png"))
         clockBtn.setIconSize(btnSize)
+        clockBtn.clicked.connect(self.addNewClock)
         # open weather
         weatherBtn = QPushButton()#("Weather", self)
         weatherBtn.setToolTip("Open weather forecast")
@@ -1255,7 +1256,7 @@ class FigWindow(QMainWindow):
         i = self.tabs.addTab(clockApp, FigIcon("sidebar/clock.png"), "\tClock")
         self.tabs.setCurrentIndex(i)
         self.tabs.setTabToolTip(i, "clock app")
-        self.log("sidebar/clock.png", "Terminal")
+        self.log("sidebar/clock.png", "Clock")
 
     def addNewBashrcViewer(self):
         '''Add new bashrc customizer.'''

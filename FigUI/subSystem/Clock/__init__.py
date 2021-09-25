@@ -82,17 +82,16 @@ class ClockWebView(QWebEngineView):
         self.settings().setAttribute(QWebEngineSettings.ErrorPageEnabled, True)
         self.settings().setAttribute(QWebEngineSettings.PluginsEnabled, True)
         # self.channel = QWebChannel()
-        self.page().setWebChannel(self.channel)
+        # self.page().setWebChannel(self.channel)
         self.linker = FigLinker("../assets")
+        self.setMinimumHeight(500)
         ### views
         ## 1. Analog Clock
         ## 2. Stop Watch
         self.sources = {
             "AnalogClock": {
-                "html": self.linker.static("clock.html"),
-                "params": {
-                    # "": ""
-                },
+                "index": self.linker.static("clock.html"),
+                "params": {},
                 "rendered": self.linker.static("clock_rendered.html"),
                 "url": self.linker.staticUrl("clock_rendered.html"),
             },
@@ -139,15 +138,14 @@ class ClockWebView(QWebEngineView):
 
     def Load(self, app_name):
         # load analog clock
-        app = self.source.get(app_name)
+        app = self.sources.get(app_name)
         if not app: return
         # load index
         index = app.get("index")
         if not index: return
         template = Template(open(index).read())
         # load parameters
-        params = app.get("params")
-        if not params: return
+        params = app.get("params", {})
         # render template and save to static
         rendered = app.get("rendered")
         if not rendered: return 
@@ -167,21 +165,94 @@ class ClockWebView(QWebEngineView):
 class FigClock(QWidget):
     def __init__(self, parent=None):
         super(FigClock, self).__init__(parent)
+        # create linker for asset loading
+        self.linker = FigLinker("../../assets")
         # vertical layout
         layout = QVBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+        layout.addStretch(True)
         # create widgets
         self.clockView = ClockWebView(self)
         self.clockView.showAnalogClock()
         # set analog clock by default.
         self.clockBar = self.initClockBar()
         # add widgets to layout
-        layout.addWidget(self.clockView)
-        layout.addWidget(self.clockBar)
+        layout.insertWidget(0, self.clockBar)
+        layout.insertWidget(0, self.clockView)
+        # set style sheet
+        self.setStyleSheet('''
+            QToolBar { 
+                background: #292929; 
+                color: #292929; 
+                border: 0px;
+            } 
+            QToolTip { border: 0px }
+            QToolButton:hover { 
+                background: red;
+        }''')
         # set layout
         self.setLayout(layout)
 
-    def initClockBar(self):
-        return QWidget()
+    def initClockBar(self, icon_size=(20,20)):
+        clockbar = QWidget()
+        clockbar.setStyleSheet('''
+            QWidget {
+                background: #292929
+            }
+            QToolBar { 
+                background: #292929; 
+                color: #292929; 
+                border: 0px;
+            } 
+            QToolTip { border: 0px }
+            QToolButton:hover { 
+                background: red;
+        }''')
+        layout = QHBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        # left spacer
+        left_spacer = QWidget()
+        left_spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        layout.addWidget(left_spacer)
+        # alarm utility
+        alarmBtn = QToolButton(self)
+        alarmBtn.setIcon(self.linker.FigIcon("clock/alarm.svg"))
+        alarmBtn.setIconSize(QSize(*icon_size))
+        alarmBtn.setToolTip("set alarm")
+        layout.addWidget(alarmBtn) 
+        # analog clock utility
+        clockBtn = QToolButton(self)
+        clockBtn.setIcon(self.linker.FigIcon("clock/clock.svg"))
+        clockBtn.setIconSize(QSize(*icon_size))
+        clockBtn.setToolTip("open analog clock")
+        layout.addWidget(clockBtn) 
+        # stop watch utility
+        stopWatchBtn = QToolButton(self)
+        stopWatchBtn.setIcon(self.linker.FigIcon("clock/stopwatch.svg"))
+        stopWatchBtn.setIconSize(QSize(*icon_size))
+        stopWatchBtn.setToolTip("start stop watch")
+        layout.addWidget(stopWatchBtn) 
+        # timer utility
+        timerBtn = QToolButton(self)
+        timerBtn.setIcon(self.linker.FigIcon("clock/timer.svg"))
+        timerBtn.setIconSize(QSize(*icon_size))
+        timerBtn.setToolTip("set timer")
+        layout.addWidget(timerBtn) 
+        # time-zone conversion utility
+        globeBtn = QToolButton(self)
+        globeBtn.setIcon(self.linker.FigIcon("clock/time-zone-converter.svg"))
+        globeBtn.setIconSize(QSize(*icon_size))
+        globeBtn.setToolTip("open time-zone converter")
+        layout.addWidget(globeBtn) 
+        # right spacer
+        right_spacer = QWidget()
+        right_spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        layout.addWidget(right_spacer) 
+        # set layout
+        clockbar.setLayout(layout)
+
+        return clockbar
 
 
 if __name__ == "__main__":
