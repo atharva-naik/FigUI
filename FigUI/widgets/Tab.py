@@ -1,12 +1,14 @@
-from PyQt5 import QtGui, QtCore, QtWidgets
+from PyQt5.QtCore import pyqtSignal, QSize
+from PyQt5.QtWidgets import QWidget, QTabBar, QPushButton, QTabWidget
 
-class TabBarPlus(QtWidgets.QTabBar):
+
+class TabBarPlus(QTabBar):
     """Tab bar that has a plus button floating to the right of the tabs."""
-    plusClicked = QtCore.pyqtSignal()
+    plusClicked = pyqtSignal()
     def __init__(self):
         super().__init__()
         # Plus Button
-        self.plusButton = QtWidgets.QPushButton("+")
+        self.plusButton = QPushButton("+")
         self.plusButton.setParent(self)
         self.plusButton.setFixedSize(20, 20)  # Small Fixed size
         self.plusButton.clicked.connect(self.plusClicked.emit)
@@ -15,10 +17,10 @@ class TabBarPlus(QtWidgets.QTabBar):
 
     def sizeHint(self):
         """Return the size of the TabBar with increased width for the plus button."""
-        sizeHint = QtWidgets.QTabBar.sizeHint(self) 
+        sizeHint = QTabBar.sizeHint(self) 
         width = sizeHint.width()
         height = sizeHint.height()
-        return QtCore.QSize(width+25, height)
+        return QSize(width+25, height)
     # end tabSizeHint
 
     def resizeEvent(self, event):
@@ -53,22 +55,26 @@ class TabBarPlus(QtWidgets.QTabBar):
     # end movePlusButton
 # end class MyClass
 
-class FigTabWidget(QtWidgets.QTabWidget):
-    """Tab Widget that that can have new tabs easily added to it."""
-    def __init__(self):
-        super().__init__()
-        # Tab Bar
-        self.tab = TabBarPlus()
-        self.setTabBar(self.tab)
+# class FigTabWidget(QTabWidget):
+#     """Tab Widget that that can have new tabs easily added to it."""
+#     def __init__(self):
+#         super().__init__()
+#         # Tab Bar
+#         self.tab = TabBarPlus()
+#         self.setTabBar(self.tab)
 
-        # Properties
-        self.setMovable(True)
-        self.setTabsClosable(True)
+#         # Properties
+#         self.setMovable(True)
+#         self.setTabsClosable(True)
 
-        # Signals
-        self.tab.plusClicked.connect(self.addTab)
-        # self.tab.tabMoved.connect(self.moveTab)
-        self.tabCloseRequested.connect(self.removeTab)
+#         # Signals
+#         self.tab.plusClicked.connect(self.addTab)
+#         # self.tab.tabMoved.connect(self.moveTab)
+#         self.tabCloseRequested.connect(self.removeTab)
+class FigTabWidget(QTabWidget):
+    def __init__(self, parent=None):
+        super(FigTabWidget, self).__init__(parent)
+
     # end Constructor
 # end class CustomTabWidget
 if __name__ == "__main__":

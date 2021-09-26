@@ -14,8 +14,10 @@ from PyQt5.QtCore import QThread, QUrl, QSize, Qt, QEvent, pyqtSlot, pyqtSignal
 from PyQt5.QtGui import QIcon, QKeySequence, QTransform, QFont, QFontDatabase, QMovie, QPixmap
 from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEngineProfile, QWebEngineSettings#, QWebChannel
 from PyQt5.QtWidgets import QApplication, QAction, QDialog, QPushButton, QWidget, QToolBar, QGridLayout, QLabel, QVBoxLayout, QHBoxLayout, QToolButton, QScrollArea, QLineEdit, QFrame, QSizePolicy
-
-
+# try:
+#     from .assets.Linker import FigLinker
+# except ImportError:
+#     from FigUI.assets.Linker import FigLinker
 class FigLinker:
     '''A class to bundle path completion resources for fig'''
     def __init__(self, rel_path="../assets", static_path="static"):
@@ -83,7 +85,7 @@ class ClockWebView(QWebEngineView):
         self.settings().setAttribute(QWebEngineSettings.PluginsEnabled, True)
         # self.channel = QWebChannel()
         # self.page().setWebChannel(self.channel)
-        self.linker = FigLinker("../assets")
+        self.linker = FigLinker("../assets", static_path="static")
         self.setMinimumHeight(500)
         ### views
         ## 1. Analog Clock

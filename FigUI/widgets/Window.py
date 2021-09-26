@@ -7,7 +7,7 @@ from PyQt5.Qt import PYQT_VERSION_STR
 from PyQt5.QtCore import QThread, QUrl, QTimer, QPoint, QRect, QSize, Qt, QT_VERSION_STR
 from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEngineProfile, QWebEngineSettings
 from PyQt5.QtGui import QIcon, QFont, QKeySequence, QTransform, QTextCharFormat, QSyntaxHighlighter, QFontDatabase, QTextFormat, QColor, QPainter, QDesktopServices, QWindow
-from PyQt5.QtWidgets import QApplication, QAction, QDialog, QPushButton, QTabWidget, QStatusBar, QToolBar, QWidget, QLineEdit, QMainWindow, QHBoxLayout, QVBoxLayout, QPlainTextEdit, QToolBar, QFrame, QSizePolicy, QTabBar, QDesktopWidget, QLabel, QToolButton, QTextEdit, QComboBox, QListWidget, QListWidgetItem, QScrollArea, QDockWidget, QGraphicsBlurEffect, QSplitter
+from PyQt5.QtWidgets import QMenu, QApplication, QAction, QDialog, QPushButton, QTabWidget, QStatusBar, QToolBar, QWidget, QLineEdit, QMainWindow, QHBoxLayout, QVBoxLayout, QPlainTextEdit, QToolBar, QFrame, QSizePolicy, QTabBar, QDesktopWidget, QLabel, QToolButton, QTextEdit, QComboBox, QListWidget, QListWidgetItem, QScrollArea, QDockWidget, QGraphicsBlurEffect, QSplitter
 
 try:
     from Theme import FigTheme
@@ -17,12 +17,14 @@ try:
     # from FigUI.handler.Code import CodeEditor
     from FigUI.subSystem.Clock import FigClock
     from FigUI.subSystem.Shell import FigShell
+    from FigUI.subSystem.ChatBot import FigChatBot
     from FigUI.subSystem.History import HistoryLogger
     from FigUI.widgets.ActivityPanel import FigActivityPanel
     from FigUI.handler.Code.QtColorPicker import ColorPicker
     from FileViewer import FigFileViewer, FigTreeFileExplorer
     from FigUI.subSystem.System.Network import NetworkHandler
     from FigUI.subSystem.Math.Calculator import FigCalculator
+    from FigUI.subSystem.System.Power import FigPowerController
     from FigUI.subSystem.System.Display import BrightnessController
 #     from utils import *
 except ImportError:
@@ -33,11 +35,13 @@ except ImportError:
     # from ..handler.Code import CodeEditor
     from ..subSystem.Clock import FigClock
     from ..subSystem.Shell import FigShell
+    from ..subSystem.ChatBot import FigChatBot
     from .ActivityPanel import FigActivityPanel
     from ..subSystem.History import HistoryLogger
     from ..handler.Code.QtColorPicker import ColorPicker
     from ..subSystem.System.Network import NetworkHandler
     from ..subSystem.Math.Calculator import FigCalculator
+    from ..subSystem.System.Power import FigPowerController
     from .FileViewer import FigFileViewer, FigTreeFileExplorer
     from ..subSystem.System.Display import BrightnessController
 #     from .utils import *
@@ -113,8 +117,7 @@ class TimeDisplay(QLabel):
         self.timer = QTimer()
         self.timer.timeout.connect(self._updateTime)
         self.timer.start(1000)
-        self.setStyleSheet("color: #fff; background: #292929; border: 0px; font-family: Helvetica; font-size: 14px")
-
+        # self.setStyleSheet("color: #fff; background: #292929; border: 0px; font-family: Helvetica; font-size: 14px")
     def _updateTime(self):
         currTime = datetime.datetime.strftime(
             datetime.datetime.now(), 
@@ -129,8 +132,7 @@ class BatteryDisplay(QPushButton):
         self.timer = QTimer()
         self.timer.timeout.connect(self._updateTime)
         self.timer.start(1000)
-        self.setStyleSheet("color: #fff; background: #292929; border: 0px; font-family: Helvetica; font-size: 14px")
-
+        # self.setStyleSheet("color: #fff; background: #292929; border: 0px; font-family: Helvetica; font-size: 14px")
     def _updateTime(self):
         batLvl = psutil.sensors_battery()
         percent = int(batLvl.percent)
@@ -138,9 +140,10 @@ class BatteryDisplay(QPushButton):
         self.setText(f"({percent}%)")
         
         if pluggedIn:
-            self.setIcon(FigIcon("bottombar/plugged.png"))
+            self.setIcon(FigIcon("bottombar/plugged.svg"))
         else:
             self.setIcon(QIcon())
+        self.setIconSize(QSize(16,16))
 
 
 class NetDisplay(QPushButton):
@@ -150,8 +153,9 @@ class NetDisplay(QPushButton):
         self.timer.timeout.connect(self._updateWifiInfo)
         self.timer.start(1000)
         self.net_handler = NetworkHandler()
-        self.setStyleSheet("color: #fff; background: #292929; border: 0px; font-family: Helvetica; font-size: 14px")
+        # self.setStyleSheet("color: #fff; background: #292929; border: 0px; font-family: Helvetica; font-size: 14px")
         self.setIcon(FigIcon("bottombar/wifi.svg"))
+        self.setIconSize(QSize(16,16))
 
     def _updateWifiInfo(self):
         info = self.net_handler.manager.net_info
@@ -711,6 +715,7 @@ class FigWindow(QMainWindow):
         # initialize activity panel.
         self.activity = FigActivityPanel(parent=self)
 
+        self.ctrlBar = self.initCtrlBar()
         self.bottomBar = self.initBottomBar()
         self.subSysBar1, self.subSysBar2 = self.subSystemsBar()
         self.debugBar = self.initDebugBar()
@@ -735,8 +740,9 @@ class FigWindow(QMainWindow):
         # self.addToolBar(Qt.LeftToolBarArea, self.packmanBar)
         self.addToolBar(Qt.RightToolBarArea, self.subSysBar1)
         self.addToolBar(Qt.RightToolBarArea, self.subSysBar2)
-        self.addToolBar(Qt.BottomToolBarArea, self.bottomBar)
+        self.addToolBar(Qt.BottomToolBarArea, self.ctrlBar)
         self.addToolBarBreak(Qt.BottomToolBarArea)
+        self.addToolBar(Qt.BottomToolBarArea, self.bottomBar)
         self.addToolBarBreak(Qt.TopToolBarArea)
 
         self.tabs = QTabWidget() # tab widget
@@ -999,12 +1005,23 @@ class FigWindow(QMainWindow):
         settingsBtn = QAction("Settings", self)
         settingsBtn.setToolTip("Open system settings.")
         settingsBtn.setIcon(FigIcon("sysbar/settings.svg"))
+        # on screen keyboard.
+        oskBtn = QAction("On Screen Keyboard", self)
+        oskBtn.setToolTip("Open onscreen keyboard.")
+        oskBtn.setIcon(FigIcon("sysbar/keyboard.svg"))
+        # open color picker dialogue.
+        colorpickerBtn = QAction("Colorpicker", self)
+        colorpickerBtn.setToolTip("Open color picker")
+        colorpickerBtn.setIcon(FigIcon("bottombar/colorwheel.svg"))
+        colorpickerBtn.triggered.connect(lambda: self.colorPickerDialog())
         # add actions and buttons.
         sysbar.addAction(opacUpBtn)
         sysbar.addAction(opacDownBtn)
         sysbar.addAction(ontopBtn)
+        sysbar.addAction(oskBtn)
         sysbar.addAction(dimBtn)
         sysbar.addAction(brightBtn)
+        sysbar.addAction(colorpickerBtn)
         sysbar.addWidget(top_spacer)
         sysbar.addAction(userBtn)
         sysbar.addAction(settingsBtn)
@@ -1097,6 +1114,7 @@ class FigWindow(QMainWindow):
         asstBtn.setToolTip("Open assitant")
         asstBtn.setIcon(FigIcon("sidebar/assistant.png"))
         asstBtn.setIconSize(btnSize)
+        asstBtn.clicked.connect(self.addNewBotTab)
         # open math package.
         mathBtn = QPushButton()#("Math", self)
         mathBtn.setToolTip("Open mathematical and scientific computing software suite.")
@@ -1258,6 +1276,14 @@ class FigWindow(QMainWindow):
         self.tabs.setTabToolTip(i, "clock app")
         self.log("sidebar/clock.png", "Clock")
 
+    def addNewBotTab(self):
+        '''Add new chat bot tab'''
+        chatBotApp = FigChatBot()
+        i = self.tabs.addTab(chatBotApp, FigIcon("sidebar/assistant.png"), "\tClock")
+        self.tabs.setCurrentIndex(i)
+        self.tabs.setTabToolTip(i, "assistant app")
+        self.log("sidebar/assistant.png", "Assistant")
+
     def addNewBashrcViewer(self):
         '''Add new bashrc customizer.'''
         home = pathlib.Path.home()
@@ -1342,6 +1368,7 @@ class FigWindow(QMainWindow):
         except AttributeError:
             pass
         self.langBtn.setIcon(self.tabs.tabIcon(i))
+        self.langBtn.setIconSize(QSize(16,16))
 
     def onCurrentTabClose(self, i):
         '''when tab is closed'''
@@ -1739,7 +1766,6 @@ class FigWindow(QMainWindow):
 
         return dockToolBar
 
-
     def initPackmanBar(self):
         label = QLabel()
         label.setText("THIS IS A LABEL")
@@ -1761,11 +1787,6 @@ class FigWindow(QMainWindow):
         qtBtn.setToolTip("Learn more about Qt and PyQt5.")
         qtBtn.setStyleSheet("color: #fff; background: #292929; border: 0px; font-family: Helvetica; font-size: 14px")
         self.qtBtn = qtBtn
-        # open color picker dialogue.
-        colorpickerBtn = QAction("Colorpicker", self)
-        colorpickerBtn.setToolTip("Open color picker")
-        colorpickerBtn.setIcon(FigIcon("bottombar/colorwheel.svg"))
-        colorpickerBtn.triggered.connect(lambda: self.colorPickerDialog())
         # get git info.
         gitBtn = QPushButton(" main*")
         gitBtn.setToolTip("Inspect current git branch")
@@ -1775,11 +1796,13 @@ class FigWindow(QMainWindow):
         warningBtn = QPushButton(" 0")
         warningBtn.setToolTip("See warnings")
         warningBtn.setIcon(FigIcon("bottombar/warning.png"))
+        warningBtn.setIconSize(QSize(16,16))
         warningBtn.setStyleSheet("color: #fff; background: #292929; border: 0px; font-family: Helvetica; font-size: 14px")
         # errors.
         errorBtn = QPushButton(" 0")
         errorBtn.setToolTip("See errors")
         errorBtn.setIcon(FigIcon("bottombar/error.png"))
+        errorBtn.setIconSize(QSize(16,16))
         errorBtn.setStyleSheet("color: #fff; background: #292929; border: 0px; font-family: Helvetica; font-size: 14px")
         # rw permissions.
         rwBtn = QPushButton("[RW]")
@@ -1820,6 +1843,7 @@ class FigWindow(QMainWindow):
         notifBtn = QPushButton()
         notifBtn.setToolTip("Open notifications.")
         notifBtn.setIcon(FigIcon("bottombar/bell.svg"))
+        notifBtn.setIconSize(QSize(16,16))
         notifBtn.setStyleSheet("color: #fff; background: #292929; border: 0px; font-family: Helvetica; font-size: 14px")
         # apt package manager.
         aptBtn = QPushButton("apt")
@@ -1857,22 +1881,21 @@ class FigWindow(QMainWindow):
         mvnBtn.setIcon(FigIcon("bottombar/mvn.png"))
         mvnBtn.setStyleSheet("color: #fff; background: #292929; font-family: Monospace; font-size: 14px")
         # buy me a coffee.
-        coffeeBtn = QPushButton(" Donate")
+        coffeeBtn = QPushButton()
         coffeeBtn.setToolTip("Buy me a coffe :)")
         coffeeBtn.setIcon(FigIcon("bottombar/coffee.png"))
+        coffeeBtn.setIconSize(QSize(16,16))
         coffeeBtn.setStyleSheet("color: #fff; background: #292929; font-family: Helvetica; font-size: 14px")
-        # time label.
-        timeLbl = TimeDisplay(self)
-        batLbl = BatteryDisplay(self)
-        netLbl = NetDisplay(self)
         # for center alignment.
         left_spacer = QWidget()
         left_spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         right_spacer = QWidget()
         right_spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        spacer = QWidget()
+        spacer.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        spacer.setFixedWidth(30)
         # add actions.
         toolbar.addWidget(qtBtn)
-        toolbar.addAction(colorpickerBtn)
         toolbar.addWidget(gitBtn)
         toolbar.addWidget(left_spacer)
         toolbar.addWidget(warningBtn)
@@ -1901,19 +1924,85 @@ class FigWindow(QMainWindow):
         # toolbar.addWidget(npmBtn)
         # toolbar.addWidget(mvnBtn)
         # toolbar.addSeparator() 
-        # toolbar.addWidget(coffeeBtn)
-        toolbar.addSeparator()
         toolbar.addWidget(right_spacer)
         toolbar.addSeparator()
         toolbar.addWidget(tweetBtn)
+        toolbar.addWidget(coffeeBtn)
         toolbar.addSeparator()
         toolbar.addWidget(notifBtn)
-        toolbar.addSeparator()       
+        toolbar.addWidget(spacer)
+
+        return toolbar
+
+    def initCtrlBar(self):
+        toolbar = QToolBar("Control Bar Visibility")
+        toolbar.setContentsMargins(0, 0, 0, 0)
+        toolbar.setIconSize(QSize(30,30))
+        toolbar.setMinimumHeight(30)
+        toolbar.setStyleSheet('''
+        QToolBar {
+            margin: 0px; 
+            border: 0px; 
+            color: #fff;
+            border-bottom-left-radius: 5px;
+            border-bottom-right-radius: 5px;
+            background: qlineargradient(x1 : 0, y1 : 0, x2 : 0, y2 : 1, stop : 0.0 #341d45, stop : 0.8 #8148a8, stop : 1.0 #997eab);
+        }
+        QLabel {
+            color: #fff; 
+            background: qlineargradient(x1 : 0, y1 : 0, x2 : 0, y2 : 1, stop : 0.0 #341d45, stop : 0.8 #8148a8, stop : 1.0 #997eab);
+            border: 0px; 
+            font-family: Helvetica; 
+            font-size: 14px;            
+        }
+        QPushButton {
+            color: #fff; 
+            background: qlineargradient(x1 : 0, y1 : 0, x2 : 0, y2 : 1, stop : 0.0 #341d45, stop : 0.8 #8148a8, stop : 1.0 #997eab);
+            font-family: Helvetica; 
+            font-size: 14px;
+            border: 0px;
+        }''')
+        toolbar.setMovable(False)
+        # time label.
+        timeLbl = TimeDisplay(self)
+        batLbl = BatteryDisplay(self)
+        netLbl = NetDisplay(self)
+        # power button.
+        powerBtn = FigPowerController(self)
+        powerBtn.setIcon(FigIcon("bottombar/power.png"))
+        powerBtn.setIconSize(QSize(20,20))
+        # powerBtn.pressed
+        powerBtn.setStyleSheet('''
+        QPushButton {
+            background: #efefef;
+            font-family: Helvetica;
+            padding: 3px;
+            border-radius: 13px;
+        }
+        QPushButton:hover {
+            background: #c0a5d4;
+        }''')
+        # for center alignment.
+        left_spacer = QWidget()
+        left_spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        right_spacer = QWidget()
+        right_spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        spacer1 = QWidget()
+        spacer1.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        spacer1.setFixedWidth(30)
+        spacer2 = QWidget()
+        spacer2.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+        spacer2.setFixedWidth(30)
+        # add actions.
+        toolbar.addWidget(left_spacer)
         toolbar.addWidget(netLbl)
-        toolbar.addSeparator()
+        # toolbar.addSeparator()
         toolbar.addWidget(batLbl)
-        toolbar.addSeparator()
+        # toolbar.addSeparator()
         toolbar.addWidget(timeLbl)
+        toolbar.addWidget(spacer1)
+        toolbar.addWidget(powerBtn)
+        toolbar.addWidget(spacer2)
 
         return toolbar
 

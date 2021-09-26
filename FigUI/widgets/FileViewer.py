@@ -1,16 +1,14 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-from inspect import Attribute
-import PyQt5, re
+import PyQt5
 import tempfile, random
-import textwrap, subprocess
-import os, sys, glob, pathlib
-from PIL import Image, ImageQt
+# from PIL import Image, ImageQt
+import os, re, sys, glob, pathlib, datetime
+import argparse, mimetypes, platform, textwrap, subprocess
 from PyQt5.QtPrintSupport import *
 from PyQt5.QtCore import QThread, QUrl, QSize, Qt, QEvent, pyqtSlot, pyqtSignal
 from PyQt5.QtGui import QIcon, QKeySequence, QTransform, QFont, QFontDatabase, QMovie, QPixmap
-from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEngineProfile, QWebEngineSettings
-from PyQt5.QtWidgets import QApplication, QAction, QDialog, QPushButton, QWidget, QToolBar, QGridLayout, QLabel, QVBoxLayout, QHBoxLayout, QToolButton, QScrollArea, QLineEdit, QFrame, QSizePolicy, QMessageBox
+from PyQt5.QtWidgets import QAction, QDialog, QWidget, QToolBar, QLabel, QVBoxLayout, QHBoxLayout, QToolButton, QScrollArea, QLineEdit, QFrame, QSizePolicy, QMessageBox
 
 try:
     from utils import *
@@ -120,6 +118,16 @@ PrefixMap = {
     "nvidia-": "cu.png",
     "zsh": "bashrc.png",
 }
+PLATFORM = platform.system()
+def sizeof_fmt(num, suffix="B"):
+    '''convert bytes to human readable format'''
+    for unit in ["", "K", "M", "G", "T", "P", "E", "Z"]:
+        if abs(num) < 1024.0:
+            return f"{num:3.1f}{unit}{suffix}"
+        num /= 1024.0
+    
+    return f"{num:.1f}Y{suffix}"
+
 
 class FigFileIcon(QToolButton):
     def __init__(self, path, parent=None, size=(120,120), textwidth=10):
@@ -130,8 +138,17 @@ class FigFileIcon(QToolButton):
         self.isfile = os.path.isfile(path)
         self.stem = pathlib.Path(path).stem
         self.setStyleSheet('''
+            QToolTip {
+                border: 0px;
+            }
             QToolButton { 
-                border: 0px; background-image: none        
+                border: 0px; 
+                background-image: none;
+            }
+            QToolButton:hover {
+                background: #009b9e;
+                color: #292929;
+                font-weight: bold;
         }''')
         self.setAttribute(Qt.WA_TranslucentBackground)
         self.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
@@ -140,7 +157,50 @@ class FigFileIcon(QToolButton):
         self.setText(text) # truncate at 3 times the max textwidth
         self.setFixedSize(QSize(*size))
         self.setIconSize(QSize(size[0]-60, size[1]-60))
+        self._getFileProperties()
         self._setThumbnail()
+        self._setPropertiesTip()
+
+    def _getMimeType(self):
+        mimeType,_ = mimetypes.guess_type(self.path) 
+        if not self.isfile:
+            return "Folder"
+        elif mimeType:
+            return mimeType
+        else:
+            if PLATFORM == "Linux":
+                cmd = f"file --mime-type {self.path}"
+                op = subprocess.getoutput(cmd)
+                return op.split()[-1]
+            else:
+                return "Unknown"
+
+    def _getFileProperties(self):
+        stat = os.stat(self.path)
+        self.props = argparse.Namespace()
+        if PLATFORM == "Linux":
+            self.props.access_time = datetime.datetime.fromtimestamp(stat.st_atime).strftime("%b,%b %d %Y %H:%M:%S")
+            self.props.modified_time = datetime.datetime.fromtimestamp(stat.st_mtime).strftime("%b,%b %d %Y %H:%M:%S")
+            self.props.size = sizeof_fmt(stat.st_size)
+        elif PLATFORM == "Windows":
+            pass
+        elif PLATFORM == "Darwin":
+            pass
+        else:
+            pass
+
+    def _setPropertiesTip(self):
+        properties = f'''
+Name: {self.name}
+Type: {self._getMimeType()}
+Size: {self.props.size}
+
+Location: {self.path}
+
+Accessed: {self.props.access_time} 
+Modified: {self.props.modified_time}
+'''
+        self.setToolTip(properties)
 
     def _setThumbnail(self):
         _,ext = os.path.splitext(self.name)
@@ -328,7 +388,9 @@ class FigFileViewer(QWidget):
                 height: 0 px;
                 subcontrol-position: top;
                 subcontrol-origin: margin;
-            }''')
+            }
+            QToolTip { border: 0px }
+        ''')
         ### replace with FlowLayout ###
         self.gridLayout = FlowLayout() # QGridLayout()
         self.gridLayout.setContentsMargins(0, 0, 0, 0)
@@ -425,6 +487,11 @@ class FigFileViewer(QWidget):
         14. Add/Edit/View tags
         '''
         propbar = QWidget()
+        propbar.setStyleSheet('''
+        QToolButton:hover {
+            background: red;
+        }
+        ''')
         propLayout = QHBoxLayout()
         # left spacer.
         left_spacer = QWidget()
@@ -486,10 +553,32 @@ class FigFileViewer(QWidget):
         noteBtn = QToolButton()
         noteBtn.setIcon(FigIcon("fileviewer/add_note.svg"))
         propLayout.addWidget(noteBtn)
-        # tags
-        tagsBtn = QToolButton()
-        tagsBtn.setIcon(FigIcon("fileviewer/tags.svg"))
-        propLayout.addWidget(tagsBtn)
+        # view and edit tags
+        vETagsBtn = QToolButton()
+        vETagsBtn.setIcon(FigIcon("fileviewer/tags.svg"))
+        propLayout.addWidget(vETagsBtn)
+        # add tags
+        addTagBtn = QToolButton()
+        addTagBtn.setIcon(FigIcon("fileviewer/add_tags.svg"))
+        propLayout.addWidget(addTagBtn)
+        # clear all tags
+        clearTagsBtn = QToolButton()
+        clearTagsBtn.setIcon(FigIcon("fileviewer/remove_tags.svg"))
+        propLayout.addWidget(clearTagsBtn)
+        propLayout.addWidget(QVLine())
+        # file share.
+        fileShareBtn = QToolButton()
+        fileShareBtn.setIcon(FigIcon("fileviewer/file_share.svg"))
+        propLayout.addWidget(fileShareBtn)
+        # email file/folder.
+        emailBtn = QToolButton()
+        emailBtn.setIcon(FigIcon("fileviewer/email.svg"))
+        propLayout.addWidget(emailBtn)
+        # copy absolute path.
+        copyPathBtn = QToolButton()
+        copyPathBtn.setIcon(FigIcon("fileviewer/copy_path.svg"))
+        copyPathBtn.clicked.connect(self.copyPathToClipboard)
+        propLayout.addWidget(copyPathBtn)
         propLayout.addWidget(QVLine())
 
         #####
@@ -560,8 +649,19 @@ class FigFileViewer(QWidget):
         15. Match case
         16. Match whole phrase
         17. Regex pattern matching for search
+        18. Filter
+        19. Filter add
+        20. Filter edit
+        21. Filter delete
+        22. Filter heart (favourite)
+        23. Filter check
         '''    
         editbar = QWidget()
+        editbar.setStyleSheet('''
+        QToolButton:hover {
+            background: red;
+        }
+        ''')
         editLayout = QHBoxLayout()
         # left spacer.
         left_spacer = QWidget()
@@ -593,7 +693,7 @@ class FigFileViewer(QWidget):
         pasteBtn = QToolButton()
         pasteBtn.setIcon(FigIcon("fileviewer/paste.svg"))
         editLayout.addWidget(pasteBtn)
-        editLayout.addWidget(QVLine())
+        # editLayout.addWidget(QVLine())
         # undo/redo
         undoBtn = QToolButton()
         undoBtn.setIcon(FigIcon("fileviewer/undo.svg"))
@@ -610,11 +710,15 @@ class FigFileViewer(QWidget):
         newFolderBtn = QToolButton()
         newFolderBtn.setIcon(FigIcon("fileviewer/new_folder.svg"))
         editLayout.addWidget(newFolderBtn)
-        editLayout.addWidget(QVLine())
+        # editLayout.addWidget(QVLine())
         # new softlink
         newLinkBtn = QToolButton()
         newLinkBtn.setIcon(FigIcon("fileviewer/softlink.svg"))
         editLayout.addWidget(newLinkBtn)
+        # unlink
+        unLinkBtn = QToolButton()
+        unLinkBtn.setIcon(FigIcon("fileviewer/unlink.svg"))
+        editLayout.addWidget(unLinkBtn)
         # rename
         renameBtn = QToolButton()
         renameBtn.setIcon(FigIcon("fileviewer/rename.svg"))
@@ -624,20 +728,32 @@ class FigFileViewer(QWidget):
         delBtn.setIcon(FigIcon("fileviewer/delete.svg"))
         editLayout.addWidget(delBtn)  
         editLayout.addWidget(QVLine())
-        # file share.
-        fileShareBtn = QToolButton()
-        fileShareBtn.setIcon(FigIcon("fileviewer/file_share.svg"))
-        editLayout.addWidget(fileShareBtn)
-        # email file/folder.
-        emailBtn = QToolButton()
-        emailBtn.setIcon(FigIcon("fileviewer/email.svg"))
-        editLayout.addWidget(emailBtn)
-        # copy absolute path.
-        copyPathBtn = QToolButton()
-        copyPathBtn.setIcon(FigIcon("fileviewer/copy_path.svg"))
-        copyPathBtn.clicked.connect(self.copyPathToClipboard)
-        editLayout.addWidget(copyPathBtn)
-        editLayout.addWidget(QVLine())
+        # filter buttons
+        filterBtn = QToolButton()
+        filterBtn.setIcon(FigIcon("fileviewer/filter.svg"))
+        editLayout.addWidget(filterBtn)
+        filtAddBtn = QToolButton()
+        filtAddBtn.setIcon(FigIcon("fileviewer/filter_add.svg"))
+        editLayout.addWidget(filtAddBtn)
+        filtDelBtn = QToolButton()
+        filtDelBtn.setIcon(FigIcon("fileviewer/filter_delete.svg"))
+        editLayout.addWidget(filtDelBtn)
+        filtEditBtn = QToolButton()
+        filtEditBtn.setIcon(FigIcon("fileviewer/filter_edit.svg"))
+        editLayout.addWidget(filtEditBtn)
+        filtFavBtn = QToolButton()
+        filtFavBtn.setIcon(FigIcon("fileviewer/filter_heart.svg"))
+        editLayout.addWidget(filtFavBtn)
+        filtStarBtn = QToolButton()
+        filtStarBtn.setIcon(FigIcon("fileviewer/filter_star.svg"))
+        editLayout.addWidget(filtStarBtn)
+        filtCheckBtn = QToolButton()
+        filtCheckBtn.setIcon(FigIcon("fileviewer/filter_check.svg"))
+        editLayout.addWidget(filtCheckBtn)
+        filtStarBtn = QToolButton()
+        filtStarBtn.setIcon(FigIcon("fileviewer/filter_remove.svg"))
+        editLayout.addWidget(filtStarBtn)
+        # editLayout.addWidget(QVLine())
         # match case.
         caseBtn = QToolButton()
         caseBtn.setIcon(FigIcon("fileviewer/case-sensitive.svg"))
