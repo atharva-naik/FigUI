@@ -20,6 +20,7 @@ def FigIcon(name, w=None, h=None):
 class FigCalculator(QMainWindow):
     def __init__(self):
         super(FigCalculator, self).__init__()
+        print("opening calculator!")
         titleBar = self.initTitleBar()
         calcWidget = Calculator(self)
         self.addToolBar(Qt.TopToolBarArea, titleBar)

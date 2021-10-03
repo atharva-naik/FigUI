@@ -1117,7 +1117,7 @@ class FigWindow(QMainWindow):
         asstBtn.clicked.connect(self.addNewBotTab)
         # open math package.
         mathBtn = QPushButton()#("Math", self)
-        mathBtn.setToolTip("Open mathematical and scientific computing software suite.")
+        mathBtn.setToolTip("Open scientific calculator.")
         mathBtn.setIcon(FigIcon("sidebar/calculator.png"))
         mathBtn.clicked.connect(FigCalculator().show)
         mathBtn.setIconSize(btnSize)
@@ -1283,6 +1283,10 @@ class FigWindow(QMainWindow):
         self.tabs.setCurrentIndex(i)
         self.tabs.setTabToolTip(i, "assistant app")
         self.log("sidebar/assistant.png", "Assistant")
+
+    def addNewKanBanBoard(self):
+        '''Add a new kanban board'''
+        pass
 
     def addNewBashrcViewer(self):
         '''Add new bashrc customizer.'''
@@ -1882,7 +1886,7 @@ class FigWindow(QMainWindow):
         mvnBtn.setStyleSheet("color: #fff; background: #292929; font-family: Monospace; font-size: 14px")
         # buy me a coffee.
         coffeeBtn = QPushButton()
-        coffeeBtn.setToolTip("Buy me a coffe :)")
+        coffeeBtn.setToolTip("Buy me a coffee :)")
         coffeeBtn.setIcon(FigIcon("bottombar/coffee.png"))
         coffeeBtn.setIconSize(QSize(16,16))
         coffeeBtn.setStyleSheet("color: #fff; background: #292929; font-family: Helvetica; font-size: 14px")
@@ -1937,8 +1941,8 @@ class FigWindow(QMainWindow):
     def initCtrlBar(self):
         toolbar = QToolBar("Control Bar Visibility")
         toolbar.setContentsMargins(0, 0, 0, 0)
-        toolbar.setIconSize(QSize(30,30))
-        toolbar.setMinimumHeight(30)
+        toolbar.setIconSize(QSize(16,16))
+        toolbar.setMinimumHeight(16)
         toolbar.setStyleSheet('''
         QToolBar {
             margin: 0px; 
@@ -1976,8 +1980,7 @@ class FigWindow(QMainWindow):
         QPushButton {
             background: #efefef;
             font-family: Helvetica;
-            padding: 3px;
-            border-radius: 13px;
+            border-radius: 10px;
         }
         QPushButton:hover {
             background: #c0a5d4;
