@@ -858,7 +858,7 @@ class FigWindow(QMainWindow):
 
     def initDebugBar(self):
         sysbar = QToolBar("Coding ToolBar Visibility")
-        sysbar.setIconSize(QSize(22,22))
+        sysbar.setIconSize(QSize(25,25))
         sysbar.setStyleSheet('''
             padding: 1px; 
             margin: 0px; 
