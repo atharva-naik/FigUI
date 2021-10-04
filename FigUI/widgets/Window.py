@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+import mimetypes
 import os, sys, math
 import json, datetime, pathlib
 import psutil, webbrowser, threading
@@ -860,7 +861,7 @@ class FigWindow(QMainWindow):
         sysbar = QToolBar("Coding ToolBar Visibility")
         sysbar.setIconSize(QSize(25,25))
         sysbar.setStyleSheet('''
-            padding: 1px; 
+            padding: 3px; 
             margin: 0px; 
             background: #292929; 
             color: #fff; 
@@ -905,9 +906,9 @@ class FigWindow(QMainWindow):
 
     def initMediaBar(self):
         sysbar = QToolBar("Media Controls Bar Visibility")
-        sysbar.setIconSize(QSize(22,22))
+        sysbar.setIconSize(QSize(25,25))
         sysbar.setStyleSheet('''
-            padding: 1px; 
+            padding: 3px; 
             margin: 0px; 
             background: #292929; 
             color: #fff; 
@@ -943,23 +944,25 @@ class FigWindow(QMainWindow):
         nextBtn.setToolTip("Next media.")
         nextBtn.setIcon(FigIcon("sysbar/next.svg"))
         nextBtn.triggered.connect(lambda: os.system("xdotool key XF86AudioNext"))
-        blankBtn = QAction("", self)
+        blank1 = QAction("", self)
+        blank2 = QAction("", self)
         # add actions.
-        sysbar.addAction(prevBtn)
-        sysbar.addAction(nextBtn)
+        sysbar.addAction(blank1)
         sysbar.addAction(volPlusBtn)
         sysbar.addAction(volMinusBtn)
         sysbar.addAction(muteBtn)
         sysbar.addAction(playBtn)
-        sysbar.addAction(blankBtn)
+        sysbar.addAction(prevBtn)
+        sysbar.addAction(nextBtn)
+        sysbar.addAction(blank2)
 
         return sysbar
 
     def systemBar(self):
         sysbar = QToolBar("System Controls Bar Visibility")
-        sysbar.setIconSize(QSize(22,22))
+        sysbar.setIconSize(QSize(25,25))
         sysbar.setStyleSheet('''
-            padding: 1px; 
+            padding: 3px; 
             margin: 0px; 
             background: #292929; 
             color: #fff; 
@@ -1035,6 +1038,14 @@ class FigWindow(QMainWindow):
         # # setting blur radius
         # self.blur_effect.setBlurRadius(1.2)
         # subbar.setGraphicsEffect(self.blur_effect)
+        '''
+        QPushButton {
+            border: 0px;
+            background: transparent;
+            padding-top: 2px;
+            padding-bottom: 2px;
+        }
+        '''
         subbar.setStyleSheet('''
         QToolBar { 
             border: 0px; 
@@ -1042,10 +1053,12 @@ class FigWindow(QMainWindow):
             background: rgba(37, 21, 47, 0.90);
         } 
         QPushButton {
-            border: 0px;
-            background: transparent;
-            padding-top: 2px;
-            padding-bottom: 2px;
+            background: purple;
+            font-family: Helvetica;
+            border-radius: 10px;
+        }
+        QPushButton:hover {
+            background: #c0a5d4;
         }
         QToolBar::separator {
             background: #734494;
@@ -1068,8 +1081,6 @@ class FigWindow(QMainWindow):
             border: 0px;
             padding-top: 2px;
             padding-bottom: 2px;
-            padding-left: 5px;
-            padding-right: 5px;
         }
         QPushButton::hover { 
             background: #734494;
@@ -1372,7 +1383,26 @@ class FigWindow(QMainWindow):
         except AttributeError:
             pass
         self.langBtn.setIcon(self.tabs.tabIcon(i))
+        filename = pathlib.Path(self.tabs.tabText(i).split("...")[0].strip()
+        ).__str__().strip()
+        
         self.langBtn.setIconSize(QSize(16,16))
+        print("\x1b[34;1m"+filename+"\x1b[0m")
+        
+        MimeType, _ = mimetypes.guess_type(filename)
+        if MimeType:
+            self.indentBtn.setText("Spaces: 4")
+            self.langBtn.setText("\t"+MimeType)
+            self.encBtn.setText("UTF-8")
+            self.eosBtn.setText("LF")
+            self.rwBtn.setText("[RW]")
+        else:
+            self.cursorBtn.setText("")
+            self.indentBtn.setText("")
+            self.langBtn.setText("")
+            self.encBtn.setText("")
+            self.eosBtn.setText("")
+            self.rwBtn.setText("")
 
     def onCurrentTabClose(self, i):
         '''when tab is closed'''
@@ -1813,6 +1843,7 @@ class FigWindow(QMainWindow):
         rwBtn.setToolTip("See read write permissions")
         rwBtn.setIcon(FigIcon("bottombar/pen.svg"))
         rwBtn.setStyleSheet("color: #fff; background: #292929; border: 0px; font-family: Helvetica; font-size: 14px")
+        self.rwBtn = rwBtn
         # show cursor location.
         cursorBtn = QPushButton("Ln 0, Col 0")
         cursorBtn.setToolTip("Get cursor location.")
@@ -1823,14 +1854,17 @@ class FigWindow(QMainWindow):
         indentBtn = QPushButton("Spaces: 4")
         indentBtn.setToolTip("Select Indentation.")
         indentBtn.setStyleSheet("color: #fff; background: #292929; border: 0px; font-family: Helvetica; font-size: 14px")
+        self.indentBtn = indentBtn
         # select encoding.
         encBtn = QPushButton("UTF-8")
         encBtn.setToolTip("Select Encoding.")
         encBtn.setStyleSheet("color: #fff; background: #292929; border: 0px; font-family: Helvetica; font-size: 14px")
+        self.encBtn = encBtn
         # select end of sequence.
         eosBtn = QPushButton("LF")
         eosBtn.setToolTip("Select End of Sequence.")
         eosBtn.setStyleSheet("color: #fff; background: #292929; border: 0px; font-family: Helvetica; font-size: 14px")
+        self.eosBtn = eosBtn
         # language mode of code.
         langBtn = QPushButton()
         # langBtn.setIcon(FigIcon("launcher/txt.png"))
@@ -1973,12 +2007,12 @@ class FigWindow(QMainWindow):
         netLbl = NetDisplay(self)
         # power button.
         powerBtn = FigPowerController(self)
-        powerBtn.setIcon(FigIcon("bottombar/power.png"))
+        powerBtn.setIcon(FigIcon("bottombar/power.svg"))
         powerBtn.setIconSize(QSize(20,20))
         # powerBtn.pressed
         powerBtn.setStyleSheet('''
         QPushButton {
-            background: #efefef;
+            background: purple;
             font-family: Helvetica;
             border-radius: 10px;
         }
