@@ -210,10 +210,8 @@ class FigTabWidget(QTabWidget):
         self.tabBar.setMouseTracking(True)
         self.indexTab = None
         self.setMovable(True)
-
         # self.addTab(QWidget(self), 'Tab One')
         # self.addTab(QWidget(self), 'Tab Two')
-
     def mouseMoveEvent(self, e):
         if e.buttons() != Qt.RightButton:
             return
@@ -561,6 +559,9 @@ class FigLicenseGenerator(QWidget):
         layout.addWidget(self.learnMore)
         self.setLayout(layout)
         self.updateLicense(license_name="Apache License 2.0")
+        self.setStyleSheet('''
+            color: #fff;
+        ''')
 
     def onSelChange(self, id):
         license_name = self.dropdown.itemText(id)
@@ -719,6 +720,8 @@ class FigWindow(QMainWindow):
         self.ctrlBar = self.initCtrlBar()
         self.bottomBar = self.initBottomBar()
         self.subSysBar1, self.subSysBar2 = self.subSystemsBar()
+        # self.subSysBar1.hide()
+        # self.subSysBar2.hide()
         self.debugBar = self.initDebugBar()
         self.mediaBar = self.initMediaBar()
         self.systemBar = self.systemBar()
@@ -756,9 +759,37 @@ class FigWindow(QMainWindow):
         self.tabs.tabCloseRequested.connect(self.onCurrentTabClose) # adding action when tab close is requested
         # self.tabs.setGraphicsEffect(self.blur_effect)
         self.tabs.setStyleSheet('''
-            border-color: orange; 
-            background: #292929; 
-            color: #d4d4d4;
+        QTabWidget {
+            background: rgba(29, 29, 29, 0.95);
+            color: #fff;
+        }
+        QTabBar::tab {
+            /* background: #292929; */
+            background: qlineargradient(x1 : 0, y1 : 0, x2 : 0, y2 : 1, stop : 0.0 #6e6e6e, stop : 0.8 #4a4a4a, stop : 1.0 #292929);
+            color: #eee;
+            padding-top: 5px;
+            padding-bottom: 5px;
+            padding-left: 9px;
+            padding-right: 5px;
+            /* border-top-left-radius: 5px;
+            border-top-right-radius: 5px; */
+            margin-right: 1px;
+            margin-left: 1px;
+        }
+        QTabBar::tab:hover {
+            background: qlineargradient(x1 : 0, y1 : 1, x2 : 0, y2 : 0, stop : 0.0 #70121c, stop : 0.6 #b31f2f, stop : 0.8 #de2336);
+            color: #fff;
+        }
+        QTabBar::tab:selected {
+            background: qlineargradient(x1 : 0, y1 : 0, x2 : 0, y2 : 1, stop : 0.0 #61313c, stop : 0.8 #451f2b, stop : 1.0 #331018);
+            color: #fff;
+            padding-top: 5px;
+            padding-bottom: 5px;
+            padding-left: 9px;
+            padding-right: 5px;
+            border-top-left-radius: 6px;
+            border-top-right-radius: 6px;
+        }
         ''') # TODO: theme
         self.logger = FigLogger(path=f"logs/{datetime.datetime.now().strftime('%d_%b_%Y_%H_%M_%S')}.log")
         self.centralWidget = QSplitter(Qt.Horizontal)
@@ -780,10 +811,6 @@ class FigWindow(QMainWindow):
         self.fig_launcher = FigLauncher(self)
         # self.newTabBtn.clicked.connect(self.addNewTab)
         self.tabs.addTab(self.fig_launcher, FigIcon("launcher.png"), "\tLauncher")
-        self.tabs.setStyleSheet('''
-            background: rgba(29, 29, 29, 0.95);
-            color: #fff;
-        ''')
         self.tabs.tabBar().setTabButton(0, QTabBar.RightSide,None) # make launcher tab unclosable.
         self.navBarAdded = False
         # self.setLayout(self.layout)
@@ -1050,20 +1077,27 @@ class FigWindow(QMainWindow):
         QToolBar { 
             border: 0px; 
             color: #fff;
-            background: rgba(37, 21, 47, 0.90);
+            background: rgba(33, 10, 18, 0.90);
+            /* background: rgba(37, 21, 47, 0.90); */
         } 
         QPushButton {
-            background: purple;
+            /* background: qradialgradient(cx: 1, cy: 1, radius: 1, stop : 0 #7a4416, stop: 0.8 #fa8e34); */ /* #fa8e34 */
+            background: qradialgradient(cx: 1, cy: 1, radius: 1, stop : 0 #404040, stop: 0.8 #b8b8b8);
             font-family: Helvetica;
-            border-radius: 10px;
+            padding-left: 3px;
+            padding-right: 3px;
+            padding-top: 5px;
+            padding-bottom: 5px;
+            margin-top: 1px;
+            margin-bottom: 1px;
+            margin-left: 2px;
+            margin-right: 2px;
+            border-radius: 14px; 
         }
         QPushButton:hover {
-            background: #c0a5d4;
+            background: #b31f2f;
         }
         QToolBar::separator {
-            background: #734494;
-        }
-        QPushButton::hover { 
             background: #734494;
         }
         ''')
@@ -1074,7 +1108,7 @@ class FigWindow(QMainWindow):
         QToolBar { 
             border: 0px; 
             color: #fff; 
-            background: rgba(37, 21, 47, 0.90);
+            background: rgba(33, 10, 18, 0.90);
         }
         QPushButton {
             background: transparent;
@@ -1089,8 +1123,8 @@ class FigWindow(QMainWindow):
         sysbar.setMovable(False)
         # sysbar.setAttribute(Qt.WA_TranslucentBackground)
         # open email client.
-        size = QSize(25,25) 
-        btnSize = QSize(25,25)
+        size = QSize(20,20) 
+        btnSize = QSize(20,20)
         emailBtn = QPushButton()
         emailBtn.setToolTip("Open email client")
         emailBtn.setIcon(FigIcon("sidebar/email.png"))
@@ -1193,21 +1227,25 @@ class FigWindow(QMainWindow):
         b1 = QPushButton()#("Weather", self)
         b1.setToolTip("Open weather forecast")
         b1.setIcon(FigIcon("sidebar/lolxd.png"))
+        b1.setStyleSheet('''background: transparent''')
         b1.setIconSize(btnSize)
         
         b2 = QPushButton()#("Weather", self)
         b2.setToolTip("Open weather forecast")
         b2.setIcon(FigIcon("sidebar/lolxd.png"))
+        b2.setStyleSheet('''background: transparent''')
         b2.setIconSize(btnSize)
         
         b3 = QPushButton()#("Weather", self)
         b3.setToolTip("Open weather forecast")
         b3.setIcon(FigIcon("sidebar/lolxd.png"))
+        b3.setStyleSheet('''background: transparent''')
         b3.setIconSize(btnSize)
         
         b4 = QPushButton()#("Weather", self)
         b4.setToolTip("Open weather forecast")
         b4.setIcon(FigIcon("sidebar/lolxd.png"))
+        b4.setStyleSheet('''background: transparent''')
         b4.setIconSize(btnSize)
 
         # add actions.
@@ -1219,7 +1257,7 @@ class FigWindow(QMainWindow):
         subbar.addWidget(b1)
         subbar.addWidget(chatBtn)
         subbar.addWidget(asstBtn)
-        subbar.addWidget(b2)
+        # subbar.addWidget(b2)
         subbar.addWidget(mathBtn)
         subbar.addWidget(calBtn)
         subbar.addWidget(clockBtn)
@@ -1248,8 +1286,12 @@ class FigWindow(QMainWindow):
     def maximize(self):
         if self.isMaximized():
             self.showNormal()
+            # self.subSysBar1.hide()
+            # self.subSysBar2.hide()
         else:
             self.showMaximized()
+            # self.subSysBar1.show()
+            # self.subSysBar2.show()
 
     def colorPickerDialog(self):
         colorPicker = ColorPicker(useAlpha=True)
@@ -1387,8 +1429,7 @@ class FigWindow(QMainWindow):
         ).__str__().strip()
         
         self.langBtn.setIconSize(QSize(16,16))
-        print("\x1b[34;1m"+filename+"\x1b[0m")
-        
+        #  print("\x1b[34;1m"+filename+"\x1b[0m")
         MimeType, _ = mimetypes.guess_type(filename)
         if MimeType:
             self.indentBtn.setText("Spaces: 4")
@@ -1984,18 +2025,19 @@ class FigWindow(QMainWindow):
             color: #fff;
             border-bottom-left-radius: 5px;
             border-bottom-right-radius: 5px;
-            background: qlineargradient(x1 : 0, y1 : 0, x2 : 0, y2 : 1, stop : 0.0 #341d45, stop : 0.8 #8148a8, stop : 1.0 #997eab);
+            /* background: qlineargradient(x1 : 0, y1 : 0, x2 : 0, y2 : 1, stop : 0.0 #341d45, stop : 0.8 #8148a8, stop : 1.0 #997eab); */
+            background: qlineargradient(x1 : 0, y1 : 1, x2 : 0, y2 : 0, stop : 0.0 #61313c, stop : 0.8 #451f2b, stop : 1.0 #331018);
         }
         QLabel {
             color: #fff; 
-            background: qlineargradient(x1 : 0, y1 : 0, x2 : 0, y2 : 1, stop : 0.0 #341d45, stop : 0.8 #8148a8, stop : 1.0 #997eab);
+            background: qlineargradient(x1 : 0, y1 : 1, x2 : 0, y2 : 0, stop : 0.0 #61313c, stop : 0.8 #451f2b, stop : 1.0 #331018);
             border: 0px; 
             font-family: Helvetica; 
             font-size: 14px;            
         }
         QPushButton {
             color: #fff; 
-            background: qlineargradient(x1 : 0, y1 : 0, x2 : 0, y2 : 1, stop : 0.0 #341d45, stop : 0.8 #8148a8, stop : 1.0 #997eab);
+            background: qlineargradient(x1 : 0, y1 : 1, x2 : 0, y2 : 0, stop : 0.0 #61313c, stop : 0.8 #451f2b, stop : 1.0 #331018);
             font-family: Helvetica; 
             font-size: 14px;
             border: 0px;
@@ -2012,7 +2054,7 @@ class FigWindow(QMainWindow):
         # powerBtn.pressed
         powerBtn.setStyleSheet('''
         QPushButton {
-            background: purple;
+            background: qradialgradient(cx: 1, cy: 1, radius: 1, stop : 0 #404040, stop: 0.8 #b8b8b8);
             font-family: Helvetica;
             border-radius: 10px;
         }

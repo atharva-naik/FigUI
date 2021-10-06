@@ -1,18 +1,17 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-import PyQt5
 from PIL import Image, ImageQt
-import os, sys, glob, pathlib
-from PyQt5.QtPrintSupport import *
+import os, glob, pathlib
 from PyQt5.QtCore import QThread, QUrl, QSize, Qt
 from PyQt5.QtGui import QIcon, QKeySequence, QTransform, QFont, QFontDatabase, QMovie, QPixmap
-from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEngineProfile, QWebEngineSettings
-from PyQt5.QtWidgets import QApplication, QAction, QDialog, QPushButton, QWidget, QToolBar, QGridLayout, QLabel, QVBoxLayout, QToolButton, QFileDialog, QScrollArea, QFrame, QGraphicsBlurEffect
+from PyQt5.QtWidgets import QApplication, QAction, QDialog, QPushButton, QWidget, QToolBar, QGridLayout, QLabel, QHBoxLayout, QVBoxLayout, QToolButton, QFileDialog, QScrollArea, QFrame, QGraphicsBlurEffect
 try:
     from utils import *
     from FlowLayout import FlowLayout
+    from assets.Image import ImageAsset
 except ImportError:
     from FigUI.utils import *
+    from FigUI.assets.Image import ImageAsset
     from FigUI.widgets.FlowLayout import FlowLayout
 
 
@@ -61,44 +60,77 @@ class FigToolButton(QToolButton):
         self.thread.start()
 
 
+class FigScrollArea(QWidget):
+    def __init__(self, parent=None):
+        super(FigScrollArea, self).__init__(parent)
+        self.setAttribute(Qt.WA_StyledBackground)
+        widget = QWidget()
+        widget.setStyleSheet("""QWidget{ background:#fff; color:#000;}""")
+        blur_effect = QGraphicsBlurEffect(blurRadius=5)
+        widget.setGraphicsEffect(blur_effect)
+
+        self._scrollarea = QScrollArea(parent=self)
+        self.scrollarea.setStyleSheet(""" background-color : transparent; color : black""")
+        self.scrollarea.setContentsMargins(10, 0, 10, 0)
+
+        lay = QVBoxLayout(self)
+        lay.addWidget(widget)
+
+    @property
+    def scrollarea(self):
+        return self._scrollarea
+
+    def sizeHint(self):
+        return self._scrollarea.sizeHint()
+
+    def resizeEvent(self, event):
+        self._scrollarea.resize(self.size())
+        self._scrollarea.raise_()
+        return super().resizeEvent(event)
+
+
 class FigLauncher(QWidget):
     def __init__(self, parent=None, width=8, button_size=(100,100), icon_size=(70,70)):
-        super(FigLauncher, self).__init__(parent)
-        layout = FlowLayout() # QGridLayout()
-        layout.setContentsMargins(0, 0, 0, 0)
-        self.layout = QVBoxLayout(self)
+        super(FigLauncher, self).__init__()
+        launcher_layout = FlowLayout()
+        # layout.setContentsMargins(2, 2, 2, 2)
+        self.layout = QVBoxLayout()
         self.layout.setContentsMargins(0, 0, 0, 0)
-        self.launcherWidget = QWidget()
-        self.launcherWidget.setStyleSheet('''background-color: rgba(73, 44, 94, 0.5);''')
+        self.launcherWidget = QWidget(self)
+        # 5A8034
+        self.launcherWidget.setAttribute(Qt.WA_TranslucentBackground, True)
         self.gifBtn = None
         self._parent = parent
-
         # creating a blur effect
         self.blur_effect = QGraphicsBlurEffect()
         # setting blur radius
-        self.blur_effect.setBlurRadius(1.5)
-
-        self.scroll = QScrollArea()
+        self.blur_effect.setBlurRadius(5)
+        
+        self.bg_url = "/tmp/FigUI.Launcher.png"
+        self.bg_img = ImageAsset('/home/atharva/Pictures/Wallpapers/anime/shop.png')
+        self.bg_img.gaussBlur(5).save(self.bg_url)
         # self.scroll.setStyleSheet("background: rgba(73, 44, 94, 0.5);")
-        self.scroll.setAttribute(Qt.WA_TranslucentBackground, True)
+        # self.scroll.setAttribute(Qt.WA_TranslucentBackground, True)
+        self.scroll = QScrollArea(self)
         self.scroll.setWidgetResizable(True)
         self.scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
         self.scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.scroll.setStyleSheet('''
             QScrollArea {
-                background-color: rgba(73, 44, 94, 0.5);
+                /* background-color: rgba(90, 12, 63, 0.5); */
+                background: url('''+ f"'{self.bg_url}'" +''') 0 0 0 0 stretch stretch no-repeat;
             }
             QScrollBar:vertical {
                 border: 0px solid #999999;
                 width:14px;    
                 margin: 0px 0px 0px 3px;
-                background-color: rgba(73, 44, 94, 0.5);
+                background-color: rgba(90, 12, 63, 0.5);
             }
             QScrollBar::handle:vertical {         
                 min-height: 0px;
                 border: 0px solid red;
                 border-radius: 5px;
-                background-color: rgb(92, 95, 141);
+                background-color: #c70039;
             }
             QScrollBar::add-line:vertical {       
                 height: 0px;
@@ -129,7 +161,7 @@ class FigLauncher(QWidget):
             name = pathlib.Path(path).stem
             ext = os.path.splitext(path)[1]
 
-            launcherButton = FigToolButton(self) # QToolButton(self)
+            launcherButton = FigToolButton(self.launcherWidget) # QToolButton(self)
             launcherButton.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
             launcherButton.setText(name)
             launcherButton.setMaximumSize(QSize(*button_size))
@@ -140,13 +172,15 @@ class FigLauncher(QWidget):
             else:
                 launcherButton.setIcon(QIcon(path))
                 launcherButton.setIconSize(QSize(*icon_size))
+            launcherButton.setAttribute(Qt.WA_TranslucentBackground)
             launcherButton.setStyleSheet('''
             QToolButton {
                 color: #fff;
                 border: 0px;
+                background: transparent
             }
             QToolButton:hover { 
-                background: #734494;
+                background: #c70039;
                 font-weight: bold;
                 color: #292929;
             }''')
@@ -185,11 +219,11 @@ class FigLauncher(QWidget):
                 if parent:
                     parent.logger.debug(f"connected FigHandler instance to '{name}' button")
                     launcherButton.clicked.connect(parent.addNewHandlerTab)
-            layout.addWidget(launcherButton)
+            launcher_layout.addWidget(launcherButton)
             # layout.addWidget(launcherButton, i // width, i % width)
             launcherButton.clicked.connect(self._clickHandler)
         
-        self.launcherWidget.setLayout(layout)
+        self.launcherWidget.setLayout(launcher_layout)
         self.scroll.setWidget(self.launcherWidget) # comment
         
         self.welcomeLabel = QPushButton("Welcome to FIG, launch an app!")

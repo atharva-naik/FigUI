@@ -140,10 +140,12 @@ class FigFileIcon(QToolButton):
         self.setStyleSheet('''
             QToolTip {
                 border: 0px;
+                color: #fff;
             }
             QToolButton { 
                 border: 0px; 
                 background-image: none;
+                color: #fff;
             }
             QToolButton:hover {
                 background: #009b9e;
@@ -912,7 +914,7 @@ class FigFileViewer(QWidget):
     def highlight(self, j):
         try:
             selBtn = self.gridLayout.itemAt(self.j).widget()
-            selBtn.setStyleSheet("background-color: #292929; border: 0px")
+            selBtn.setStyleSheet("background-color: #292929; color: #fff; border: 0px")
             self.j = j
             selBtn = self.gridLayout.itemAt(self.j).widget()
             selBtn.setStyleSheet("background: #42f2f5; color: #292929; font-weight: bold")
