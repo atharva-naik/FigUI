@@ -3,8 +3,8 @@
 from PIL import Image, ImageQt
 import os, glob, pathlib
 from PyQt5.QtCore import QThread, QUrl, QSize, Qt
-from PyQt5.QtGui import QIcon, QKeySequence, QTransform, QFont, QFontDatabase, QMovie, QPixmap
-from PyQt5.QtWidgets import QApplication, QAction, QDialog, QPushButton, QWidget, QToolBar, QGridLayout, QLabel, QHBoxLayout, QVBoxLayout, QToolButton, QFileDialog, QScrollArea, QFrame, QGraphicsBlurEffect
+from PyQt5.QtGui import QIcon, QKeySequence, QTransform, QFont, QFontDatabase, QMovie, QPixmap, QColor
+from PyQt5.QtWidgets import QApplication, QAction, QDialog, QPushButton, QWidget, QToolBar, QGridLayout, QLabel, QHBoxLayout, QVBoxLayout, QToolButton, QFileDialog, QScrollArea, QFrame, QGraphicsBlurEffect, QGraphicsDropShadowEffect
 try:
     from utils import *
     from FlowLayout import FlowLayout
@@ -32,6 +32,19 @@ class FigToolButton(QToolButton):
         super(FigToolButton, self).__init__(parent)
         self.keep_running = True
         self.setFixedSize(QSize(*size))
+
+    def enterEvent(self, event):
+        shadowEffect = QGraphicsDropShadowEffect(self)
+        shadowEffect.setOffset(0, 0)
+        shadowEffect.setColor(QColor(255, 223, 97))
+        shadowEffect.setBlurRadius(200)
+        blurEffect = QGraphicsBlurEffect(self)
+        blurEffect.setBlurRadius(1.5)
+        self.setGraphicsEffect(shadowEffect)
+        # self.setGraphicsEffect(blurEffect)
+
+    def leaveEvent(self, event):
+        self.setGraphicsEffect(None)
 
     def _animateMovie(self):
         import time
@@ -106,9 +119,15 @@ class FigLauncher(QWidget):
         # setting blur radius
         self.blur_effect.setBlurRadius(5)
         
-        self.bg_url = "/tmp/FigUI.Launcher.png"
-        self.bg_img = ImageAsset('/home/atharva/Pictures/Wallpapers/anime/shop.png')
-        self.bg_img.gaussBlur(5).save(self.bg_url)
+        # this snippet of code is to setup a blurred background image.
+        if parent:
+            img_path = parent.background
+            stem = pathlib.Path(img_path).stem
+            self.bg_url = f"/tmp/FigUI.Launcher?={stem}.png"
+            if not os.path.exists(self.bg_url):
+                self.bg_img = ImageAsset(img_path)
+                self.bg_img.gaussBlur(5).save(self.bg_url)
+        
         # self.scroll.setStyleSheet("background: rgba(73, 44, 94, 0.5);")
         # self.scroll.setAttribute(Qt.WA_TranslucentBackground, True)
         self.scroll = QScrollArea(self)
@@ -179,8 +198,10 @@ class FigLauncher(QWidget):
                 border: 0px;
                 background: transparent
             }
+            /* #c70039; */
+            /*
             QToolButton:hover { 
-                background: #c70039;
+                background: #ffdf61; 
                 font-weight: bold;
                 color: #292929;
             }''')

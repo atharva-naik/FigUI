@@ -7,7 +7,7 @@ import psutil, webbrowser, threading
 from PyQt5.Qt import PYQT_VERSION_STR
 from PyQt5.QtCore import QThread, QUrl, QTimer, QPoint, QRect, QSize, Qt, QT_VERSION_STR
 from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEngineProfile, QWebEngineSettings
-from PyQt5.QtGui import QIcon, QFont, QKeySequence, QTransform, QTextCharFormat, QSyntaxHighlighter, QFontDatabase, QTextFormat, QColor, QPainter, QDesktopServices, QWindow
+from PyQt5.QtGui import QIcon, QFont, QKeySequence, QTransform, QCursor, QPixmap, QTextCharFormat, QSyntaxHighlighter, QFontDatabase, QTextFormat, QColor, QPainter, QDesktopServices, QWindow
 from PyQt5.QtWidgets import QMenu, QApplication, QAction, QDialog, QPushButton, QTabWidget, QStatusBar, QToolBar, QWidget, QLineEdit, QMainWindow, QHBoxLayout, QVBoxLayout, QPlainTextEdit, QToolBar, QFrame, QSizePolicy, QTabBar, QDesktopWidget, QLabel, QToolButton, QTextEdit, QComboBox, QListWidget, QListWidgetItem, QScrollArea, QDockWidget, QGraphicsBlurEffect, QSplitter
 
 try:
@@ -707,11 +707,13 @@ class FigBrowser(QWidget):
 
 
 class FigWindow(QMainWindow):
-    def __init__(self, init_url='https://pypi.org/project/bossweb/0.0.1/', *args, **kwargs):
+    def __init__(self, background="logo.png", *args, **kwargs):
         os.makedirs("logs", exist_ok=True)
         super(FigWindow, self).__init__(*args, **kwargs)  
         self.setMouseTracking(True) # allow mouse tracking   
 
+        # set background image path.
+        self.background = background
         # initialize file tree.
         self.fileTree = FigTreeFileExplorer()
         # initialize activity panel.
@@ -1060,11 +1062,6 @@ class FigWindow(QMainWindow):
 
     def subSystemsBar(self):
         subbar = QToolBar("App Launcher Bar Visibility")
-        # # creating a blur effect
-        # self.blur_effect = QGraphicsBlurEffect()
-        # # setting blur radius
-        # self.blur_effect.setBlurRadius(1.2)
-        # subbar.setGraphicsEffect(self.blur_effect)
         '''
         QPushButton {
             border: 0px;
@@ -1077,12 +1074,15 @@ class FigWindow(QMainWindow):
         QToolBar { 
             border: 0px; 
             color: #fff;
-            background: rgba(33, 10, 18, 0.90);
-            /* background: rgba(37, 21, 47, 0.90); */
+            background: rgba(0, 77, 57, 0.90);
+            /* background: rgba(37, 21, 47, 0.80); */
+            /* background: rgba(33, 10, 18, 0.80); */
+            /* background: url('/home/atharva/GUI/FigUI/FigUI/assets/icons/glass_texture.jpg') 0 0 0 0;
+            background-position: center; */
         } 
         QPushButton {
             /* background: qradialgradient(cx: 1, cy: 1, radius: 1, stop : 0 #7a4416, stop: 0.8 #fa8e34); */ /* #fa8e34 */
-            background: qradialgradient(cx: 1, cy: 1, radius: 1, stop : 0 #404040, stop: 0.8 #b8b8b8);
+            /* background: qradialgradient(cx: 1, cy: 1, radius: 1, stop : 0 #404040, stop: 0.8 #b8b8b8); */
             font-family: Helvetica;
             padding-left: 3px;
             padding-right: 3px;
@@ -1095,7 +1095,8 @@ class FigWindow(QMainWindow):
             border-radius: 14px; 
         }
         QPushButton:hover {
-            background: #b31f2f;
+            /* background: #b31f2f; */
+            background: rgba(185, 255, 236, 0.5);
         }
         QToolBar::separator {
             background: #734494;
@@ -1108,9 +1109,30 @@ class FigWindow(QMainWindow):
         QToolBar { 
             border: 0px; 
             color: #fff; 
-            background: rgba(33, 10, 18, 0.90);
+            background: rgba(0, 77, 57, 0.90);
+            /* background: url('/home/atharva/GUI/FigUI/FigUI/assets/icons/glass_texture.jpg') 0 0 0 0;
+            background-repeat: y;
+            background-position: center; */
         }
         QPushButton {
+            /* background: qradialgradient(cx: 1, cy: 1, radius: 1, stop : 0 #7a4416, stop: 0.8 #fa8e34); */ /* #fa8e34 */
+            /* background: qradialgradient(cx: 1, cy: 1, radius: 1, stop : 0 #404040, stop: 0.8 #b8b8b8); */
+            font-family: Helvetica;
+            padding-left: 3px;
+            padding-right: 3px;
+            padding-top: 5px;
+            padding-bottom: 5px;
+            margin-top: 1px;
+            margin-bottom: 1px;
+            margin-left: 2px;
+            margin-right: 2px;
+            border-radius: 14px; 
+        }
+        QPushButton:hover {
+            /* background: #b31f2f; */
+            background: rgba(185, 255, 236, 0.5);
+        }
+        /* QPushButton {
             background: transparent;
             border: 0px;
             padding-top: 2px;
@@ -1118,7 +1140,7 @@ class FigWindow(QMainWindow):
         }
         QPushButton::hover { 
             background: #734494;
-        }
+        } */
         ''')
         sysbar.setMovable(False)
         # sysbar.setAttribute(Qt.WA_TranslucentBackground)
@@ -1127,101 +1149,101 @@ class FigWindow(QMainWindow):
         btnSize = QSize(20,20)
         emailBtn = QPushButton()
         emailBtn.setToolTip("Open email client")
-        emailBtn.setIcon(FigIcon("sidebar/email.png"))
+        emailBtn.setIcon(FigIcon("sidebar/email.svg"))
         emailBtn.setIconSize(btnSize)
         # open notes.
         notesBtn = QPushButton()
         notesBtn.setToolTip("Open note taking app")
-        notesBtn.setIcon(FigIcon("sidebar/notes.png"))
+        notesBtn.setIcon(FigIcon("sidebar/contacts.svg"))
         notesBtn.setIconSize(btnSize)
         # open translator.
         transBtn = QPushButton()#("Translator", self)
         transBtn.setToolTip("Open translator")
-        transBtn.setIcon(FigIcon("sidebar/translate.png"))
+        transBtn.setIcon(FigIcon("sidebar/translate.svg"))
         transBtn.setIconSize(btnSize)
         # open text to speech.
         ttsBtn = QPushButton()#("Text2Speech", self)
         ttsBtn.setToolTip("Open text to speech")
-        ttsBtn.setIcon(FigIcon("sidebar/tts.png"))
+        ttsBtn.setIcon(FigIcon("sidebar/tts.svg"))
         ttsBtn.setIconSize(btnSize)
         # open optical character recognition.
         ocrBtn = QPushButton()#("OCR", self)
         ocrBtn.setToolTip("Open optical character recognition")
-        ocrBtn.setIcon(FigIcon("sidebar/ocr.png"))
+        ocrBtn.setIcon(FigIcon("sidebar/ocr.svg"))
         ocrBtn.setIconSize(btnSize)
         # open p2p chat server.
         chatBtn = QPushButton()#("Chat", self)
         chatBtn.setToolTip("Open chat server")
-        chatBtn.setIcon(FigIcon("sidebar/chat.png"))
+        chatBtn.setIcon(FigIcon("sidebar/chat.svg"))
         chatBtn.setIconSize(btnSize)
         # open assitant.
         asstBtn = QPushButton()#("Assistant", self)
         asstBtn.setToolTip("Open assitant")
-        asstBtn.setIcon(FigIcon("sidebar/assistant.png"))
+        asstBtn.setIcon(FigIcon("sidebar/assistant.svg"))
         asstBtn.setIconSize(btnSize)
         asstBtn.clicked.connect(self.addNewBotTab)
         # open math package.
         mathBtn = QPushButton()#("Math", self)
         mathBtn.setToolTip("Open scientific calculator.")
-        mathBtn.setIcon(FigIcon("sidebar/calculator.png"))
+        mathBtn.setIcon(FigIcon("sidebar/calculator.svg"))
         mathBtn.clicked.connect(FigCalculator().show)
         mathBtn.setIconSize(btnSize)
         # open newsfeed.
         newsBtn = QPushButton()#("Newsfeed", self)
         newsBtn.setToolTip("Open news feed")
-        newsBtn.setIcon(FigIcon("sidebar/news.png"))
+        newsBtn.setIcon(FigIcon("sidebar/news.svg"))
         newsBtn.setIconSize(btnSize)
         # whiteboard.
         wbBtn = QPushButton()#("Whiteboard", self)
         wbBtn.setToolTip("Open whiteboard")
-        wbBtn.setIcon(FigIcon("sidebar/whiteboard.png"))
+        wbBtn.setIcon(FigIcon("sidebar/whiteboard.svg"))
         wbBtn.setIconSize(btnSize)
         # illustrator
         illuBtn = QPushButton()#("Illustrator", self)
         illuBtn.setToolTip("Open illustrator")
-        illuBtn.setIcon(FigIcon("sidebar/illustrator.png"))
+        illuBtn.setIcon(FigIcon("sidebar/illustrator.svg"))
         illuBtn.setIconSize(btnSize)
         # kanban board.
         kanbanBtn = QPushButton()#("Kanban Board", self)
         kanbanBtn.setToolTip("Open kanban board")
-        kanbanBtn.setIcon(FigIcon("sidebar/kanban.png"))
+        kanbanBtn.setIcon(FigIcon("sidebar/kanban.svg"))
         kanbanBtn.setIconSize(btnSize)
         # open history.
         histBtn = QPushButton()#("History", self)
         histBtn.setToolTip("Open history")
-        histBtn.setIcon(FigIcon("sidebar/history.png"))
+        histBtn.setIcon(FigIcon("sidebar/history.svg"))
         histBtn.clicked.connect(self.addNewHistoryViewer)
         histBtn.setIconSize(btnSize)
         # open password manager.
         passBtn = QPushButton()#("PassMan", self)
         passBtn.setToolTip("Open password manager")
-        passBtn.setIcon(FigIcon("sidebar/password.png"))
+        passBtn.setIcon(FigIcon("sidebar/password.svg"))
         passBtn.setIconSize(size)
         # open hardware monitoring software package.
         hardwareBtn = QPushButton()#("Hardware Manager", self)
         hardwareBtn.setToolTip("Open hardware manager")
-        hardwareBtn.setIcon(FigIcon("sidebar/hardware.svg"))
+        hardwareBtn.setIcon(FigIcon("sidebar/hard-ware.svg"))
         hardwareBtn.setIconSize(size)
         # open date and time.
         calBtn = QPushButton()#("Calendar", self)
         calBtn.setToolTip("Open date/time widget")
-        calBtn.setIcon(FigIcon("sidebar/calendar.png"))
+        calBtn.setIcon(FigIcon("sidebar/calendar.svg"))
         calBtn.setIconSize(btnSize)
         # open clock
         clockBtn = QPushButton()#("Clock", self)
         clockBtn.setToolTip("Open clock")
-        clockBtn.setIcon(FigIcon("sidebar/clock.png"))
+        clockBtn.setIcon(FigIcon("sidebar/clock.svg"))
         clockBtn.setIconSize(btnSize)
         clockBtn.clicked.connect(self.addNewClock)
         # open weather
         weatherBtn = QPushButton()#("Weather", self)
         weatherBtn.setToolTip("Open weather forecast")
-        weatherBtn.setIcon(FigIcon("sidebar/weather.png"))
+        weatherBtn.setIcon(FigIcon("sidebar/weather.svg"))
         weatherBtn.setIconSize(btnSize)
         # trash.
         trash = QPushButton()#("Trash", self)
         trash.setToolTip("Open trash folder.")
-        trash.setIcon(FigIcon("sidebar/trash.png"))
+        trash.setIcon(FigIcon("sidebar/trash.svg"))
         trash.setIconSize(size)
         
         b1 = QPushButton()#("Weather", self)
@@ -2087,7 +2109,8 @@ class FigWindow(QMainWindow):
 
 
 class FigApp(QApplication):
-    def __init__(self, argv, 
+    def __init__(self, argv,
+                 background="logo.png",
                  x=100, y=100, w=1050, h=850, 
                  theme=None, icon="logo.png", 
                  *args, **kwargs):
@@ -2106,7 +2129,7 @@ class FigApp(QApplication):
         for fontFile in fontFiles:
             fontIds.append(QFontDatabase.addApplicationFont(__font__(fontFile)))
 
-        self.window = FigWindow(*args, **kwargs)
+        self.window = FigWindow(*args, background=background, **kwargs)
         self.window.setGeometry(x, y, w, h)
         
         # TODO: always stay on top (from commandline).
@@ -2118,36 +2141,36 @@ class FigApp(QApplication):
         
         self.window.setWindowOpacity(self.window.opacLevel)
         self.window.clipboard = self.clipboard() 
-        # self.server_thread = threading.Thread(target=serve_all_files)
         self.setWindowIcon(QIcon(icon))
-        # if fontId1 < 0:
-        #     self.window.logger.error("unable to load OMORI_GAME.ttf")
-        # else:
-        #     self.window.logger.debug("loaded OMORI_GAME.ttf successfully")
-        self.setCursorFlashTime(1000)
         self.window.qtBtn.clicked.connect(self.aboutQt)
+        self.setup_cursor()
 
     def announce(self):
+        print("\x1b[33;1m")
         print(sys.version)
-        print("Qt version:", QT_VERSION_STR)
-        print("PyQt5 version:", PYQT_VERSION_STR)
-        print("made by: 𝓐𝓽𝓱𝓪𝓻𝓿𝓪 𝓝𝓪𝓲𝓴, with ❤️ ")
+        print("Qt", QT_VERSION_STR)
+        print("PyQt5", PYQT_VERSION_STR)
+        print("𝓐𝓽𝓱𝓪𝓻𝓿𝓪 𝓝𝓪𝓲𝓴, 𝔀𝓲𝓽𝓱 \x1b[0m\x1b[31;1m❤\x1b[0m")
+
+    def setup_cursor(self):
+        '''setup cursor image.'''
+        self.setCursorFlashTime(1000)
+        pixmap = QPixmap(__icon__("cursor.svg")).scaledToWidth(32).scaledToWidth(32)
+        cursor = QCursor(pixmap, 32, 32)
+        self.window.tabs.setCursor(cursor)
 
     def run(self):
         # self.aboutQt()
         import time
         start = time.time()
         self.window.show()
-        print("window.show took:", time.time()-start)
-        
+        # print("window.show took:", time.time()-start)
         start = time.time()
         # self.server_thread.start()
-        print("server.thread.start() took:", time.time()-start)
-        
+        # print("server.thread.start() took:", time.time()-start)
         start = time.time()
         self.beep()
-        print("self.beep() took:", time.time()-start)
-
+        # print("self.beep() took:", time.time()-start)
         self.announce()
         sys.exit(self.__exec__())
 

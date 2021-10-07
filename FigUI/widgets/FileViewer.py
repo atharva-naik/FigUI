@@ -6,9 +6,9 @@ import tempfile, random
 import os, re, sys, glob, pathlib, datetime
 import argparse, mimetypes, platform, textwrap, subprocess
 from PyQt5.QtPrintSupport import *
-from PyQt5.QtCore import QThread, QUrl, QSize, Qt, QEvent, pyqtSlot, pyqtSignal
+from PyQt5.QtCore import QThread, QUrl, QDir, QSize, Qt, QEvent #, pyqtSlot, pyqtSignal
 from PyQt5.QtGui import QIcon, QKeySequence, QTransform, QFont, QFontDatabase, QMovie, QPixmap
-from PyQt5.QtWidgets import QAction, QDialog, QWidget, QToolBar, QLabel, QVBoxLayout, QHBoxLayout, QToolButton, QScrollArea, QLineEdit, QFrame, QSizePolicy, QMessageBox
+from PyQt5.QtWidgets import QAction, QDialog, QWidget, QToolBar, QLabel, QVBoxLayout, QHBoxLayout, QToolButton, QScrollArea, QLineEdit, QFrame, QSizePolicy, QMessageBox, QTreeView, QFileSystemModel
 
 try:
     from utils import *
@@ -1036,10 +1036,32 @@ class FigFileViewer(QWidget):
 class FigTreeFileExplorer(QWidget):
     def __init__(self, root_path="/home/atharva", parent=None):
         super(FigTreeFileExplorer, self).__init__(parent)
+        # veritcal layout.
         layout = QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(QLabel(root_path))
+        # root path.
         self.fileRoot = root_path
+        # file system model.
+        self.fileModel = QFileSystemModel()
+        self.fileModel.setRootPath(QDir.currentPath())
+        # file tree view.
+        self.fileTree = QTreeView()
+        self.fileTree.setModel(self.fileModel)
+        self.fileTree.setRootIndex(
+            self.fileModel.index(
+                QDir.currentPath()
+            )
+        )
+        # hide Size, Type and Date Modified.
+        self.fileTree.hideColumn(1)
+        self.fileTree.hideColumn(2)
+        self.fileTree.hideColumn(3)
+        # hide scroll bar.
+        self.fileTree.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        # add file tree to layout.
+        layout.addWidget(self.fileTree)
+
         self.setLayout(layout)
         self.visible = False
         self.setStyleSheet('''

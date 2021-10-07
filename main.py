@@ -7,5 +7,7 @@ import FigUI.widgets.Window
 
 if __name__ == "__main__":
     FigUI.utils.notify() # works only for Linux.
-    app = FigUI.widgets.Window.FigApp(argv=sys.argv)
+    app = FigUI.widgets.Window.FigApp(argv=sys.argv,
+                                      # x=200, y=200, w=1920, h=1080, 
+                                      background='/home/atharva/Pictures/Wallpapers/anime/shop.png')
     app.run()
