@@ -28,20 +28,21 @@ def FigIcon(name, w=None, h=None):
 
 
 class FigToolButton(QToolButton):
-    def __init__(self, parent=None, size=(100,100)):
+    def __init__(self, 
+                 parent=None, 
+                 size=(100,100), 
+                 icon_size=(60,60)):
         super(FigToolButton, self).__init__(parent)
         self.keep_running = True
         self.setFixedSize(QSize(*size))
+        self.setIconSize(QSize(*icon_size))
 
     def enterEvent(self, event):
         shadowEffect = QGraphicsDropShadowEffect(self)
         shadowEffect.setOffset(0, 0)
-        shadowEffect.setColor(QColor(255, 223, 97))
-        shadowEffect.setBlurRadius(200)
-        blurEffect = QGraphicsBlurEffect(self)
-        blurEffect.setBlurRadius(1.5)
+        shadowEffect.setColor(QColor(255, 213, 0))
+        shadowEffect.setBlurRadius(50)
         self.setGraphicsEffect(shadowEffect)
-        # self.setGraphicsEffect(blurEffect)
 
     def leaveEvent(self, event):
         self.setGraphicsEffect(None)
@@ -137,7 +138,7 @@ class FigLauncher(QWidget):
         self.scroll.setStyleSheet('''
             QScrollArea {
                 /* background-color: rgba(90, 12, 63, 0.5); */
-                background: url('''+ f"'{self.bg_url}'" +''') 0 0 0 0 stretch stretch no-repeat;
+                background: url('''+ f"'{self.bg_url}'" +''') 0 0 0 0 stretch stretch; /* no-repeat; */
             }
             QScrollBar:vertical {
                 border: 0px solid #999999;
@@ -196,12 +197,12 @@ class FigLauncher(QWidget):
             QToolButton {
                 color: #fff;
                 border: 0px;
-                background: transparent
+                background: transparent;
+                border-radius: 50px;
             }
             /* #c70039; */
-            /*
             QToolButton:hover { 
-                background: #ffdf61; 
+                background: qradialgradient(cx: 0.6, cy: 0.6, radius: 0.5, stop : 0.3 #ffd500, stop: 0.6 #ffdf61, stop: 0.9 #fcf2ca); 
                 font-weight: bold;
                 color: #292929;
             }''')
