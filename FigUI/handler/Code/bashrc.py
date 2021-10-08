@@ -60,6 +60,7 @@ class ANSIColorPicker(QWidget):
         layout = QHBoxLayout()
         self.picked_color = (0,0,0,50)
         # create widgets.
+        self.setStyleSheet("color: #fff")
         self.rgb_color = QLineEdit() # enter input color in rgb
         self.rgb_color.setText("0, 0, 0")
         self.rgb_color.returnPressed.connect(self.fromRGB)

@@ -2,6 +2,9 @@ from PyQt5.QtCore import pyqtSignal, QSize
 from PyQt5.QtWidgets import QWidget, QTabBar, QPushButton, QTabWidget
 
 
+class FigTabButton():
+    pass
+
 class TabBarPlus(QTabBar):
     """Tab bar that has a plus button floating to the right of the tabs."""
     plusClicked = pyqtSignal()

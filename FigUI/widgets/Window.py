@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-import mimetypes
 import os, sys, math
+import mimetypes, platform
 import json, datetime, pathlib
 import psutil, webbrowser, threading
 from PyQt5.Qt import PYQT_VERSION_STR
-from PyQt5.QtCore import QThread, QUrl, QTimer, QPoint, QRect, QSize, Qt, QT_VERSION_STR
+from PyQt5.QtCore import QThread, QUrl, pyqtSignal, QTimer, QPoint, QRect, QSize, Qt, QT_VERSION_STR
 from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEngineProfile, QWebEngineSettings
-from PyQt5.QtGui import QIcon, QFont, QKeySequence, QTransform, QCursor, QPixmap, QTextCharFormat, QSyntaxHighlighter, QFontDatabase, QTextFormat, QColor, QPainter, QDesktopServices, QWindow
-from PyQt5.QtWidgets import QMenu, QApplication, QAction, QDialog, QPushButton, QTabWidget, QStatusBar, QToolBar, QWidget, QLineEdit, QMainWindow, QHBoxLayout, QVBoxLayout, QPlainTextEdit, QToolBar, QFrame, QSizePolicy, QTabBar, QDesktopWidget, QLabel, QToolButton, QTextEdit, QComboBox, QListWidget, QListWidgetItem, QScrollArea, QDockWidget, QGraphicsBlurEffect, QSplitter
+from PyQt5.QtGui import QIcon, QFont, QKeySequence, QTransform, QCursor, QPixmap, QTextCharFormat, QSyntaxHighlighter, QFontDatabase, QTextFormat, QColor, QPainter, QDesktopServices
+from PyQt5.QtWidgets import QMenu, QApplication, QAction, QDialog, QPushButton, QTabWidget, QStatusBar, QToolBar, QWidget, QLineEdit, QMainWindow, QHBoxLayout, QVBoxLayout, QPlainTextEdit, QToolBar, QFrame, QSizePolicy, QTabBar, QDesktopWidget, QLabel, QToolButton, QTextEdit, QComboBox, QListWidget, QListWidgetItem, QScrollArea, QDockWidget, QGraphicsBlurEffect, QSplitter, QShortcut, QGraphicsDropShadowEffect, QGraphicsOpacityEffect
 
 try:
     from Theme import FigTheme
@@ -19,6 +19,7 @@ try:
     from FigUI.subSystem.Clock import FigClock
     from FigUI.subSystem.Shell import FigShell
     from FigUI.subSystem.ChatBot import FigChatBot
+    from FigUI.widgets.SearchBar import FigSearchBar
     from FigUI.subSystem.History import HistoryLogger
     from FigUI.widgets.ActivityPanel import FigActivityPanel
     from FigUI.handler.Code.QtColorPicker import ColorPicker
@@ -33,6 +34,7 @@ except ImportError:
     from .Tab import FigTabWidget
     from ..handler import FigHandler
     from .Launcher import FigLauncher
+    from .SearchBar import FigSearchBar
     # from ..handler.Code import CodeEditor
     from ..subSystem.Clock import FigClock
     from ..subSystem.Shell import FigShell
@@ -81,21 +83,53 @@ def __asset__(name):
 
     return path
 
+# platform name
+PLATFORM = platform.system()
 # system controllers.
 brightnessCtrl = BrightnessController()
-# def serve_all_files(directory="/", port=5000):
-#     import http.server
-#     import socketserver
-#     PORT = port
-#     DIRECTORY = directory
 
-#     class Handler(http.server.SimpleHTTPRequestHandler):
-#         def __init__(self, *args, **kwargs):
-#             super().__init__(*args, directory=DIRECTORY, **kwargs)
 
-#     with socketserver.TCPServer(("", PORT), Handler) as httpd:
-#         print("serving at port", PORT)
-#         httpd.serve_forever()
+class FigAppBtn(QPushButton):
+    def __init__(self, 
+                 orig_size=30, 
+                 hover_size=40, 
+                 **kwargs):
+        super(FigAppBtn, self).__init__(**kwargs)
+        self.orig_size = orig_size
+        self.hover_size = hover_size
+        self.setIconSize(QSize(orig_size,
+                               orig_size))
+        self.taskBarAppStyle = '''
+            QPushButton {
+                color: #fff; 
+                background: transparent; 
+                border: 0px; 
+                border-radius: 20px;
+                /* padding-top: 5px;
+                padding-bottom: 5px;
+                padding-left: 4px;
+                padding-right: 4px; */
+            }
+            /* QPushButton:hover {
+                background: rgba(235, 235, 235, 0.5);
+            } */
+            QToolTip  {
+                background: #292929;
+                color: #fff;
+                border: 0px;
+            }
+        '''
+        self.setStyleSheet(self.taskBarAppStyle)
+
+    def leaveEvent(self, event):
+        self.setIconSize(QSize(self.orig_size, 
+                               self.orig_size))
+
+    def enterEvent(self, event):
+        self.setIconSize(QSize(self.hover_size, 
+                               self.hover_size))
+
+
 class QHLine(QFrame):
     def __init__(self):
         super(QHLine, self).__init__()
@@ -122,7 +156,7 @@ class TimeDisplay(QLabel):
     def _updateTime(self):
         currTime = datetime.datetime.strftime(
             datetime.datetime.now(), 
-            "%a %b %d %Y %-I:%M:%S %p "
+            "  %-I:%M:%S %p\n%a %-m/%-d/%Y"
         )
         self.setText(currTime)
 
@@ -363,15 +397,15 @@ class FigHistoryViewer(QWidget):
             path = path.replace(f"/home/{getpass.getuser()}", "~")
             pathBtn = QPushButton(path)
             pathBtn.setStyleSheet('''
-                QPushButton { 
+                QPushButton {
                     border: 0px; 
                     color: #32a8a6; 
-                    font-weight: bold 
+                    font-weight: bold; 
                 }
-
                 QPushButton:hover {
-                    color: #292929;
                     background: #32a8a6; 
+                    font-weight: bold;
+                    color: #292929;
                 }
             ''')
             HLayout.addWidget(pathBtn)
@@ -383,10 +417,26 @@ class FigHistoryViewer(QWidget):
             timestamp = record["time"]
             timeLbl = QLabel()
             timeLbl.setText(timestamp)
+            timeLbl.setStyleSheet('''
+                QLabel {
+                    color: #fff;
+                }
+                QLabel:hover {
+                    background: #32a8a6; 
+                    color: #292929;
+                    font-weight: bold;
+                }
+            ''')
             HLayout.addWidget(timeLbl)
             # create widget for this row.
             rowWidget = QWidget()
             rowWidget.setLayout(HLayout)
+            rowWidget.setStyleSheet('''
+                QWidget:hover {
+                    background: #32a8a6; 
+                    color: #292929;
+                }
+            ''')
             # add row widget to vertical layout.
             VLayout.insertWidget(0, rowWidget) #, Qt.AlignBottom)
         # create history widget.
@@ -600,6 +650,7 @@ class WebRenderEngine(QWebEngineView):
         self.settings().setAttribute(QWebEngineSettings.LocalContentCanAccessRemoteUrls, True)
         self.settings().setAttribute(QWebEngineSettings.ErrorPageEnabled, True)
         self.settings().setAttribute(QWebEngineSettings.PluginsEnabled, True)
+        self.settings().setAttribute(QWebEngineSettings.FullScreenSupportEnabled, True)
         self._parent = parent
         # self.browserZoomInAction = QAction("Zoom in", self)
         # self.browserZoomInAction.setShortcut(QKeySequence.ZoomIn)
@@ -707,6 +758,8 @@ class FigBrowser(QWidget):
 
 
 class FigWindow(QMainWindow):
+    keyPressed = pyqtSignal(int)
+    
     def __init__(self, background="logo.png", *args, **kwargs):
         os.makedirs("logs", exist_ok=True)
         super(FigWindow, self).__init__(*args, **kwargs)  
@@ -765,9 +818,16 @@ class FigWindow(QMainWindow):
             background: rgba(29, 29, 29, 0.95);
             color: #fff;
         }
+        QTabWidget::pane {
+            border: 0px;
+        }
+        QTabBar {
+            border: 0px;
+        }
         QTabBar::tab {
             /* background: #292929; */
-            background: qlineargradient(x1 : 0, y1 : 0, x2 : 0, y2 : 1, stop : 0.0 #6e6e6e, stop : 0.8 #4a4a4a, stop : 1.0 #292929);
+            /* background: qlineargradient(x1 : 0, y1 : 0, x2 : 0, y2 : 1, stop : 0.0 #6e6e6e, stop : 0.8 #4a4a4a, stop : 1.0 #292929); */
+            background: #292929;
             color: #eee;
             padding-top: 5px;
             padding-bottom: 5px;
@@ -777,20 +837,23 @@ class FigWindow(QMainWindow):
             border-top-right-radius: 5px; */
             margin-right: 1px;
             margin-left: 1px;
+            border: 0px;
         }
         QTabBar::tab:hover {
-            background: qlineargradient(x1 : 0, y1 : 1, x2 : 0, y2 : 0, stop : 0.0 #70121c, stop : 0.6 #b31f2f, stop : 0.8 #de2336);
+            /* background: qlineargradient(x1 : 0, y1 : 1, x2 : 0, y2 : 0, stop : 0.0 #70121c, stop : 0.6 #b31f2f, stop : 0.8 #de2336); */
+            background: #ff5e00;
             color: #fff;
         }
         QTabBar::tab:selected {
-            background: qlineargradient(x1 : 0, y1 : 0, x2 : 0, y2 : 1, stop : 0.0 #61313c, stop : 0.8 #451f2b, stop : 1.0 #331018);
+            /* background: qlineargradient(x1 : 0, y1 : 0, x2 : 0, y2 : 1, stop : 0.0 #61313c, stop : 0.8 #451f2b, stop : 1.0 #331018); */
+            background: qlineargradient(x1 : 0, y1 : 0, x2 : 0, y2 : 2, stop : 0.0 #e38c59, stop : 0.99 #ff5e00); 
             color: #fff;
             padding-top: 5px;
             padding-bottom: 5px;
             padding-left: 9px;
             padding-right: 5px;
-            border-top-left-radius: 6px;
-            border-top-right-radius: 6px;
+            /* border-top-left-radius: 6px;
+            border-top-right-radius: 6px; */
         }
         ''') # TODO: theme
         self.logger = FigLogger(path=f"logs/{datetime.datetime.now().strftime('%d_%b_%Y_%H_%M_%S')}.log")
@@ -817,6 +880,54 @@ class FigWindow(QMainWindow):
         self.navBarAdded = False
         # self.setLayout(self.layout)
         self.setAttribute(Qt.WA_TranslucentBackground, True) # NOTE: need for rounded corners
+        # fullscreen on F11.
+        self.isfullscreen = False
+        # self.ctrlBar.hide()
+        # self.showFullScreen()
+        if PLATFORM == "Linux":
+            self.fnF11 = QShortcut(QKeySequence('Fn+F11'), self)
+            self.fnF11.activated.connect(self.toggleFullScreen)
+
+    def showFullScreen(self):
+        super(FigWindow, self).showFullScreen()
+        self.titleBar.hide()
+        # self.closeBtn.hide()
+        # self.maximizeBtn.hide()
+        # self.minimizeBtn.hide()
+        self.ctrlBar.show()
+
+    def showNormal(self):
+        super(FigWindow, self).showNormal()
+        self.titleBar.show()
+        # self.closeBtn.show()
+        # self.maximizeBtn.show()
+        # self.minimizeBtn.show()
+        self.ctrlBar.hide()
+
+    def toggleFullScreen(self):
+        print("toggling full screen")
+        if self.isfullscreen: 
+            self.showNormal()
+        else: 
+            self.showFullScreen()
+        self.isfullscreen = not self.isfullscreen
+
+    def onKey(self, key):
+        if key == Qt.Key_F11:
+            if platform.system() == "Windows":
+                self.toggleFullScreen()
+        # elif key == KeySequence:
+    def keyPressEvent(self, event):
+        super(FigWindow, self).keyPressEvent(event)
+        self.keyPressed.emit(event.key())
+
+    def stayOnTop(self):
+        '''change flags to make the window stay on top.'''
+        if self.ontopFlag:
+            self.setWindowFlags(self.windowFlags() & ~Qt.WindowStaysOnTopHint)
+        else:
+            self.setWindowFlags(self.windowFlags() & Qt.WindowStaysOnTopHint)
+        self.ontopFlag = not self.ontopFlag
 
     def initShortcutBar(self):
         home = str(pathlib.Path.home())
@@ -873,6 +984,9 @@ class FigWindow(QMainWindow):
         videosBtn.setToolTip("open videos.")
         videosBtn.setIcon(FigIcon("sysbar/videos.svg"))
         videosBtn.triggered.connect(lambda: self.addNewFileViewer(path=videos))
+        # blank.
+        blank = QWidget()
+        blank.setFixedWidth(20)
         # add actions.
         sysbar.addWidget(left_spacer)
         sysbar.addAction(recentBtn)
@@ -883,6 +997,7 @@ class FigWindow(QMainWindow):
         sysbar.addAction(musicBtn)
         sysbar.addAction(picturesBtn)
         sysbar.addAction(videosBtn)
+        sysbar.addWidget(blank)
 
         return sysbar
 
@@ -1001,24 +1116,6 @@ class FigWindow(QMainWindow):
         # top spacer
         top_spacer = QWidget()
         top_spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        # stay on top
-        ontopBtn = QAction(self)
-        ontopBtn.setToolTip("always stay on top")
-        ontopBtn.setIcon(FigIcon("sysbar/ontop.svg"))
-        
-        # flag to stay on top
-        ontopBtn.triggered.connect(lambda: self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint))
-        # increase opacity
-        self.opacLevel = 0.99
-        opacUpBtn = QAction(self)
-        opacUpBtn.setToolTip("increase opacity")
-        opacUpBtn.setIcon(FigIcon("sysbar/opacity_up.svg"))
-        opacUpBtn.triggered.connect(self.incOpac)
-        # decrease opacity
-        opacDownBtn = QAction(self)
-        opacDownBtn.setToolTip("decrease opacity")
-        opacDownBtn.setIcon(FigIcon("sysbar/opacity_down.svg"))
-        opacDownBtn.triggered.connect(self.decOpac)
         # lower brightness.
         dimBtn = QAction("Lower Brightness", self)
         dimBtn.setToolTip("Lower screen brightness.")
@@ -1037,23 +1134,16 @@ class FigWindow(QMainWindow):
         settingsBtn = QAction("Settings", self)
         settingsBtn.setToolTip("Open system settings.")
         settingsBtn.setIcon(FigIcon("sysbar/settings.svg"))
-        # on screen keyboard.
-        oskBtn = QAction("On Screen Keyboard", self)
-        oskBtn.setToolTip("Open onscreen keyboard.")
-        oskBtn.setIcon(FigIcon("sysbar/keyboard.svg"))
-        # open color picker dialogue.
-        colorpickerBtn = QAction("Colorpicker", self)
-        colorpickerBtn.setToolTip("Open color picker")
-        colorpickerBtn.setIcon(FigIcon("bottombar/colorwheel.svg"))
-        colorpickerBtn.triggered.connect(lambda: self.colorPickerDialog())
+        # exit fullscreen.
+        exitFullScreenBtn = QAction("Disable Full Screen", self)
+        exitFullScreenBtn.setIcon(FigIcon("sysbar/exit_fullscreen.svg"))
+        # exitFullScreenBtn.setStyleSheet(titleBtnStyle)
+        exitFullScreenBtn.setToolTip("Disable full screen mode")
+        exitFullScreenBtn.triggered.connect(self.showNormal)
         # add actions and buttons.
-        sysbar.addAction(opacUpBtn)
-        sysbar.addAction(opacDownBtn)
-        sysbar.addAction(ontopBtn)
-        sysbar.addAction(oskBtn)
         sysbar.addAction(dimBtn)
         sysbar.addAction(brightBtn)
-        sysbar.addAction(colorpickerBtn)
+        sysbar.addAction(exitFullScreenBtn)
         sysbar.addWidget(top_spacer)
         sysbar.addAction(userBtn)
         sysbar.addAction(settingsBtn)
@@ -1129,9 +1219,9 @@ class FigWindow(QMainWindow):
             border-radius: 14px; 
         }
         QPushButton:hover {
-            /* background: #b31f2f; */
             background: rgba(185, 255, 236, 0.5);
         }
+        /* background: #b31f2f; */
         /* QPushButton {
             background: transparent;
             border: 0px;
@@ -1440,12 +1530,19 @@ class FigWindow(QMainWindow):
     
     def onCurrentTabChange(self, i):
         '''when tab is changed.'''
+
         try:
             qurl = self.tabs.currentWidget().url() # get the curl
 		    # self.update_urlbar(qurl, self.tabs.currentWidget()) # update the url 
             self.update_title(self.tabs.currentWidget()) # update the title
         except AttributeError:
             pass
+        # shadow effect for tab.
+        # shadowEffect = QGraphicsDropShadowEffect(self)
+        # shadowEffect.setOffset(0, 0)
+        # shadowEffect.setColor(QColor(255, 213, 0))
+        # shadowEffect.setBlurRadius(50)
+        # tabBar.tabButton(i-1, right).setGraphicsEffect(shadowEffect)
         self.langBtn.setIcon(self.tabs.tabIcon(i))
         filename = pathlib.Path(self.tabs.tabText(i).split("...")[0].strip()
         ).__str__().strip()
@@ -1516,62 +1613,88 @@ class FigWindow(QMainWindow):
         }''')
         toolbar.setIconSize(QSize(20,20))
         toolbar.setMovable(False)
+        ctrlBtnStyle = '''
+            QToolButton {
+                font-family: Helvetica;
+                padding-left: 0px;
+                padding-right: 0px;
+                padding-top: 0px;
+                padding-bottom: 0px;
+                margin-top: 1px;
+                margin-bottom: 1px;
+                margin-left: 1px;
+                margin-right: 1px;
+                border-radius: 11px; 
+            }
+            QToolButton:hover {
+                background: rgba(235, 235, 235, 0.5);
+            }         
+        '''
 
         closeBtn = QToolButton(self)
         closeBtn.setToolTip("close window")
         closeBtn.setIcon(FigIcon("close.svg")) 
-        closeBtn.setStyleSheet('''
-        QToolButton {
-            margin: 0px;
-        }
-        QToolButton:hover {
-            border: 0px;
-            border-top-left-radius: 10px;
-            border-top-right-radius: 10px;
-        }
-        ''')
+        closeBtn.setStyleSheet(ctrlBtnStyle)
         closeBtn.clicked.connect(lambda: self.close()) # closing logic.
+        self.closeBtn = closeBtn
 
         minimizeBtn = QToolButton(self)
         minimizeBtn.setToolTip("minimize window")
         minimizeBtn.setIcon(FigIcon("minimize.svg"))
         minimizeBtn.clicked.connect(lambda: self.showMinimized())
-        minimizeBtn.setStyleSheet('''
-        QToolButton {
-            margin: 0px;
-        }
-        QToolButton:hover {
-            border: 0px;
-            border-top-left-radius: 10px;
-            border-top-right-radius: 10px;
-        }
-        ''')
+        minimizeBtn.setStyleSheet(ctrlBtnStyle)
+        self.minimizeBtn = minimizeBtn
 
         maximizeBtn = QToolButton(self)
         maximizeBtn.setToolTip("maximize window")
         maximizeBtn.setIcon(FigIcon("maximize.svg"))
         maximizeBtn.clicked.connect(lambda: self.maximize())
-        maximizeBtn.setStyleSheet('''
-        QToolButton {
-            margin: 0px;
-        }
-        QToolButton:hover {
-            border: 0px;
-            border-top-left-radius: 10px;
-            border-top-right-radius: 10px;
-        }
-        ''')
+        maximizeBtn.setStyleSheet(ctrlBtnStyle)
+        self.maximizeBtn = maximizeBtn
 
-        ontopBtn = QAction(self)
-        ontop1Btn = QToolButton(self)
-        ontop1Btn.setStyleSheet('''
+        titleBtnStyle = '''
             QToolButton {
-                margin: -8px;
-                padding: -1px;
+                font-family: Helvetica;
+                padding-left: 4px;
+                padding-right: 4px;
+                padding-top: 4px;
+                padding-bottom: 4px;
+                margin-top: 1px;
+                margin-bottom: 1px;
+                margin-left: 2px;
+                margin-right: 2px;
+                border-radius: 14px; 
             }
-        ''')
-        opacUpBtn = QAction(self)
-        opacDownBtn = QAction(self)
+            QToolButton:hover {
+                background: rgba(255, 223, 97, 0.5);
+            }        
+        '''
+        self.opacLevel = 0.99
+        self.ontopFlag = True
+        # stay on top.
+        ontopBtn = QToolButton(self)
+        ontopBtn.setIcon(FigIcon("sysbar/ontop.svg"))
+        ontopBtn.setStyleSheet(titleBtnStyle)
+        ontopBtn.setToolTip("stay on top")
+        ontopBtn.clicked.connect(self.stayOnTop)
+        # increase opacity.
+        opacUpBtn = QToolButton(self)
+        opacUpBtn.setIcon(FigIcon("sysbar/opacity_up.svg"))
+        opacUpBtn.setStyleSheet(titleBtnStyle)
+        opacUpBtn.setToolTip("increase opacity")
+        opacUpBtn.clicked.connect(self.incOpac)
+        # decrease opacity.
+        opacDownBtn = QToolButton(self)
+        opacDownBtn.setIcon(FigIcon("sysbar/opacity_down.svg"))
+        opacDownBtn.setStyleSheet(titleBtnStyle)
+        opacDownBtn.setToolTip("decrease opacity")
+        opacDownBtn.clicked.connect(self.decOpac)
+        # enable fullscreen.
+        fullScreenBtn = QToolButton(self)
+        fullScreenBtn.setIcon(FigIcon("sysbar/fullscreen.svg"))
+        fullScreenBtn.setStyleSheet(titleBtnStyle)
+        fullScreenBtn.setToolTip("Enable full screen mode")
+        fullScreenBtn.clicked.connect(self.showFullScreen)
 
         windowTitle = QLabel()
         windowTitle.setText("") # ("𝔽𝕚𝕘 𝕀𝕤 𝕒 𝔾𝕦𝕚") #("𝗙ig 𝗜s a 𝗚UI")
@@ -1581,17 +1704,24 @@ class FigWindow(QMainWindow):
         left_spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         right_spacer = QWidget()
         right_spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        # blank spacer.
+        blankL = QWidget()
+        blankL.setFixedWidth(5)
+        blankR = QWidget()
+        blankR.setFixedWidth(5)
 
-        toolbar.addWidget(ontop1Btn)
+        toolbar.addWidget(blankL)
         toolbar.addWidget(closeBtn)
         toolbar.addWidget(minimizeBtn)
         toolbar.addWidget(maximizeBtn)
         toolbar.addWidget(left_spacer)
         toolbar.addWidget(windowTitle)
         toolbar.addWidget(right_spacer)
-        toolbar.addAction(opacUpBtn)
-        toolbar.addAction(opacDownBtn)
-        toolbar.addAction(ontopBtn)
+        toolbar.addWidget(fullScreenBtn)
+        toolbar.addWidget(opacUpBtn)
+        toolbar.addWidget(ontopBtn)
+        toolbar.addWidget(opacDownBtn)
+        toolbar.addWidget(blankR)
 
         return toolbar
 
@@ -1728,6 +1858,7 @@ class FigWindow(QMainWindow):
         # }
         # '''
         toolbar = QToolBar("Folder Navigation Bar Visibility")
+        toolbar.setStyleSheet("border: 0px");
         toolbar.setStyleSheet("color: #fff; background: #292929; border: 0px; padding: 2px;")
         toolbar.setIconSize(QSize(22,22))
         toolbar.setMovable(False)
@@ -1878,12 +2009,6 @@ class FigWindow(QMainWindow):
         toolbar.setIconSize(QSize(22,22))
         toolbar.setStyleSheet("background: #292929; color: #fff; margin: 0px; border: 0px")
         toolbar.setMovable(False)
-        # about qt button.
-        qtBtn = QPushButton()
-        qtBtn.setIcon(FigIcon("bottombar/qt.png"))
-        qtBtn.setToolTip("Learn more about Qt and PyQt5.")
-        qtBtn.setStyleSheet("color: #fff; background: #292929; border: 0px; font-family: Helvetica; font-size: 14px")
-        self.qtBtn = qtBtn
         # get git info.
         gitBtn = QPushButton(" main*")
         gitBtn.setToolTip("Inspect current git branch")
@@ -1995,8 +2120,7 @@ class FigWindow(QMainWindow):
         spacer = QWidget()
         spacer.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         spacer.setFixedWidth(30)
-        # add actions.
-        toolbar.addWidget(qtBtn)
+        # add actions and widgets.
         toolbar.addWidget(gitBtn)
         toolbar.addWidget(left_spacer)
         toolbar.addWidget(warningBtn)
@@ -2039,71 +2163,165 @@ class FigWindow(QMainWindow):
         toolbar = QToolBar("Control Bar Visibility")
         toolbar.setContentsMargins(0, 0, 0, 0)
         toolbar.setIconSize(QSize(16,16))
-        toolbar.setMinimumHeight(16)
+        toolbar.setFixedHeight(45)
         toolbar.setStyleSheet('''
-        QToolBar {
-            margin: 0px; 
-            border: 0px; 
-            color: #fff;
-            border-bottom-left-radius: 5px;
-            border-bottom-right-radius: 5px;
-            /* background: qlineargradient(x1 : 0, y1 : 0, x2 : 0, y2 : 1, stop : 0.0 #341d45, stop : 0.8 #8148a8, stop : 1.0 #997eab); */
-            background: qlineargradient(x1 : 0, y1 : 1, x2 : 0, y2 : 0, stop : 0.0 #61313c, stop : 0.8 #451f2b, stop : 1.0 #331018);
-        }
-        QLabel {
-            color: #fff; 
-            background: qlineargradient(x1 : 0, y1 : 1, x2 : 0, y2 : 0, stop : 0.0 #61313c, stop : 0.8 #451f2b, stop : 1.0 #331018);
-            border: 0px; 
-            font-family: Helvetica; 
-            font-size: 14px;            
-        }
-        QPushButton {
-            color: #fff; 
-            background: qlineargradient(x1 : 0, y1 : 1, x2 : 0, y2 : 0, stop : 0.0 #61313c, stop : 0.8 #451f2b, stop : 1.0 #331018);
-            font-family: Helvetica; 
-            font-size: 14px;
-            border: 0px;
-        }''')
+            QToolBar {
+                margin: 0px; 
+                border: 0px; 
+                color: #fff;
+                border-bottom-left-radius: 5px;
+                border-bottom-right-radius: 5px;
+                /* background: qlineargradient(x1 : 0, y1 : 0, x2 : 0, y2 : 1, stop : 0.0 #341d45, stop : 0.8 #8148a8, stop : 1.0 #997eab); */
+                /* background: qlineargradient(x1 : 0, y1 : 1, x2 : 0, y2 : 0, stop : 0.0 #61313c, stop : 0.8 #451f2b, stop : 1.0 #331018); */
+                background: qlineargradient(x1 : 0, y1 : 0, x2 : 0, y2 : 2, stop : 0.0 #001433, stop : 0.8 #152d54);
+            }
+            QLabel {
+                color: #fff; 
+                /* background: qlineargradient(x1 : 0, y1 : 1, x2 : 0, y2 : 0, stop : 0.0 #61313c, stop : 0.8 #451f2b, stop : 1.0 #331018); */
+                background: transparent;
+                border: 0px; 
+                font-family: Helvetica; 
+                font-size: 14px;            
+            }
+            QPushButton {
+                color: #fff; 
+                background: transparent;
+                /* background: qlineargradient(x1 : 0, y1 : 1, x2 : 0, y2 : 0, stop : 0.0 #61313c, stop : 0.8 #451f2b, stop : 1.0 #331018); */
+                font-family: Helvetica; 
+                font-size: 14px;
+                border: 0px;
+            }''')
         toolbar.setMovable(False)
+        # blank.
+        blank1 = QWidget()
+        blank2 = QWidget()
+        blank5 = QWidget()
+        blank6 = QWidget()
+        blank1.setFixedWidth(10)
+        blank2.setFixedWidth(10)
+        blank5.setFixedWidth(10)
+        blank6.setFixedWidth(10)
+        # about qt button.
+        qtBtn = FigAppBtn()
+        qtBtn.setIcon(FigIcon("ctrlbar/qt.png"))
+        qtBtn.setToolTip("Learn more about Qt and PyQt5.")
+        self.qtBtn = qtBtn
+        # launch windows menu.
+        winBtn = FigAppBtn(orig_size=25, hover_size=30)
+        winBtn.setIcon(FigIcon("ctrlbar/windows.svg"))
+        winBtn.setToolTip("Open launch menu.")
+        # task view button.
+        taskViewBtn = FigAppBtn(orig_size=22, hover_size=25)
+        taskViewBtn.setIcon(FigIcon("ctrlbar/task-view.svg"))
+        taskViewBtn.setToolTip("Open task view.")
+        # open color picker dialogue.
+        colorpickerBtn = FigAppBtn()
+        colorpickerBtn.setToolTip("Open color picker")
+        colorpickerBtn.setIcon(FigIcon("ctrlbar/color-picker.png"))
+        colorpickerBtn.clicked.connect(lambda: self.colorPickerDialog())
+        self.winBtn = winBtn
+        # taskbar style.
+        taskbarStyle = '''
+            QPushButton {
+                font-family: Helvetica;
+                padding-left: 7px;
+                padding-right: 7px;
+                padding-top: 8px;
+                padding-bottom: 8px;
+                margin-top: 1px;
+                margin-bottom: 1px;
+                margin-left: 2px;
+                margin-right: 2px;
+                border-radius: 20px; 
+            }
+            QPushButton:hover {
+                background: rgba(235, 235, 235, 0.5);
+            }'''
+        # on screen keyboard.
+        oskBtn = QPushButton()
+        oskBtn.setToolTip("Open onscreen keyboard.")
+        oskBtn.setIcon(FigIcon("ctrlbar/keyboard.svg"))
+        oskBtn.setIconSize(QSize(25,25))
+        oskBtn.setStyleSheet(taskbarStyle)
         # time label.
         timeLbl = TimeDisplay(self)
         batLbl = BatteryDisplay(self)
         netLbl = NetDisplay(self)
+        # system language label.
+        langLbl = QLabel()
+        langLbl.setText("ENG\n US")
+        langLbl.setStyleSheet('''
+            QLabel {
+                color: #fff;
+                background: transparent;
+            }
+        ''')
         # power button.
         powerBtn = FigPowerController(self)
         powerBtn.setIcon(FigIcon("bottombar/power.svg"))
         powerBtn.setIconSize(QSize(20,20))
         # powerBtn.pressed
         powerBtn.setStyleSheet('''
-        QPushButton {
-            background: qradialgradient(cx: 1, cy: 1, radius: 1, stop : 0 #404040, stop: 0.8 #b8b8b8);
-            font-family: Helvetica;
-            border-radius: 10px;
-        }
-        QPushButton:hover {
-            background: #c0a5d4;
-        }''')
+            QPushButton {
+                font-family: Helvetica;
+                padding-left: 8px;
+                padding-right: 8px;
+                padding-top: 10px;
+                padding-bottom: 10px;
+                margin-top: 1px;
+                margin-bottom: 1px;
+                margin-left: 2px;
+                margin-right: 2px;
+                border-radius: 18px; 
+            }
+            QPushButton:hover {
+                background: rgba(255, 94, 0, 0.5);
+            } ''')
+        blank3 = QWidget()
+        blank3.setFixedWidth(10)
+        blank4 = QWidget()
+        blank4.setFixedWidth(30)
         # for center alignment.
         left_spacer = QWidget()
         left_spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         right_spacer = QWidget()
         right_spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        # fig search bar utility.
+        searchBar = FigSearchBar()
+        
         spacer1 = QWidget()
         spacer1.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         spacer1.setFixedWidth(30)
         spacer2 = QWidget()
         spacer2.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
         spacer2.setFixedWidth(30)
-        # add actions.
+        toolbar.addWidget(blank1)
+        # add actions and widgets.
+        toolbar.addWidget(winBtn)
+        toolbar.addWidget(blank2)
+        toolbar.addWidget(searchBar)
+        toolbar.addWidget(blank3)
+        toolbar.addWidget(taskViewBtn)
+        # add a blank.
+        toolbar.addWidget(blank4)
+        toolbar.addWidget(qtBtn)
+        toolbar.addWidget(colorpickerBtn)
         toolbar.addWidget(left_spacer)
         toolbar.addWidget(netLbl)
         # toolbar.addSeparator()
         toolbar.addWidget(batLbl)
         # toolbar.addSeparator()
+        toolbar.addWidget(oskBtn)
+        toolbar.addWidget(langLbl)
         toolbar.addWidget(timeLbl)
-        toolbar.addWidget(spacer1)
+        toolbar.addWidget(blank6)
         toolbar.addWidget(powerBtn)
-        toolbar.addWidget(spacer2)
+        toolbar.addWidget(blank5)
+        # change opacity
+        opacEffect = QGraphicsOpacityEffect(self)
+        opacEffect.setOpacity(0.97)
+        toolbar.setGraphicsEffect(opacEffect)
+        toolbar.setAutoFillBackground(True)
 
         return toolbar
 
@@ -2157,7 +2375,7 @@ class FigApp(QApplication):
         self.setCursorFlashTime(1000)
         pixmap = QPixmap(__icon__("cursor.svg")).scaledToWidth(32).scaledToWidth(32)
         cursor = QCursor(pixmap, 32, 32)
-        self.window.tabs.setCursor(cursor)
+        # self.window.tabs.setCursor(cursor)
 
     def run(self):
         # self.aboutQt()

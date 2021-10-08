@@ -103,9 +103,12 @@ class LinuxNetInfo(argparse.Namespace):
             attr_values = parse.parse(template, line)
             # set attribute values from parsed output.
             for j, attr_name in enumerate(self.templates[i][1]):
-                setattr(self, 
+                try:
+                    setattr(self, 
                         attr_name, 
                         attr_values[j].strip())
+                except AttributeError:
+                    pass
 
     def serialize(self, prefix: str, attr: str) -> str:
         attr_val = getattr(self, attr)

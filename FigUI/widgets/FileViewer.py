@@ -8,7 +8,7 @@ import argparse, mimetypes, platform, textwrap, subprocess
 from PyQt5.QtPrintSupport import *
 from PyQt5.QtCore import QThread, QUrl, QDir, QSize, Qt, QEvent #, pyqtSlot, pyqtSignal
 from PyQt5.QtGui import QIcon, QKeySequence, QTransform, QFont, QFontDatabase, QMovie, QPixmap
-from PyQt5.QtWidgets import QAction, QDialog, QWidget, QToolBar, QLabel, QVBoxLayout, QHBoxLayout, QToolButton, QScrollArea, QLineEdit, QFrame, QSizePolicy, QMessageBox, QTreeView, QFileSystemModel
+from PyQt5.QtWidgets import QAction, QDialog, QWidget, QToolBar, QLabel, QVBoxLayout, QHBoxLayout, QToolButton, QScrollArea, QLineEdit, QFrame, QSizePolicy, QMessageBox, QTreeView, QFileSystemModel, QGraphicsDropShadowEffect
 
 try:
     from utils import *
@@ -148,7 +148,7 @@ class FigFileIcon(QToolButton):
                 color: #fff;
             }
             QToolButton:hover {
-                background: #009b9e;
+                background: #e38c59; /* #009b9e; */
                 color: #292929;
                 font-weight: bold;
         }''')
@@ -917,7 +917,8 @@ class FigFileViewer(QWidget):
             selBtn.setStyleSheet("background-color: #292929; color: #fff; border: 0px")
             self.j = j
             selBtn = self.gridLayout.itemAt(self.j).widget()
-            selBtn.setStyleSheet("background: #42f2f5; color: #292929; font-weight: bold")
+            selBtn.setStyleSheet("background: #ff5e00; color: #292929; font-weight: bold")
+            #42f2f5
         except AttributeError:
             self.back()
     # def eventFilter(self, source, event):

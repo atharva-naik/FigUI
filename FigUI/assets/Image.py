@@ -34,6 +34,9 @@ class ImageAsset:
         '''save image at a given path.'''
         self._image.save(path)
 
+    def thumbnail(self, x: float=100, y: float=100):
+        self._image.thumbnail((x, y))
+
     def backgroundURL(self, path='tmp'):
         '''save the image at a given path and return that path.'''
         tmp = tempfile.NamedTemporaryFile(suffix=".png")

@@ -72,37 +72,33 @@ class FigToolButton(QToolButton):
         self._gifMovie = Image.open(path)
         self._gifLength = self._gifMovie.n_frames
         self.thread.start()
+# class FigScrollArea(QWidget):
+#     def __init__(self, parent=None):
+#         super(FigScrollArea, self).__init__(parent)
+#         self.setAttribute(Qt.WA_StyledBackground)
+#         widget = QWidget()
+#         widget.setStyleSheet("""QWidget{ background:#fff; color:#000;}""")
+#         blur_effect = QGraphicsBlurEffect(blurRadius=5)
+#         widget.setGraphicsEffect(blur_effect)
 
+#         self._scrollarea = QScrollArea(parent=self)
+#         self.scrollarea.setStyleSheet(""" background-color : transparent; color : black""")
+#         self.scrollarea.setContentsMargins(10, 0, 10, 0)
 
-class FigScrollArea(QWidget):
-    def __init__(self, parent=None):
-        super(FigScrollArea, self).__init__(parent)
-        self.setAttribute(Qt.WA_StyledBackground)
-        widget = QWidget()
-        widget.setStyleSheet("""QWidget{ background:#fff; color:#000;}""")
-        blur_effect = QGraphicsBlurEffect(blurRadius=5)
-        widget.setGraphicsEffect(blur_effect)
+#         lay = QVBoxLayout(self)
+#         lay.addWidget(widget)
 
-        self._scrollarea = QScrollArea(parent=self)
-        self.scrollarea.setStyleSheet(""" background-color : transparent; color : black""")
-        self.scrollarea.setContentsMargins(10, 0, 10, 0)
+#     @property
+#     def scrollarea(self):
+#         return self._scrollarea
 
-        lay = QVBoxLayout(self)
-        lay.addWidget(widget)
+#     def sizeHint(self):
+#         return self._scrollarea.sizeHint()
 
-    @property
-    def scrollarea(self):
-        return self._scrollarea
-
-    def sizeHint(self):
-        return self._scrollarea.sizeHint()
-
-    def resizeEvent(self, event):
-        self._scrollarea.resize(self.size())
-        self._scrollarea.raise_()
-        return super().resizeEvent(event)
-
-
+#     def resizeEvent(self, event):
+#         self._scrollarea.resize(self.size())
+#         self._scrollarea.raise_()
+#         return super().resizeEvent(event)
 class FigLauncher(QWidget):
     def __init__(self, parent=None, width=8, button_size=(100,100), icon_size=(70,70)):
         super(FigLauncher, self).__init__()
@@ -127,7 +123,8 @@ class FigLauncher(QWidget):
             self.bg_url = f"/tmp/FigUI.Launcher?={stem}.png"
             if not os.path.exists(self.bg_url):
                 self.bg_img = ImageAsset(img_path)
-                self.bg_img.gaussBlur(5).save(self.bg_url)
+                self.bg_img.thumbnail(1920, 1080)
+                self.bg_img.gaussBlur(3).save(self.bg_url)
         
         # self.scroll.setStyleSheet("background: rgba(73, 44, 94, 0.5);")
         # self.scroll.setAttribute(Qt.WA_TranslucentBackground, True)
@@ -138,19 +135,21 @@ class FigLauncher(QWidget):
         self.scroll.setStyleSheet('''
             QScrollArea {
                 /* background-color: rgba(90, 12, 63, 0.5); */
-                background: url('''+ f"'{self.bg_url}'" +''') 0 0 0 0 stretch stretch; /* no-repeat; */
+                background: url('''+ f"'{self.bg_url}'" +'''); /* no-repeat; */
+                background-position: center;
+                border: 0px;
             }
             QScrollBar:vertical {
                 border: 0px solid #999999;
-                width:14px;    
-                margin: 0px 0px 0px 3px;
-                background-color: rgba(90, 12, 63, 0.5);
+                width: 8px;    
+                margin: 0px 0px 0px 0px;
+                background-color: rgba(227, 140, 89, 0.5);
             }
             QScrollBar::handle:vertical {         
                 min-height: 0px;
                 border: 0px solid red;
-                border-radius: 5px;
-                background-color: #c70039;
+                border-radius: 4px;
+                background-color: #e38c59; /* #c70039; */
             }
             QScrollBar::add-line:vertical {       
                 height: 0px;
@@ -163,7 +162,13 @@ class FigLauncher(QWidget):
                 subcontrol-origin: margin;
             }''')
         # self.scroll.setStyleSheet('''background: rgba(73, 44, 94, 0.5);''')
-        # self.scroll.setGraphicsEffect(self.blur_effect)
+        self.glowEffect = QGraphicsDropShadowEffect(self)
+        self.glowEffect.setOffset(2, 2)
+        self.glowEffect.setColor(QColor(255, 132, 0))
+        self.glowEffect.setBlurRadius(50)
+        # add glow to vertical scroll bar.
+        self.vscrollBar = self.scroll.verticalScrollBar()
+        self.vscrollBar.setGraphicsEffect(self.glowEffect)
 
         exclude = ["eclipse", "android", "mozilla", "kivy", "netbeans", "nano", "gnome", "tor", "openoffice", "thunderbird", "dbus", "compiz"]
 
@@ -257,7 +262,7 @@ class FigLauncher(QWidget):
         #self.welcomeLabel.setMaximumWidth(900)
         self.welcomeLabel.setFont(QFont('OMORI_GAME2', 40))
 
-        self.layout.addWidget(self.welcomeLabel, alignment=Qt.AlignCenter)
+        # self.layout.addWidget(self.welcomeLabel, alignment=Qt.AlignCenter)
         # self.layout.addWidget(self.launcherWidget) 
         self.layout.addWidget(self.scroll) # comment
         self.setLayout(self.layout)

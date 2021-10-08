@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" data-name="Layer 1" viewBox="0 0 64 64">
+    <rect width="40" height="24" x="2" y="20" fill="none" stroke="#fff" stroke-miterlimit="10" stroke-width="4" />
+    <polyline fill="none" stroke="#fff" stroke-miterlimit="10" stroke-width="4" points="2 2 2 12 42 12 42 2" />
+    <polyline fill="none" stroke="#fff" stroke-miterlimit="10" stroke-width="4" points="2 62 2 52 42 52 42 62" />
+    <line x1="58" x2="58" y1="2" y2="14" fill="none" stroke="#fff" stroke-miterlimit="10" stroke-width="4" />
+    <line x1="58" x2="58" y1="34" y2="62" fill="none" stroke="#fff" stroke-miterlimit="10" stroke-width="4" />
+    <circle cx="58" cy="24" r="6" fill="#fff" />
+</svg>
