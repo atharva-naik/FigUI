@@ -11,7 +11,7 @@ import FigUI.handler.Archives.pt
 import FigUI.handler.Archives.pkl
 import FigUI.handler.Archives.zip
 import FigUI.handler.Document.pdf
-from PyQt5.QtWidgets import QFileDialog, QLabel, QTextEdit
+from PyQt5.QtWidgets import QFileDialog, QWidget, QTextEdit
 try:
     from utils import *
 except ImportError:
@@ -83,6 +83,8 @@ class FigHandler:
             return FigUI.handler.Image.FigImageViewer(path=path, parent=self.parent)
         elif self.ext in [".webm", ".mp4", ".flv", ".ogv", ".wmv", ".mov"]:
             return FigUI.handler.Video.FigVideoWidget(path=path, parent=self.parent)
+        elif self.ext in [".tgz", ".zip"]:
+            return QWidget()
         else:
             return FigUI.handler.Text.txt.FigTextEditor(path=path, parent=self.parent) 
             # return QLabel("no handler found")

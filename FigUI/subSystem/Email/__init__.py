@@ -57,9 +57,11 @@ class FigEmailClient(QWidget):
     def initFileMenu(self):
         '''create file menu'''
         fileMenu = QWidget()
-        layout = QHBoxLayout()
+        layout = QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
-        
+        # 
+        QToolButton(fileMenu)
+
         fileMenu.addLayout(layout)
 
         return fileMenu

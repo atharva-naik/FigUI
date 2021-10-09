@@ -2,13 +2,14 @@
 # -*- coding: utf-8 -*-
 import PyQt5
 import tempfile, random
+from typing import Union, List
 # from PIL import Image, ImageQt
 import os, re, sys, glob, pathlib, datetime
 import argparse, mimetypes, platform, textwrap, subprocess
 from PyQt5.QtPrintSupport import *
-from PyQt5.QtCore import QThread, QUrl, QDir, QSize, Qt, QEvent #, pyqtSlot, pyqtSignal
+from PyQt5.QtCore import QThread, QUrl, QDir, QSize, Qt, QEvent, pyqtSlot, pyqtSignal, QObject
 from PyQt5.QtGui import QIcon, QKeySequence, QTransform, QFont, QFontDatabase, QMovie, QPixmap
-from PyQt5.QtWidgets import QAction, QDialog, QWidget, QToolBar, QLabel, QVBoxLayout, QHBoxLayout, QToolButton, QScrollArea, QLineEdit, QFrame, QSizePolicy, QMessageBox, QTreeView, QFileSystemModel, QGraphicsDropShadowEffect
+from PyQt5.QtWidgets import QAction, QWidget, QToolBar, QLabel, QVBoxLayout, QHBoxLayout, QToolButton, QScrollArea, QLineEdit, QFrame, QSizePolicy, QMessageBox, QTreeView, QFileSystemModel, QGraphicsDropShadowEffect
 
 try:
     from utils import *
@@ -25,7 +26,7 @@ class QVLine(QFrame):
         self.setFrameShadow(QFrame.Raised)
         self.setStyleSheet("color: #6E6E6E")
 
-
+#### TODO: replace with static background given as command line arg." ####
 def getWallpaper():
     import os
     import time
@@ -90,11 +91,9 @@ for folder in ["openoffice", "ssh", "npm", "wine", "dbus", "thunderbird", "gradl
     ThumbMap["."+folder] = folder + '.png'
 for folder in ["Videos", "Desktop", "Documents", "Downloads", "Pictures"]:
     ThumbMap[folder] = folder + ".png"
-
 ThumbMap["Music"] = "Music.svg"
 ThumbMap[".rstudio-desktop"] = "R.png"
 ThumbMap[".python-eggs"] = "python-eggs.png"
-
 StemMap = {
     "requirements": "requirements.png",
     ".cling_history": "cling.png",
@@ -108,7 +107,6 @@ StemMap = {
     ".Rhistory": "R.png",
     ".pypirc": "py.png", 
 }
-
 PrefixMap = {
     ".python_history": "py.png",
     ".conda": "anaconda3.png",
@@ -119,6 +117,7 @@ PrefixMap = {
     "zsh": "bashrc.png",
 }
 PLATFORM = platform.system()
+
 def sizeof_fmt(num, suffix="B"):
     '''convert bytes to human readable format'''
     for unit in ["", "K", "M", "G", "T", "P", "E", "Z"]:
@@ -127,6 +126,40 @@ def sizeof_fmt(num, suffix="B"):
         num /= 1024.0
     
     return f"{num:.1f}Y{suffix}"
+
+
+class FileViewerInitWorker(QObject):
+    finished = pyqtSignal()
+    progress = pyqtSignal(int)
+    
+    def run(self, file_viewer, all_files: List[str]):
+        '''for the fileviewer ui loading task.'''
+        for i, path in enumerate(all_files):
+            fileIcon = FigFileIcon(path, parent=file_viewer)
+            fileIcon.clicked.connect(file_viewer.open)
+            ### replace with FlowLayout ###
+            file_viewer.gridLayout.addWidget(fileIcon)
+            # self.gridLayout.addWidget(fileIcon, i // width, i % width) 
+            ###############################       
+
+        # file_viewer.layout.addWidget(file_viewer.scrollArea)
+        # file_viewer.setLayout(file_viewer.layout)
+        selBtn = file_viewer.gridLayout.itemAt(0).widget()
+        selBtn.setStyleSheet("background: color(0, 0, 255, 50)")
+        file_viewer.highlight(0)
+
+        file_viewer.viewer.setLayout(file_viewer.gridLayout)
+        self.finished.emit()
+
+
+class FileViewerRefreshWorker(QObject):
+    finished = pyqtSignal()
+    progress = pyqtSignal(int)
+    
+    def run(self, file_viewer, path: str, reverse: bool):
+        '''for the fileviewer ui refresh task.'''
+        file_viewer._refresh(path, reverse)
+        self.finished.emit()
 
 
 class FigFileIcon(QToolButton):
@@ -406,17 +439,33 @@ class FigFileViewer(QWidget):
         self.history = [path]
         self.i = 0
         self.j = 0
-        for i,path in enumerate(all_files):
-            fileIcon = FigFileIcon(path, parent=self)
-            fileIcon.clicked.connect(self.open)
-            ### replace with FlowLayout ###
-            self.gridLayout.addWidget(fileIcon)
-            # self.gridLayout.addWidget(fileIcon, i // width, i % width) 
-            ###############################       
-        self.viewer.setLayout(self.gridLayout)
+        import time
+        start = time.time()
+
+        self.init_thread = QThread()
+        self.init_worker = FileViewerInitWorker()
+        self.init_worker.moveToThread(self.init_thread)
+        self.init_thread.started.connect(lambda: self.init_worker.run(self, all_files))
+        self.init_worker.finished.connect(self.init_thread.quit)
+        self.init_worker.finished.connect(self.init_worker.deleteLater)
+        self.init_thread.finished.connect(self.init_thread.deleteLater)
+        # TODO: check dis.
+        # self.init_worker.progress.connect(self.reportProgress)
+        self.init_thread.start()
+        # for i, path in enumerate(all_files):
+        #     fileIcon = FigFileIcon(path, parent=self)
+        #     fileIcon.clicked.connect(self.open)
+        #     ### replace with FlowLayout ###
+        #     self.gridLayout.addWidget(fileIcon)
+        #     # self.gridLayout.addWidget(fileIcon, i // width, i % width) 
+        #     ###############################       
+        # self.viewer.setLayout(self.gridLayout)
+        
+        print("created grid layout:", time.time()-start)
         # self.layout.addWidget(self.welcomeLabel, alignment=Qt.AlignCenter)
         self.scrollArea.setWidget(self.viewer)
 
+        start = time.time()
         self.navbar = self.initNavBar()
         self.propbar = self.initPropBar()
         self.editbar = self.initEditBar()
@@ -425,36 +474,27 @@ class FigFileViewer(QWidget):
         self.layout.addWidget(self.navbar)
         self.layout.addWidget(self.editbar)
         self.layout.addWidget(self.propbar)
+        print("created toolbars:", time.time()-start)
         # self.layout.addWidget(self.viewbar)
         # self.layout.addWidget(self.utilbar)
+
+        start = time.time()
         self.layout.addWidget(self.scrollArea)
         self.setLayout(self.layout)
         self.width = width
-        selBtn = self.gridLayout.itemAt(0).widget()
-        selBtn.setStyleSheet("background: color(0, 0, 255, 50)")
-        self.highlight(0)
+        # selBtn = self.gridLayout.itemAt(0).widget()
+        # selBtn.setStyleSheet("background: color(0, 0, 255, 50)")
+        # self.highlight(0)
 
+        # link folder nav bar buttons.
         if self._parent:
             self._parent.backNavBtn.clicked.connect(self.prevPath)
             self._parent.nextNavBtn.clicked.connect(self.nextPath)
+        print("created toolbars:", time.time()-start)
 
     def initNavBar(self):
         navbar = QWidget()
         navLayout = QHBoxLayout() 
-        # backBtn = QToolButton()
-        # backBtn.setIcon(FigIcon("stepback.svg"))
-        # backBtn.clicked.connect(self.back)
-        # navLayout.addWidget(backBtn)
-        
-        # prevBtn = QToolButton()
-        # prevBtn.setIcon(FigIcon("back.svg"))
-        # prevBtn.clicked.connect(self.prevPath)
-        # navLayout.addWidget(prevBtn)
-
-        # nextBtn = QToolButton()
-        # nextBtn.setIcon(FigIcon("forward.svg"))
-        # nextBtn.clicked.connect(self.nextPath)
-        # navLayout.addWidget(nextBtn)
         searchBar = QLineEdit()
         searchBar.setStyleSheet("background: #fff; color: #000")
         navLayout.addWidget(searchBar)
@@ -980,7 +1020,25 @@ class FigFileViewer(QWidget):
             return files
 
     def refresh(self, path, reverse=False):
+        '''launch worker to refresh file layout..'''
         self.clear()
+        import time
+        start = time.time()
+        print("refreshing view ...")
+        self.refresh_thread = QThread()
+        self.refresh_worker = FileViewerRefreshWorker()
+        self.refresh_worker.moveToThread(self.refresh_thread)
+        self.refresh_thread.started.connect(lambda: self.refresh_worker.run(self, path, reverse))
+        self.refresh_worker.finished.connect(self.refresh_thread.quit)
+        self.refresh_worker.finished.connect(self.refresh_worker.deleteLater)
+        self.refresh_thread.finished.connect(self.refresh_thread.deleteLater)
+        # TODO: check dis.
+        # self.init_worker.progress.connect(self.reportProgress)
+        self.refresh_thread.start()
+        print("refreshed in:", time.time()-start)
+
+    def _refresh(self, path, reverse=False):
+        '''function to be executed inside the worker.'''
         if self._parent:
             i = self._parent.tabs.currentIndex()
             name = pathlib.Path(path).name
@@ -1156,3 +1214,18 @@ if __name__ == "__main__":
 #             return f"launcher/{ext}.svg"
 #         else: 
 #             return f"launcher/txt.png" # if ext is not recognized set it to txt
+
+        # backBtn = QToolButton()
+        # backBtn.setIcon(FigIcon("stepback.svg"))
+        # backBtn.clicked.connect(self.back)
+        # navLayout.addWidget(backBtn)
+        
+        # prevBtn = QToolButton()
+        # prevBtn.setIcon(FigIcon("back.svg"))
+        # prevBtn.clicked.connect(self.prevPath)
+        # navLayout.addWidget(prevBtn)
+
+        # nextBtn = QToolButton()
+        # nextBtn.setIcon(FigIcon("forward.svg"))
+        # nextBtn.clicked.connect(self.nextPath)
+        # navLayout.addWidget(nextBtn)
