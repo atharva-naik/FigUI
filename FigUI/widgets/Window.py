@@ -19,6 +19,7 @@ try:
     from FigUI.subSystem.Clock import FigClock
     from FigUI.subSystem.Shell import FigShell
     from FigUI.subSystem.ChatBot import FigChatBot
+    from FigUI.subSystem.Email import FigEmailClient
     from FigUI.widgets.SearchBar import FigSearchBar
     from FigUI.subSystem.History import HistoryLogger
     from FigUI.widgets.ActivityPanel import FigActivityPanel
@@ -40,6 +41,7 @@ except ImportError:
     from ..subSystem.Shell import FigShell
     from ..subSystem.ChatBot import FigChatBot
     from .ActivityPanel import FigActivityPanel
+    from ..subSystem.Email import FigEmailClient
     from ..subSystem.History import HistoryLogger
     from ..handler.Code.QtColorPicker import ColorPicker
     from ..subSystem.System.Network import NetworkHandler
@@ -1241,6 +1243,7 @@ class FigWindow(QMainWindow):
         emailBtn.setToolTip("Open email client")
         emailBtn.setIcon(FigIcon("sidebar/email.svg"))
         emailBtn.setIconSize(btnSize)
+        emailBtn.clicked.connect(self.addNewMailClient)
         # open notes.
         notesBtn = QPushButton()
         notesBtn.setToolTip("Open note taking app")
@@ -1500,7 +1503,12 @@ class FigWindow(QMainWindow):
         self.tabs.setCurrentIndex(i)
         self.log("launcher/fileviewer.png", path)
 
-    def addNewTab(self, Squrl=None, label="Blank"):
+    def addNewMailClient(self):
+        mailClient = FigEmailClient(self)
+        i = self.tabs.addTab(mailClient, FigIcon("sidebar/email.png"), f"\t{mailClient.imap_url}")
+        self.tabs.setCurrentIndex(i)
+
+    def addNewTab(self, qurl=None, label="Blank"):
         '''method for adding new tab'''
         qurl = QUrl('http://www.google.com') # show bossweb homepage
         browser = FigBrowser(self) # creating a WebRenderEngine object
@@ -1728,12 +1736,12 @@ class FigWindow(QMainWindow):
     def incOpac(self):
         self.opacLevel += 0.01 
         self.opacLevel = min(self.opacLevel, 1)
-        self.setWindowOpacity(self.opacLevel)
+        self.tabs.setWindowOpacity(self.opacLevel)
 
     def decOpac(self):
         self.opacLevel -= 0.01 
         self.opacLevel = max(self.opacLevel, 0.9)
-        self.setWindowOpacity(self.opacLevel)
+        self.tabs.setWindowOpacity(self.opacLevel)
 
     def updateFolderBar(self, path, viewer=None):
         folderBtnStyle = '''

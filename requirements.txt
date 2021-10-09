@@ -17,6 +17,7 @@ extcolors
 omegaconf
 scholarly
 ansicolors
+imap_tools
 python-vlc
 py-wallpaper
 PyQtWebEngine
