@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-from PIL import Image, ImageQt
 import os, glob, pathlib
-from PyQt5.QtCore import QThread, QUrl, QSize, Qt
-from PyQt5.QtGui import QIcon, QKeySequence, QTransform, QFont, QFontDatabase, QMovie, QPixmap, QColor
-from PyQt5.QtWidgets import QApplication, QAction, QDialog, QPushButton, QWidget, QToolBar, QGridLayout, QLabel, QHBoxLayout, QVBoxLayout, QToolButton, QFileDialog, QScrollArea, QFrame, QGraphicsBlurEffect, QGraphicsDropShadowEffect
+from PIL import Image, ImageQt
+from typing import Union, List, Tuple
+from PyQt5.QtCore import QThread, QUrl, QSize, Qt, QPoint, QPropertyAnimation, QSequentialAnimationGroup, QEasingCurve, QObject, pyqtSignal
+from PyQt5.QtGui import QIcon, QKeySequence, QTransform, QFont, QFontDatabase, QMovie, QPixmap, QColor, QBrush
+from PyQt5.QtWidgets import QApplication, QAction, QDialog, QPushButton, QWidget, QToolBar, QGridLayout, QLabel, QHBoxLayout, QVBoxLayout, QToolButton, QFileDialog, QScrollArea, QMainWindow, QGraphicsBlurEffect, QGraphicsDropShadowEffect, QGraphicsScene, QGraphicsView, QGraphicsEllipseItem, QGraphicsWidget
 try:
     from utils import *
     from FlowLayout import FlowLayout
@@ -25,6 +26,15 @@ def FigIcon(name, w=None, h=None):
     path = os.path.join(__icons__, name)
 
     return QIcon(path)
+
+
+class FigWorker(QObject):
+    finished = pyqtSignal()
+    progress = pyqtSignal(int)
+
+    def run(self, obj, func, **kwargs):
+        getattr(obj, func)(**kwargs)
+        self.finished.emit()
 
 
 class FigToolButton(QToolButton):
@@ -99,6 +109,78 @@ class FigToolButton(QToolButton):
 #         self._scrollarea.resize(self.size())
 #         self._scrollarea.raise_()
 #         return super().resizeEvent(event)
+class SunAnimation:
+    def __init__(self, parent=None, size: Tuple[int, int]=(200, 200)):
+        self.sunSprite = QWidget(parent)
+        self.sunSprite.setObjectName("Sun")
+        # self.sunSprite.setAttribute(Qt.WA_TranslucentBackground)
+        self._size = size
+        self._center = (size[0]/2, size[1]/2)
+        self.sunSprite.setStyleSheet('''
+            QWidget#Sun {
+                border-radius: 100;
+                background: qradialgradient(cx: 1, cy: 1, radius: 1, stop : 0 #fff, stop: 0.5 #000);            
+                /* background-image: url('/home/atharva/GUI/FigUI/FigUI/assets/icons/animations/sun.png');
+                background-repeat: no-repeat;
+                background-position: center; */
+            }
+        ''')
+        self.sunSprite.resize(*size)
+        self._animation_group = QSequentialAnimationGroup()
+        self.sunSprite.hide()
+
+    @property
+    def size(self):
+        return self._size
+
+    @property
+    def center(self):
+        return self._center
+
+    def addAnimation(self, 
+                     initial_state: Union[QPoint, Tuple[int, int]],
+                     goal_state: Union[QPoint, Tuple[int, int]]=QPoint(800, 0), 
+                     duration: int=1000,
+                     curve: QEasingCurve=QEasingCurve.OutBounce):
+        anim = QPropertyAnimation(self.sunSprite, b"pos")
+        anim.setStartValue(initial_state)
+        anim.setEndValue(goal_state)
+        anim.setEasingCurve(curve)
+        anim.setDuration(duration)
+        self._animation_group.addAnimation(anim)
+        self._animation_group.finished.connect(self.destroyAnimation)
+
+    def _start(self, count):
+        print("starting animation")
+        self.sunSprite.show()
+        self._animation_group.setLoopCount(count)
+        self._animation_group.start()
+
+    def destroyAnimation(self):
+        '''clear up the animation artefacts after waiting for some time.'''
+        # wait for 5 seconds and the hide the sun.
+        print("destroying animation")
+        pyqtSleep(5000)
+        self.sunSprite.hide()
+
+    def start(self, count: int=1):
+        '''
+        self.thread = QThread()
+        self.worker = FigWorker()
+        self.worker.moveToThread(self.thread)
+        self.thread.started.connect(lambda: self.worker.run(self, 
+                                        "_start", 
+                                        count=count))
+        self.worker.finished.connect(self.thread.quit)
+        self.worker.finished.connect(self.worker.deleteLater)
+        self.thread.finished.connect(self.thread.deleteLater)
+        # TODO: check dis.
+        # self.init_worker.progress.connect(self.reportProgress)
+        self.thread.start()
+        '''
+        self._start(count)
+
+
 class FigLauncher(QWidget):
     def __init__(self, parent=None, width=8, button_size=(100,100), icon_size=(70,70)):
         super(FigLauncher, self).__init__()
@@ -106,9 +188,9 @@ class FigLauncher(QWidget):
         # layout.setContentsMargins(2, 2, 2, 2)
         self.layout = QVBoxLayout()
         self.layout.setContentsMargins(0, 0, 0, 0)
-        self.launcherWidget = QWidget(self)
+        self.launcherWidget = QGraphicsView(self)
         # 5A8034
-        self.launcherWidget.setAttribute(Qt.WA_TranslucentBackground, True)
+        # self.launcherWidget.setAttribute(Qt.WA_TranslucentBackground, True)
         self.gifBtn = None
         self._parent = parent
         # creating a blur effect
@@ -124,10 +206,17 @@ class FigLauncher(QWidget):
             if not os.path.exists(self.bg_url):
                 self.bg_img = ImageAsset(img_path)
                 self.bg_img.thumbnail(1920, 1080)
-                self.bg_img.gaussBlur(3).save(self.bg_url)
+                self.bg_img.gaussBlur(5).save(self.bg_url)
         
         # self.scroll.setStyleSheet("background: rgba(73, 44, 94, 0.5);")
         # self.scroll.setAttribute(Qt.WA_TranslucentBackground, True)
+        self.launcherWidget.setStyleSheet('''
+            QGraphicsView {
+                background-image: url('''+ f"'{self.bg_url}'" +''');
+                background-position: center;
+                border: 0px;
+            }
+        ''')
         self.scroll = QScrollArea(self)
         self.scroll.setWidgetResizable(True)
         self.scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
@@ -267,6 +356,25 @@ class FigLauncher(QWidget):
         self.layout.addWidget(self.scroll) # comment
         self.setLayout(self.layout)
         self.setAcceptDrops(True)
+
+        if self._parent and isinstance(self._parent, QMainWindow):
+            print("\x1b[31mconnected FigLauncher.showWeather\x1b[0m")
+            self._parent.weatherBtn.clicked.connect(self.showWeather)
+
+    def showWeather(self):
+        weather = "sunny"
+        if weather == "sunny":
+            self.sun_animation = SunAnimation(self)
+            w = self.width() # x coordinate of initial point.
+            h = self.height() # y coordinate of initial point.s
+            c_x, c_y = self.sun_animation.size
+            initial_state = QPoint(w-c_x, 0)
+            goal_state = QPoint((w-c_x)/2, h-c_y)
+            self.sun_animation.addAnimation(initial_state=initial_state, 
+                                       goal_state=goal_state,
+                                       curve=QEasingCurve.OutBounce,
+                                       duration=2000)
+            self.sun_animation.start(count=3)
 
     def _clickHandler(self, event):
         pass

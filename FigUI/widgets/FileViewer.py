@@ -177,6 +177,7 @@ class FigFileIcon(QToolButton):
             }
             QToolButton { 
                 border: 0px; 
+                background: transparent;
                 background-image: none;
                 color: #fff;
             }
@@ -404,6 +405,28 @@ class FigFileViewer(QWidget):
             }
             QScrollBar:vertical {
                 border: 0px solid #999999;
+                width: 8px;    
+                margin: 0px 0px 0px 0px;
+                background-color: rgba(227, 140, 89, 0.5);
+            }
+            QScrollBar::handle:vertical {         
+                min-height: 0px;
+                border: 0px solid red;
+                border-radius: 4px;
+                background-color: #e38c59; /* #c70039; */
+            }
+            QScrollBar::add-line:vertical {       
+                height: 0px;
+                subcontrol-position: bottom;
+                subcontrol-origin: margin;
+            }
+            QScrollBar::sub-line:vertical {
+                height: 0 px;
+                subcontrol-position: top;
+                subcontrol-origin: margin;
+            }
+            /* QScrollBar:vertical {
+                border: 0px solid #999999;
                 width:14px;    
                 margin: 0px 0px 0px 3px;
                 background-color: rgba(73, 44, 94, 0.5);
@@ -423,7 +446,7 @@ class FigFileViewer(QWidget):
                 height: 0 px;
                 subcontrol-position: top;
                 subcontrol-origin: margin;
-            }
+            } */
             QToolTip { border: 0px }
         ''')
         ### replace with FlowLayout ###
@@ -954,7 +977,8 @@ class FigFileViewer(QWidget):
     def highlight(self, j):
         try:
             selBtn = self.gridLayout.itemAt(self.j).widget()
-            selBtn.setStyleSheet("background-color: #292929; color: #fff; border: 0px")
+            selBtn.setStyleSheet("background: transparent; color: #fff; border: 0px")
+            selBtn.setAttribute(Qt.WA_TranslucentBackground)
             self.j = j
             selBtn = self.gridLayout.itemAt(self.j).widget()
             selBtn.setStyleSheet("background: #ff5e00; color: #292929; font-weight: bold")
@@ -1021,10 +1045,11 @@ class FigFileViewer(QWidget):
 
     def refresh(self, path, reverse=False):
         '''launch worker to refresh file layout..'''
-        self.clear()
         import time
         start = time.time()
-        print("refreshing view ...")
+        if self._parent:
+            print("refreshing view ...")
+            self._parent.setWindowTitle("Loading")
         self.refresh_thread = QThread()
         self.refresh_worker = FileViewerRefreshWorker()
         self.refresh_worker.moveToThread(self.refresh_thread)
@@ -1039,6 +1064,7 @@ class FigFileViewer(QWidget):
 
     def _refresh(self, path, reverse=False):
         '''function to be executed inside the worker.'''
+        self.clear()
         if self._parent:
             i = self._parent.tabs.currentIndex()
             name = pathlib.Path(path).name

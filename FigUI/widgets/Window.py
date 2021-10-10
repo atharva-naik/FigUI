@@ -784,6 +784,8 @@ class FigWindow(QMainWindow):
         self.systemBar = self.systemBar()
         self.titleBar = self.initTitleBar()
         self.folderBar = self.folderNavBar()
+        # currently displayed path (on the folder bar)
+        self.folderBar.path = str(pathlib.Path.home())
         self.shortcutBar = self.initShortcutBar()
 
         # package manager launcher
@@ -1333,6 +1335,7 @@ class FigWindow(QMainWindow):
         weatherBtn.setToolTip("Open weather forecast")
         weatherBtn.setIcon(FigIcon("sidebar/weather.svg"))
         weatherBtn.setIconSize(btnSize)
+        self.weatherBtn = weatherBtn
         # trash.
         trash = QPushButton()#("Trash", self)
         trash.setToolTip("Open trash folder.")
@@ -1782,6 +1785,12 @@ class FigWindow(QMainWindow):
                 font-size: 16px;
         }
         '''
+        if self.folderBar.path.startswith(str(path)): 
+            # selectedBtn = self.sender()
+            # print(selectedBtn)
+            # selectedBtn.setStyleSheet(selFolderBtnStyle)
+            return
+
         for action in self.folderBarActions:
             self.folderBar.removeAction(action)
         self.folderBarActions = []
@@ -1803,6 +1812,7 @@ class FigWindow(QMainWindow):
                     btn.setStyleSheet(folderBtnStyle)
                 action = self.folderBar.addWidget(btn)
                 self.folderBarActions.append(action)
+        self.folderBar.path = str(path)
 
     def folderNavBar(self):
         backBtnStyle = '''
@@ -1866,7 +1876,7 @@ class FigWindow(QMainWindow):
         # }
         # '''
         toolbar = QToolBar("Folder Navigation Bar Visibility")
-        toolbar.setStyleSheet("border: 0px");
+        toolbar.setStyleSheet("border: 0px")
         toolbar.setStyleSheet("color: #fff; background: #292929; border: 0px; padding: 2px;")
         toolbar.setIconSize(QSize(22,22))
         toolbar.setMovable(False)

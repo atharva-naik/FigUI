@@ -1,6 +1,16 @@
 import os
 from PyQt5.QtGui import QFont, QIcon
+from PyQt5.QtCore import QEventLoop, QTimer
 
+
+def pyqtSleep(time: int=1000):
+    '''
+    A pyqt5 friendly version of time.sleep.
+    time to wait in millis
+    '''
+    loop = QEventLoop()
+    QTimer.singleShot(time, loop.quit)
+    loop.exec_()
 
 def truncateString(string):
     if len(string) > 20:
