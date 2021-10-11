@@ -18,7 +18,7 @@ class PickleHandler:
             widget = QWidget()
             layout = QVBoxLayout()
             searchBar = QLineEdit()
-            searchBar.setStyleSheet("background: white; color: black")
+            searchBar.setStyleSheet("background: white; color: black; color: #fff;")
             layout.addWidget(searchBar)
             textEdit = QTextEdit()
             if isinstance(self.data, dict):

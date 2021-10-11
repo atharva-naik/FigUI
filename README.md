@@ -28,14 +28,14 @@ For now, see: [attributions.md](FigUI/assets/attributions.md)
 1) App Launcher
 ![App Launcher](screenshots/launcher.png?raw=true "App Launcher")
 2) File Viewer
-![File Viewer 1](screenshots/file-viewer1.png?raw=true "File Viewer 1")
-![File Viewer 2](screenshots/file-viewer2.png?raw=true "File Viewer 2")
+![File Viewer](screenshots/file-viewer1.png?raw=true "File Viewer 1")
+<!-- ![File Viewer 2](screenshots/file-viewer2.png?raw=true "File Viewer 2")
 ![File Viewer 3](screenshots/file-viewer3.png?raw=true "File Viewer 3")
 ![File Viewer 4](screenshots/file-viewer4.png?raw=true "File Viewer 4")
 ![File Viewer 5](screenshots/file-viewer5.png?raw=true "File Viewer 5")
 ![File Viewer 6](screenshots/file-viewer6.png?raw=true "File Viewer 6")
 ![File Viewer 7](screenshots/file-viewer7.png?raw=true "File Viewer 7")
-![File Viewer 8](screenshots/file-viewer8.png?raw=true "File Viewer 8")
+![File Viewer 8](screenshots/file-viewer8.png?raw=true "File Viewer 8") -->
 3) Bashrc Editor
 ![Bashrc Editor](screenshots/bashrc-editor.png?raw=true "Bashrc Editor")
 4) Code Editor
@@ -54,6 +54,16 @@ For now, see: [attributions.md](FigUI/assets/attributions.md)
 ![Text Editor](screenshots/text-editor.png?raw=true "Text Editor")
 11) Embedded xterm Emulator
 ![Embedded xterm Emulator](screenshots/embedded-xterm.png?raw=true "Embedded xterm Emulator")
+12) File Explorer Sidebar
+![Hierarchical file explorer sidebar](screenshots/file-explorer-sidebar.png?raw=true "Hierarchical file explorer sidebar")
+13) Licence Generator
+![License generator](screenshots/license-generator.png?raw=true "License generator")
+14) Task Viewer
+![Task Viewer: horizontal mode](screenshots/task-view.png?raw=true "Task Viewer: horizontal mode")
+![Task Viewer: vertical mode](screenshots/task-view-alternate.png?raw=true "Task Viewer: vertical mode")
+15) Clock
+![Clock](screenshots/clock.png?raw=true "clock")
+
 
 ## How to install
 Installation instructions for fig.
