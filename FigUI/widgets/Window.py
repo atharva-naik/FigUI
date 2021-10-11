@@ -5,12 +5,13 @@ import mimetypes, platform
 import json, datetime, pathlib
 import psutil, webbrowser, threading
 from PyQt5.Qt import PYQT_VERSION_STR
-from PyQt5.QtCore import QThread, QUrl, pyqtSignal, QTimer, QPoint, QRect, QSize, Qt, QT_VERSION_STR
+from PyQt5.QtCore import QThread, QUrl, pyqtSignal, QObject, QTimer, QPoint, QRect, QSize, Qt, QT_VERSION_STR
 from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEngineProfile, QWebEngineSettings
 from PyQt5.QtGui import QIcon, QFont, QKeySequence, QTransform, QCursor, QPixmap, QTextCharFormat, QSyntaxHighlighter, QFontDatabase, QTextFormat, QColor, QPainter, QDesktopServices
 from PyQt5.QtWidgets import QMenu, QApplication, QAction, QDialog, QPushButton, QTabWidget, QStatusBar, QToolBar, QWidget, QLineEdit, QMainWindow, QHBoxLayout, QVBoxLayout, QPlainTextEdit, QToolBar, QFrame, QSizePolicy, QTabBar, QDesktopWidget, QLabel, QToolButton, QTextEdit, QComboBox, QListWidget, QListWidgetItem, QScrollArea, QDockWidget, QGraphicsBlurEffect, QSplitter, QShortcut, QGraphicsDropShadowEffect, QGraphicsOpacityEffect
 
 try:
+    from FigUI.utils import *
     from Theme import FigTheme
     from Tab import FigTabWidget
     from Launcher import FigLauncher
@@ -32,6 +33,7 @@ try:
     from FigUI.subSystem.System.Display import BrightnessController
 #     from utils import *
 except ImportError:
+    from ..utils import *
     from .Theme import FigTheme
     from .Tab import FigTabWidget
     from ..handler import FigHandler
@@ -91,6 +93,21 @@ def __asset__(name):
 PLATFORM = platform.system()
 # system controllers.
 brightnessCtrl = BrightnessController()
+
+
+class FigWorker(QObject):
+    finished = pyqtSignal()
+    progress = pyqtSignal(int)
+
+    def run(self, obj, func, *args, **kwargs):
+        getattr(obj, func)(*args, **kwargs)
+        self.finished.emit()
+
+    def sleep_n_run(self, obj, func, *args, 
+                    sleep_interval=2, **kwargs):
+        pyqtSleep(sleep_interval)
+        getattr(obj, func)(*args, **kwargs)
+        self.finished.emit()
 
 
 class FigAppBtn(QPushButton):
@@ -764,11 +781,13 @@ class FigBrowser(QWidget):
 class FigWindow(QMainWindow):
     keyPressed = pyqtSignal(int)
     
-    def __init__(self, background="logo.png", *args, **kwargs):
+    def __init__(self, screen=None, background="logo.png", *args, **kwargs):
+        self.threads = [] # collect threads.
         os.makedirs("logs", exist_ok=True)
         super(FigWindow, self).__init__(*args, **kwargs)  
         self.setMouseTracking(True) # allow mouse tracking   
-
+        # attach primary screen (from QApplication)
+        self.screen = screen
         # set background image path.
         self.background = background
         # initialize file tree.
@@ -1420,7 +1439,18 @@ class FigWindow(QMainWindow):
     def log(self, icon, path):
         handler = __icon__(icon)
         self.fig_history.log(handler, path)
-
+    # def save_screenshot(self, widget: QWidget):
+    #     pixmap = self.screen.grabWindow(widget.winId())
+    #     path = f"/tmp/FigUI.widgets.FigWindow.tabs.{widget.winId()}.png"
+    #     worker = FigWorker()
+    #     thread = QThread()
+    #     worker.moveToThread(thread)
+    #     thread.started.connect(lambda: worker.sleep_n_run(pixmap, "save", path, "png"))
+    #     worker.finished.connect(thread.quit)
+    #     worker.finished.connect(worker.deleteLater)
+    #     thread.finished.connect(thread.deleteLater)
+    #     thread.start()
+    #     self.threads.append(thread)
     def addNewTerm(self, path=None):
         '''Add new terminal widget'''
         if path:
@@ -1439,23 +1469,24 @@ class FigWindow(QMainWindow):
         # self.tabs.setTabWhatsThis(i, "xterm (embedded)")
         self.tabs.setTabToolTip(i, "xterm (embedded)")
         self.log("launcher/bash.png", "Terminal")
-
+        # self.save_screenshot(terminal)
     def addNewClock(self):
         '''Add new clock window'''
         clockApp = FigClock()
         i = self.tabs.addTab(clockApp, FigIcon("sidebar/clock.png"), "\tClock")
         self.tabs.setCurrentIndex(i)
         self.tabs.setTabToolTip(i, "clock app")
-        self.log("sidebar/clock.png", "Clock")
 
+        self.log("sidebar/clock.png", "Clock")
+        # self.save_screenshot(clockApp)
     def addNewTaskView(self):
         '''Add new task view window'''
-        taskView = FigTaskWebView(self)
+        taskView = FigTaskWebView(parent=self, screen=self.screen)
         i = self.tabs.addTab(taskView, FigIcon("ctrlbar/task-view.svg"), "\tTasks")
         self.tabs.setCurrentIndex(i)
         self.tabs.setTabToolTip(i, "manage tasks/tabs")
         self.log("ctrlbar/task-view.svg", "Task Viewer")
-
+        # self.save_screenshot(taskView)
     def addNewBotTab(self):
         '''Add new chat bot tab'''
         chatBotApp = FigChatBot()
@@ -1463,7 +1494,7 @@ class FigWindow(QMainWindow):
         self.tabs.setCurrentIndex(i)
         self.tabs.setTabToolTip(i, "assistant app")
         self.log("sidebar/assistant.png", "Assistant")
-
+        # self.save_screenshot(chatBotApp)
     def addNewKanBanBoard(self):
         '''Add a new kanban board'''
         pass
@@ -1476,28 +1507,28 @@ class FigWindow(QMainWindow):
         i = self.tabs.addTab(handlerWidget, FigIcon("launcher/bashrc.png"), "\t.bashrc")
         self.tabs.setCurrentIndex(i)
         self.log("launcher/bashrc.png", bashrc)
-
+        # self.save_screenshot(handlerWidget)
     def addNewLicenseGenerator(self):
         '''Add new license template generator.'''
         licenseViewer = FigLicenseGenerator()
         i = self.tabs.addTab(licenseViewer, FigIcon("launcher/license.png"), "\tLICENSE")
         self.tabs.setCurrentIndex(i)
         self.log("launcher/license.png", "LICENSE Generator")
-
+        # self.save_screenshot(licenseViewer)
     def addNewHistoryViewer(self):
         '''Add new tab for viewing history.'''
         historyViewer = FigHistoryViewer(self.fig_history)
         i = self.tabs.addTab(historyViewer, FigIcon("launcher/history.png"), f"\t{self.fig_history.title}'s history")
         self.tabs.setCurrentIndex(i)
         self.log("launcher/history.png", self.fig_history.path)
-
+        # self.save_screenshot(historyViewer)
     def addNewTextEditor(self):
         '''Add new bashrc customizer.'''
         handlerWidget = self.handler.getUI("Untitled.txt")
         i = self.tabs.addTab(handlerWidget, FigIcon("launcher/txt.png"), "\tUntitled")
         self.tabs.setCurrentIndex(i)
         self.log("launcher/txt.png", "Untitled")
-
+        # self.save_screenshot(handlerWidget)
     def addNewHandlerTab(self):
         handlerWidget = self.handler.handle()
         i = self.tabs.addTab(handlerWidget, "New Tab")
@@ -1514,6 +1545,7 @@ class FigWindow(QMainWindow):
         i = self.tabs.addTab(fileViewer, FigIcon("launcher/fileviewer.png"), f"\t{name} {parent}")# f"\t{str(pathlib.Path.home())}")
         self.tabs.setCurrentIndex(i)
         self.log("launcher/fileviewer.png", path)
+        # self.save_screenshot(fileViewer)
 
     def addNewMailClient(self):
         mailClient = FigEmailClient(self)
@@ -2374,17 +2406,17 @@ class FigApp(QApplication):
         fontFiles = ["OMORI_GAME.ttf", "OMORI_GAME2.ttf", "HomemadeApple.ttf"]
         for fontFile in fontFiles:
             fontIds.append(QFontDatabase.addApplicationFont(__font__(fontFile)))
-
-        self.window = FigWindow(*args, background=background, **kwargs)
+        self.screen = self.primaryScreen()
+        self.window = FigWindow(*args, 
+                                screen=self.screen, background=background, 
+                                **kwargs)
         self.window.setGeometry(x, y, w, h)
-        
         # TODO: always stay on top (from commandline).
         FigStayOnTop = True
         if FigStayOnTop:
             self.window.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
         else:
             self.window.setWindowFlags(Qt.FramelessWindowHint)
-        
         self.window.setWindowOpacity(self.window.opacLevel)
         self.window.clipboard = self.clipboard() 
         self.setWindowIcon(QIcon(icon))

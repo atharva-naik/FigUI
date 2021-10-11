@@ -150,7 +150,7 @@
     <div class="scene">
         <div class="carousel">
             {% for i in range(NUM_TABS) %}
-                <div class="carousel__cell" onclick="carouselClick({{ i }})"></div>    
+                <div class="carousel__cell" onclick="carouselClick({{ i }})" style="background-image: url('{{ TAB_SCREENSHOTS[i] }}'); background-size: cover;"></div>    
             {% endfor %}
             <!-- <div class="carousel__cell" onclick="carouselClick(0)"></div>
             <div class="carousel__cell" onclick="carouselClick(1)" style="background-image: url('/home/atharva/GUI/background.jpg'); background-size: cover;"></div>

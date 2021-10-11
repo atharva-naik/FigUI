@@ -9,10 +9,10 @@ var rotateFn = isHorizontal ? 'rotateY' : 'rotateX';
 var radius, theta;
 // console.log( cellWidth, cellHeight );
 function carouselClick(x) {
-  alert(x);
+  // alert(x);
   new QWebChannel(qt.webChannelTransport, function(channel) {
     backend = channel.objects.backend;
-    backend.sendCursorPos(line, col)
+    backend.selectedTabIndex(x);
   });
 }
 
