@@ -1,20 +1,22 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+import random
 import os, glob, pathlib
 from PIL import Image, ImageQt
 from typing import Union, List, Tuple
-from PyQt5.QtCore import QThread, QUrl, QSize, Qt, QPoint, QPropertyAnimation, QSequentialAnimationGroup, QEasingCurve, QObject, pyqtSignal
+from PyQt5.QtCore import QThread, QUrl, QSize, Qt, QPoint, QPropertyAnimation, QSequentialAnimationGroup, QParallelAnimationGroup, QEasingCurve, QObject, pyqtSignal
 from PyQt5.QtGui import QIcon, QKeySequence, QTransform, QFont, QFontDatabase, QMovie, QPixmap, QColor, QBrush
-from PyQt5.QtWidgets import QApplication, QAction, QDialog, QPushButton, QWidget, QToolBar, QGridLayout, QLabel, QHBoxLayout, QVBoxLayout, QToolButton, QFileDialog, QScrollArea, QMainWindow, QGraphicsBlurEffect, QGraphicsDropShadowEffect, QGraphicsScene, QGraphicsView, QGraphicsEllipseItem, QGraphicsWidget
+from PyQt5.QtWidgets import QApplication, QAction, QDialog, QPushButton, QWidget, QToolBar, QGridLayout, QLabel, QHBoxLayout, QVBoxLayout, QToolButton, QFileDialog, QScrollArea, QMainWindow, QGraphicsBlurEffect, QGraphicsDropShadowEffect, QGraphicsScene, QGraphicsView, QGraphicsEllipseItem, QGraphicsEffect
 try:
     from utils import *
     from FlowLayout import FlowLayout
     from assets.Image import ImageAsset
+    from BlurShadowEffect import QGraphicsBlurShadowEffect
 except ImportError:
     from FigUI.utils import *
     from FigUI.assets.Image import ImageAsset
     from FigUI.widgets.FlowLayout import FlowLayout
-
+    from FigUI.widgets.BlurShadowEffect import QGraphicsBlurShadowEffect
 
 __current_dir__ = os.path.dirname(os.path.realpath(__file__))
 __icons__ = os.path.join(__current_dir__, "../assets/icons")
@@ -111,23 +113,33 @@ class FigToolButton(QToolButton):
 #         return super().resizeEvent(event)
 class SunAnimation:
     def __init__(self, parent=None, size: Tuple[int, int]=(200, 200)):
-        self.sunSprite = QWidget(parent)
-        self.sunSprite.setObjectName("Sun")
-        # self.sunSprite.setAttribute(Qt.WA_TranslucentBackground)
         self._size = size
         self._center = (size[0]/2, size[1]/2)
+        self.sunSprite = QWidget(parent)
+        self.sunSprite.setObjectName("Sun")
+        self.sunSprite.resize(*self.size)
+        # apply glow effect.
+        self.glowEffect = QGraphicsDropShadowEffect(self.sunSprite)
+        self.glowEffect.setOffset(0, 0)
+        self.glowEffect.setColor(QColor(252, 186, 3))
+        self.glowEffect.setBlurRadius(300)
+        self.sunSprite.setGraphicsEffect(self.glowEffect)
+        # set styling.
         self.sunSprite.setStyleSheet('''
-            QWidget#Sun {
+            QWidget {
                 border-radius: 100;
-                background: qradialgradient(cx: 1, cy: 1, radius: 1, stop : 0 #fff, stop: 0.5 #000);            
-                /* background-image: url('/home/atharva/GUI/FigUI/FigUI/assets/icons/animations/sun.png');
+                /* background: qradialgradient(cx: 1, cy: 1, radius: 1, stop : 0 #fff, stop: 0.5 #fca103); */          
+                background-image: url('/home/atharva/GUI/FigUI/FigUI/assets/icons/animations/sun.png') 0 0 0 0 stretch stretch;
+                background-position: center;
                 background-repeat: no-repeat;
-                background-position: center; */
-            }
+            }  
         ''')
-        self.sunSprite.resize(*size)
         self._animation_group = QSequentialAnimationGroup()
         self.sunSprite.hide()
+
+    def sprite(self):
+        '''return the core sprite object.'''
+        return self.sunSprite
 
     @property
     def size(self):
@@ -148,21 +160,22 @@ class SunAnimation:
         anim.setEasingCurve(curve)
         anim.setDuration(duration)
         self._animation_group.addAnimation(anim)
-        self._animation_group.finished.connect(self.destroyAnimation)
+
+    def hide(self):
+        '''hide sprite.'''
+        self.sunSprite.hide()
 
     def _start(self, count):
         print("starting animation")
         self.sunSprite.show()
         self._animation_group.setLoopCount(count)
         self._animation_group.start()
-
-    def destroyAnimation(self):
-        '''clear up the animation artefacts after waiting for some time.'''
-        # wait for 5 seconds and the hide the sun.
-        print("destroying animation")
-        pyqtSleep(5000)
-        self.sunSprite.hide()
-
+    # def destroyAnimation(self):
+    #     '''clear up the animation artefacts after waiting for some time.'''
+    #     # wait for 5 seconds and the hide the sun.
+    #     print("destroying animation")
+    #     pyqtSleep(5000)
+    #     self.sunSprite.hide()
     def start(self, count: int=1):
         '''
         self.thread = QThread()
@@ -179,6 +192,76 @@ class SunAnimation:
         self.thread.start()
         '''
         self._start(count)
+
+
+class SnowAnimation:
+    def __init__(self, parent=None, size: Tuple[int, int]=(50, 50), count: int=5):
+        self.snowFlakes = []
+        self._size = size
+        self._count = count 
+        for i in range(self.count):
+            self.addSnowFlake(parent)
+        self._animation_group = QParallelAnimationGroup()
+
+    def __len__(self):
+        return self.count
+
+    def config(self, w: int, h: int, duration: int=5000):
+        gap = w / len(self)
+        jump = h // 10
+        for i, snowFlake in enumerate(self.snowFlakes):
+            x1 = int(gap * i + gap / 2)
+            x2 = int(gap * i)
+            s_x, s_y = self.size
+            # print("(", x1, ", ", s_x, ") to (", x2, ", ", h-s_y, ")")
+            # add random offsets to the durations.
+            # configure the animations.
+            anim = QPropertyAnimation(snowFlake, b"pos")
+            anim.setStartValue(
+                QPoint(
+                    x1, s_x + jump * random.randint(0, 5)
+                )
+            )
+            anim.setEndValue(
+                QPoint(x2, h-s_y)
+            )
+            anim.setDuration(duration + 100*random.randint(-10, 30))
+            self._animation_group.addAnimation(anim)
+
+    def addSnowFlake(self, parent=None):
+        snowFlake = QWidget(parent)
+        snowFlake.setStyleSheet('''
+            QWidget {
+                background: transparent;
+                background-image: url('/home/atharva/GUI/FigUI/FigUI/assets/icons/animations/snowflake30x30.png');
+                background-position: center;
+            }
+        ''')
+        snowFlake.resize(*self.size)
+        snowFlake.hide()
+        self.snowFlakes.append(snowFlake)
+
+    def show(self):
+        for snowFlake in self.snowFlakes:
+            snowFlake.show()
+
+    def start(self, count: int=1):
+        print("starting animation")
+        self.show()
+        self._animation_group.setLoopCount(count)
+        self._animation_group.start()
+
+    @property
+    def size(self):
+        return self._size
+
+    @property
+    def count(self):
+        return self._count
+
+    def hide(self):
+        for snowFlake in self.snowFlakes:
+            snowFlake.hide()
 
 
 class FigLauncher(QWidget):
@@ -296,7 +379,7 @@ class FigLauncher(QWidget):
             }
             /* #c70039; */
             QToolButton:hover { 
-                background: qradialgradient(cx: 0.6, cy: 0.6, radius: 0.5, stop : 0.3 #ffd500, stop: 0.6 #ffdf61, stop: 0.9 #fcf2ca); 
+                background: qradialgradient(cx: 0, cy: 0, radius: 0.1, stop : 0.3 #ffd500, stop: 0.6 #ffdf61, stop: 0.9 #fcf2ca); 
                 font-weight: bold;
                 color: #292929;
             }''')
@@ -356,25 +439,72 @@ class FigLauncher(QWidget):
         self.layout.addWidget(self.scroll) # comment
         self.setLayout(self.layout)
         self.setAcceptDrops(True)
+        self.animations = []
 
         if self._parent and isinstance(self._parent, QMainWindow):
+            self.showingWeatherAnimation = False
             print("\x1b[31mconnected FigLauncher.showWeather\x1b[0m")
             self._parent.weatherBtn.clicked.connect(self.showWeather)
 
     def showWeather(self):
-        weather = "sunny"
+        if self.showingWeatherAnimation:
+            # hide sprite if animation is currently displaying and the weather button is clicked.
+            self.animations[-1].hide()
+            self.showingWeatherAnimation = not(self.showingWeatherAnimation)
+            return
+        weather = "snow"
+        # dimensions of launcher window.
+        w = self.width() # x coordinate of initial point.
+        h = self.height() # y coordinate of initial point.s
         if weather == "sunny":
-            self.sun_animation = SunAnimation(self)
-            w = self.width() # x coordinate of initial point.
-            h = self.height() # y coordinate of initial point.s
-            c_x, c_y = self.sun_animation.size
+            sun_animation = SunAnimation(self)
+            c_x, c_y = sun_animation.size
             initial_state = QPoint(w-c_x, 0)
-            goal_state = QPoint((w-c_x)/2, h-c_y)
-            self.sun_animation.addAnimation(initial_state=initial_state, 
+            origin_state = QPoint(0, 0)
+            goal_state = QPoint(w-c_x, h-c_y)
+            mid_state = QPoint((w-c_x)/2, h-c_y)
+            # add all animations to the sequence.
+            sun_animation.addAnimation(initial_state=initial_state, 
+                                       goal_state=mid_state,
+                                       curve=QEasingCurve.OutBounce,
+                                       duration=1000)
+            sun_animation.addAnimation(initial_state=mid_state, 
+                                       goal_state=origin_state,
+                                       curve=QEasingCurve.InBounce,
+                                       duration=1000)
+            sun_animation.addAnimation(initial_state=origin_state, 
+                                       goal_state=mid_state,
+                                       curve=QEasingCurve.OutBounce,
+                                       duration=1000)
+            sun_animation.addAnimation(initial_state=mid_state, 
+                                       goal_state=initial_state,
+                                       curve=QEasingCurve.InBounce,
+                                       duration=1000)
+            sun_animation.addAnimation(initial_state=initial_state, 
                                        goal_state=goal_state,
                                        curve=QEasingCurve.OutBounce,
-                                       duration=2000)
-            self.sun_animation.start(count=3)
+                                       duration=1000)
+            sun_animation.addAnimation(initial_state=goal_state, 
+                                       goal_state=initial_state,
+                                       curve=QEasingCurve.InBounce,
+                                       duration=1000)
+            sun_animation.start(count=1)
+            self.animations.append(sun_animation)
+        
+        elif weather == "rain":
+            pass
+
+        elif weather == "windy":
+            pass 
+
+        elif weather == "snow":
+            snow_animation = SnowAnimation(parent=self, count=200, size=(30,30))
+            snow_animation.config(w, h)
+            snow_animation.start(1)
+            self.animations.append(snow_animation)
+        # hide animation
+        self.showingWeatherAnimation = not(self.showingWeatherAnimation)
+
 
     def _clickHandler(self, event):
         pass
