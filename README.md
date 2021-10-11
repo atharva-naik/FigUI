@@ -63,6 +63,8 @@ For now, see: [attributions.md](FigUI/assets/attributions.md)
 ![Task Viewer: vertical mode](screenshots/task-view-alternate.png?raw=true "Task Viewer: vertical mode")
 15) Clock
 ![Clock](screenshots/clock.png?raw=true "clock")
+16) Embedded Chromium Browser
+![Browser](screenshots/embedded-chromium-browser.png?raw=true "Browser")
 
 
 ## How to install

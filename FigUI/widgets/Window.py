@@ -709,73 +709,20 @@ class WebRenderEngine(QWebEngineView):
 class FigBrowser(QWidget):
     def __init__(self, parent=None):
         super(FigBrowser, self).__init__()
+        self._parent = parent
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
-        navbar = QToolBar("Navigation")
-        # move back.
-        backBtn = QAction("Back", self)
-        backBtn.setToolTip("Go back to the previous page ...")
-        backBtn.setIcon(FigIcon("browser/back.svg"))
-        # move forward.
-        forwardBtn = QAction("Forward", self)
-        forwardBtn.setToolTip("Go forward while navigating ...")
-        forwardBtn.setIcon(FigIcon("browser/forward.svg"))
-        # refresh.
-        refreshBtn = QAction("Refresh", self)
-        refreshBtn.setToolTip("Refresh webpage")
-        refreshBtn.setIcon(FigIcon("browser/refresh.svg"))
-        # stop loading.
-        stopBtn = QAction("Stop", self)
-        stopBtn.setToolTip("Stop loading of the webpage")
-        stopBtn.setIcon(FigIcon("browser/stop.svg"))
-        # home page.
-        homeBtn = QAction("Home", self)
-        homeBtn.setToolTip("Got back to home page")
-        homeBtn.setIcon(FigIcon("browser/home.svg"))
-        # search function.
-        searchBtn = QAction("Search", self)
-        searchBtn.setToolTip("Search the url entered in the search bar.")
-        searchBtn.setIcon(FigIcon("browser/search.svg"))
-        # url search bar.
-        searchBar = QLineEdit()
-        searchBar.setToolTip("Type a url or search query.")
-        searchBar.setStyleSheet("background: #fff")
-        # extensions.
-        extensionsBtn = QAction("Extensions", self)
-        extensionsBtn.setToolTip("Extensions.")
-        extensionsBtn.setIcon(FigIcon("browser/extensions.svg"))
-        # user profile.
-        profileBtn = QAction("User", self)
-        profileBtn.setToolTip("Change user profile.")
-        profileBtn.setIcon(FigIcon("browser/user.svg"))
-        # settings.
-        settingsBtn = QAction("Settings", self)
-        settingsBtn.setToolTip("Modify settings.")
-        settingsBtn.setIcon(FigIcon("browser/settings.svg"))
-        # navigation bar.
-        navbar.addAction(backBtn)
-        navbar.addAction(forwardBtn)
-        navbar.addAction(refreshBtn)
-        navbar.addAction(homeBtn)
-        navbar.addSeparator()
-        navbar.addWidget(searchBar)
-        navbar.addSeparator()
-        navbar.addAction(searchBtn)
-        navbar.addAction(extensionsBtn)
-        navbar.addAction(stopBtn)
-        navbar.addAction(profileBtn)
-        navbar.addAction(settingsBtn)
-        navbar.setStyleSheet("background: #292929")
+        # navbar = QToolBar("Navigation")
         self.browser = WebRenderEngine(parent)
         layout.addWidget(self.browser)
         # set toolbar sizes.
-        navbar.setIconSize(QSize(20,20))
         if parent:
-            parent.navbar = navbar
-            if not(parent.navBarAdded):
-                parent.addToolBar(navbar)
-                parent.logger.info(f"browser bar added for {parent.winId()}")
+            parent.browserNavBar.show()
         self.setLayout(layout)
+        self._parent = parent
+
+    def url(self):
+        return self.browser.url()
 
 
 class FigWindow(QMainWindow):
@@ -808,7 +755,8 @@ class FigWindow(QMainWindow):
         # currently displayed path (on the folder bar)
         self.folderBar.path = str(pathlib.Path.home())
         self.shortcutBar = self.initShortcutBar()
-
+        # browser navigation bar.
+        self.browserNavBar = self.initBrowserNavBar() 
         # package manager launcher
         self.packmanBar = self.initPackmanBar()
         self.packmanBar.setMinimumSize(QSize(300,400))
@@ -817,6 +765,8 @@ class FigWindow(QMainWindow):
         self.addToolBarBreak(Qt.TopToolBarArea)
         self.addToolBar(Qt.TopToolBarArea, self.folderBar)
         self.addToolBar(Qt.TopToolBarArea, self.shortcutBar)
+        self.addToolBarBreak(Qt.TopToolBarArea)
+        self.addToolBar(Qt.TopToolBarArea, self.browserNavBar)
         self.addToolBar(Qt.LeftToolBarArea, self.debugBar)
         self.addToolBar(Qt.LeftToolBarArea, self.mediaBar)
         self.addToolBar(Qt.LeftToolBarArea, self.systemBar)
@@ -902,12 +852,12 @@ class FigWindow(QMainWindow):
         # self.newTabBtn.clicked.connect(self.addNewTab)
         self.tabs.addTab(self.fig_launcher, FigIcon("launcher.png"), "\tLauncher")
         self.tabs.tabBar().setTabButton(0, QTabBar.RightSide,None) # make launcher tab unclosable.
-        self.navBarAdded = False
         # self.setLayout(self.layout)
         self.setAttribute(Qt.WA_TranslucentBackground, True) # NOTE: need for rounded corners
         # fullscreen on F11.
         self.isfullscreen = False
-        # self.ctrlBar.hide()
+        self.ctrlBar.hide()
+        self.browserNavBar.hide()
         # self.showFullScreen()
         if PLATFORM == "Linux":
             self.fnF11 = QShortcut(QKeySequence('Fn+F11'), self)
@@ -953,6 +903,67 @@ class FigWindow(QMainWindow):
         else:
             self.setWindowFlags(self.windowFlags() & Qt.WindowStaysOnTopHint)
         self.ontopFlag = not self.ontopFlag
+
+    def initBrowserNavBar(self):
+        '''create the navbar for borwser instances.'''
+        navbar = QToolBar("Navigation")
+        # move back.
+        backBtn = QAction("Back", self)
+        backBtn.setToolTip("Go back to the previous page ...")
+        backBtn.setIcon(FigIcon("browser/back.svg"))
+        # move forward.
+        forwardBtn = QAction("Forward", self)
+        forwardBtn.setToolTip("Go forward while navigating ...")
+        forwardBtn.setIcon(FigIcon("browser/forward.svg"))
+        # refresh.
+        refreshBtn = QAction("Refresh", self)
+        refreshBtn.setToolTip("Refresh webpage")
+        refreshBtn.setIcon(FigIcon("browser/refresh.svg"))
+        # stop loading.
+        stopBtn = QAction("Stop", self)
+        stopBtn.setToolTip("Stop loading of the webpage")
+        stopBtn.setIcon(FigIcon("browser/stop.svg"))
+        # home page.
+        homeBtn = QAction("Home", self)
+        homeBtn.setToolTip("Got back to home page")
+        homeBtn.setIcon(FigIcon("browser/home.svg"))
+        # search function.
+        searchBtn = QAction("Search", self)
+        searchBtn.setToolTip("Search the url entered in the search bar.")
+        searchBtn.setIcon(FigIcon("browser/search.svg"))
+        # url search bar.
+        searchBar = QLineEdit()
+        searchBar.setToolTip("Type a url or search query.")
+        searchBar.setStyleSheet("background: #fff")
+        # extensions.
+        extensionsBtn = QAction("Extensions", self)
+        extensionsBtn.setToolTip("Extensions.")
+        extensionsBtn.setIcon(FigIcon("browser/extensions.svg"))
+        # user profile.
+        profileBtn = QAction("User", self)
+        profileBtn.setToolTip("Change user profile.")
+        profileBtn.setIcon(FigIcon("browser/user.svg"))
+        # settings.
+        settingsBtn = QAction("Settings", self)
+        settingsBtn.setToolTip("Modify settings.")
+        settingsBtn.setIcon(FigIcon("browser/settings.svg"))
+        # navigation bar.
+        navbar.addAction(backBtn)
+        navbar.addAction(forwardBtn)
+        navbar.addAction(refreshBtn)
+        navbar.addAction(homeBtn)
+        navbar.addSeparator()
+        navbar.addWidget(searchBar)
+        navbar.addSeparator()
+        navbar.addAction(searchBtn)
+        navbar.addAction(extensionsBtn)
+        navbar.addAction(stopBtn)
+        navbar.addAction(profileBtn)
+        navbar.addAction(settingsBtn)
+        navbar.setStyleSheet("background: #292929")
+        navbar.setIconSize(QSize(17,17))
+
+        return navbar
 
     def initShortcutBar(self):
         home = str(pathlib.Path.home())
@@ -1561,7 +1572,6 @@ class FigWindow(QMainWindow):
         browser.browser.setUrl(qurl) 
         # browser.execJS("document.location.href='https://developer.mozilla.org/en-US/docs/Web/API/document.location';") # setting url to browser
 		# setting tab index
-        self.navBarAdded = True
         i = self.tabs.addTab(browser, label)
         self.tabs.setCurrentIndex(i)
         self.logger.info(f"browser opened into a window with id: {int(self.winId())}")
@@ -1582,13 +1592,13 @@ class FigWindow(QMainWindow):
     
     def onCurrentTabChange(self, i):
         '''when tab is changed.'''
-
         try:
             qurl = self.tabs.currentWidget().url() # get the curl
 		    # self.update_urlbar(qurl, self.tabs.currentWidget()) # update the url 
-            self.update_title(self.tabs.currentWidget()) # update the title
+            self.browserNavBar.show()
+            self.tabs.setTabText(i, qurl.toString())
         except AttributeError:
-            pass
+            self.browserNavBar.hide()
         # shadow effect for tab.
         # shadowEffect = QGraphicsDropShadowEffect(self)
         # shadowEffect.setOffset(0, 0)
@@ -1622,14 +1632,12 @@ class FigWindow(QMainWindow):
         if self.tabs.count() < 2:
             return # do nothing
         self.tabs.removeTab(i) # else remove the tab
-
-    def update_title(self, browser):
-        '''method for update_title'''
-        # if signal is not from the current tab
-        if browser != self.tabs.currentWidget(): return # do nothing
-        title = self.tabs.currentWidget().page().title() # get the page title
-        self.setWindowTitle(title) # set the window title
-
+    # def update_title(self, browser):
+    #     '''method for update_title'''
+    #     # if signal is not from the current tab
+    #     if browser != self.tabs.currentWidget(): return # do nothing
+    #     title = self.tabs.currentWidget().page().title() # get the page title
+    #     self.setWindowTitle(title) # set the window title
     def navigate_to_url(self):
         '''method for navigating to the url.'''
         # get the line edit text and convert it to QUrl object

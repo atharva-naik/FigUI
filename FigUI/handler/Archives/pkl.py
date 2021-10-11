@@ -18,9 +18,11 @@ class PickleHandler:
             widget = QWidget()
             layout = QVBoxLayout()
             searchBar = QLineEdit()
-            searchBar.setStyleSheet("background: white; color: black; color: #fff;")
+            searchBar.setStyleSheet("background: white; color: black;")
             layout.addWidget(searchBar)
             textEdit = QTextEdit()
+            textEdit.setReadOnly(True)
+            textEdit.setStyleSheet("color: #fff;")
             if isinstance(self.data, dict):
                 # print("\x1b[31;1mfound dict\x1b[0m")
                 try:
