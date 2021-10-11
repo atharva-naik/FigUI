@@ -22,6 +22,7 @@ try:
     from FigUI.subSystem.Email import FigEmailClient
     from FigUI.widgets.SearchBar import FigSearchBar
     from FigUI.subSystem.History import HistoryLogger
+    from FigUI.subSystem.TaskViewer import FigTaskWebView
     from FigUI.widgets.ActivityPanel import FigActivityPanel
     from FigUI.handler.Code.QtColorPicker import ColorPicker
     from FileViewer import FigFileViewer, FigTreeFileExplorer
@@ -43,6 +44,7 @@ except ImportError:
     from .ActivityPanel import FigActivityPanel
     from ..subSystem.Email import FigEmailClient
     from ..subSystem.History import HistoryLogger
+    from ..subSystem.TaskViewer import FigTaskWebView
     from ..handler.Code.QtColorPicker import ColorPicker
     from ..subSystem.System.Network import NetworkHandler
     from ..subSystem.Math.Calculator import FigCalculator
@@ -985,7 +987,6 @@ class FigWindow(QMainWindow):
         picturesBtn.triggered.connect(lambda: self.addNewFileViewer(path=pictures))
         # videos.
         videosBtn = QAction("Videos", self)
-        videosBtn.setToolTip("open videos.")
         videosBtn.setIcon(FigIcon("sysbar/videos.svg"))
         videosBtn.triggered.connect(lambda: self.addNewFileViewer(path=videos))
         # blank.
@@ -1446,6 +1447,14 @@ class FigWindow(QMainWindow):
         self.tabs.setCurrentIndex(i)
         self.tabs.setTabToolTip(i, "clock app")
         self.log("sidebar/clock.png", "Clock")
+
+    def addNewTaskView(self):
+        '''Add new task view window'''
+        taskView = FigTaskWebView(self)
+        i = self.tabs.addTab(taskView, FigIcon("ctrlbar/task-view.svg"), "\tTasks")
+        self.tabs.setCurrentIndex(i)
+        self.tabs.setTabToolTip(i, "manage tasks/tabs")
+        self.log("ctrlbar/task-view.svg", "Task Viewer")
 
     def addNewBotTab(self):
         '''Add new chat bot tab'''
@@ -2232,6 +2241,7 @@ class FigWindow(QMainWindow):
         taskViewBtn = FigAppBtn(orig_size=22, hover_size=25)
         taskViewBtn.setIcon(FigIcon("ctrlbar/task-view.svg"))
         taskViewBtn.setToolTip("Open task view.")
+        taskViewBtn.clicked.connect(self.addNewTaskView)
         # open color picker dialogue.
         colorpickerBtn = FigAppBtn()
         colorpickerBtn.setToolTip("Open color picker")

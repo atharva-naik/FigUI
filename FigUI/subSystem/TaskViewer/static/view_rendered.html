@@ -1,0 +1,187 @@
+<style>
+    * {
+        box-sizing: border-box;
+    }
+
+    body {
+        font-family: sans-serif;
+        text-align: center;
+    }
+
+    .scene {
+        border: 1px solid #CCC;
+        margin: 40px 0;
+        position: relative;
+        width: 525px;
+        height: 350px;
+        margin: 80px auto;
+        perspective: 1000px;
+    }
+
+    .carousel {
+        width: 100%;
+        height: 100%;
+        position: absolute;
+        transform: translateZ(-288px);
+        transform-style: preserve-3d;
+        transition: transform 1s;
+    }
+
+    .carousel__cell {
+        position: absolute;
+        width: 475px;
+        height: 300px;
+        left: 10px;
+        top: 10px;
+        border: 2px solid black;
+        line-height: 116px;
+        font-size: 80px;
+        font-weight: bold;
+        color: white;
+        text-align: center;
+        transition: transform 1s, opacity 1s;
+    }
+
+    .carousel__cell:nth-child(9n+1) {
+        background: hsla(0, 100%, 50%, 0.8);
+    }
+
+    .carousel__cell:nth-child(9n+2) {
+        background: hsla(40, 100%, 50%, 0.8);
+    }
+
+    .carousel__cell:nth-child(9n+3) {
+        background: hsla(80, 100%, 50%, 0.8);
+    }
+
+    .carousel__cell:nth-child(9n+4) {
+        background: hsla(120, 100%, 50%, 0.8);
+    }
+
+    .carousel__cell:nth-child(9n+5) {
+        background: hsla(160, 100%, 50%, 0.8);
+    }
+
+    .carousel__cell:nth-child(9n+6) {
+        background: hsla(200, 100%, 50%, 0.8);
+    }
+
+    .carousel__cell:nth-child(9n+7) {
+        background: hsla(240, 100%, 50%, 0.8);
+    }
+
+    .carousel__cell:nth-child(9n+8) {
+        background: hsla(280, 100%, 50%, 0.8);
+    }
+
+    .carousel__cell:nth-child(9n+0) {
+        background: hsla(320, 100%, 50%, 0.8);
+    }
+
+    .carousel__cell:nth-child(1) {
+        transform: rotateY(0deg) translateZ(288px);
+    }
+
+    .carousel__cell:nth-child(2) {
+        transform: rotateY(40deg) translateZ(288px);
+    }
+
+    .carousel__cell:nth-child(3) {
+        transform: rotateY(80deg) translateZ(288px);
+    }
+
+    .carousel__cell:nth-child(4) {
+        transform: rotateY(120deg) translateZ(288px);
+    }
+
+    .carousel__cell:nth-child(5) {
+        transform: rotateY(160deg) translateZ(288px);
+    }
+
+    .carousel__cell:nth-child(6) {
+        transform: rotateY(200deg) translateZ(288px);
+    }
+
+    .carousel__cell:nth-child(7) {
+        transform: rotateY(240deg) translateZ(288px);
+    }
+
+    .carousel__cell:nth-child(8) {
+        transform: rotateY(280deg) translateZ(288px);
+    }
+
+    .carousel__cell:nth-child(9) {
+        transform: rotateY(320deg) translateZ(288px);
+    }
+
+    .cells-range {
+        display:none;
+    }
+
+    .carousel-options {
+        text-align: center;
+        position: relative;
+        z-index: 2;
+        background: rgba(10, 10, 10, 0.8);
+        /* background: hsla(0, 0%, 100%, 0.8); */
+    }
+    
+    .previous-button {
+        background: transparent;
+        border-radius: 50%;
+        padding: 5px;
+        border: 0px;
+    }
+    .previous-button:hover {
+        background: rgba(201, 255, 249, 0.5);
+    }
+    .next-button {
+        background: transparent;
+        border-radius: 50%;
+        padding: 5px;
+        border: 0px;
+    }
+    .next-button:hover {
+        background: rgba(201, 255, 249, 0.5);
+    }
+</style>
+
+<body style="background-color: #292929">
+    <div class="scene">
+        <div class="carousel">
+            
+                <div class="carousel__cell" onclick="carouselClick(0)"></div>    
+            
+            <!-- <div class="carousel__cell" onclick="carouselClick(0)"></div>
+            <div class="carousel__cell" onclick="carouselClick(1)" style="background-image: url('/home/atharva/GUI/background.jpg'); background-size: cover;"></div>
+            <div class="carousel__cell" onclick="carouselClick(2)" style="background-image: url('/home/atharva/GUI/background.jpg'); background-size: cover;"></div>
+            <div class="carousel__cell" onclick="carouselClick(3)"></div>
+            <div class="carousel__cell" onclick="carouselClick(4)"></div>
+            <div class="carousel__cell" onclick="carouselClick(5)"></div>
+            <div class="carousel__cell" onclick="carouselClick(6)"></div> -->
+        </div>
+    </div>
+    <div class="carousel-options">
+        <p>
+            <label>
+                <input class="cells-range" type="range" min="3" max="30" value="1" />
+            </label>
+        </p>
+        <p>
+            <button class="previous-button"><img src="prev.svg"/></button>
+            <button class="next-button"><img src="next.svg"/></button>
+        </p>
+        <p>
+            <label>
+                <img src="horizontal.svg"/>
+                <input type="radio" name="orientation" value="horizontal" checked />
+            </label>
+            <label>
+                <img src="vertical.svg"/>
+                <input type="radio" name="orientation" value="vertical" />
+            </label>
+        </p>
+        <script src="/home/atharva/GUI/FigUI/FigUI/subSystem/TaskViewer/static/qwebchannel.js"></script>
+        <script src="/home/atharva/GUI/FigUI/FigUI/subSystem/TaskViewer/static/carousel.js"></script>
+    </div>
+</body>
