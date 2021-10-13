@@ -61,7 +61,7 @@ class FigEmailClient(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         # 
         QToolButton(fileMenu)
-
+        
         fileMenu.addLayout(layout)
 
         return fileMenu

@@ -1,5 +1,30 @@
 <!DOCTYPE html>
 <html lang="en">
+    <style>
+        /* Chrome, safari */
+        *::-webkit-scrollbar {
+            width: 7px;
+            height: 7px;
+        }    
+        *::-webkit-scrollbar-track {
+            background-color: rgba(235, 235, 235, 0.1);
+        }
+
+        *::-webkit-scrollbar-thumb {
+            background-color: gray;
+        }
+        *::-webkit-scrollbar-thumb:hover {
+            background-color: orange;
+        }
+        *::-webkit-scrollbar-corner {
+            background-color: transparent;
+            /* background: rgba(235, 235, 235, 0.1); */
+        }
+        /* Firefox */
+        /* .selector {
+            scrollbar-width: none;
+        } */
+    </style>
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
@@ -77,9 +102,11 @@
         <link rel="stylesheet" href="https://codemirror.net/addon/fold/foldgutter.css">
         <link rel="stylesheet" href="https://codemirror.net/addon/search/matchesonscrollbar.css">
         <link rel="stylesheet" href="https://codemirror.net/addon/scroll/simplescrollbars.css"></link>
-        <title>Code Mirror</title>
+        <title>HTML Editor</title>
     </head>
-    <body style="background-color: {{ EDITOR_BACKGROUND_COLOR }}">
+    <body style="background-color: #292929; color: #fff">
+        <!-- qweb channel -->
+        <script src="{{ QWEBCHANNEL_JS }}"></script>
         <!-- core javascript source -->
         <script src="https://codemirror.net/lib/codemirror.js"></script>
         <!-- addons -->
@@ -109,105 +136,187 @@
         <script src="https://codemirror.net/addon/scroll/simplescrollbars.js"></script>
         <!-- language highlighting scripts -->
         <script src="https://codemirror.net/mode/javascript/javascript.js"></script>
-        <script src="https://codemirror.net/mode/python/python.js"></script>
-        <div style="margin-left: auto; margin-right: auto;">
-            <textarea id="codemirror">
-                {{ CODE_FILE_CONTENT }}
-            </textarea>
-            <p>Select a theme: <select onchange="selectTheme()" id=select>
-                <option selected>default</option>
-                <option>3024-day</option>
-                <option>3024-night</option>
-                <option>abbott</option>
-                <option>abcdef</option>
-                <option>ambiance</option>
-                <option>ayu-dark</option>
-                <option>ayu-mirage</option>
-                <option>base16-dark</option>
-                <option>base16-light</option>
-                <option>bespin</option>
-                <option>blackboard</option>
-                <option>cobalt</option>
-                <option>colorforth</option>
-                <option>darcula</option>
-                <option>dracula</option>
-                <option>duotone-dark</option>
-                <option>duotone-light</option>
-                <option>eclipse</option>
-                <option>elegant</option>
-                <option>erlang-dark</option>
-                <option>gruvbox-dark</option>
-                <option>hopscotch</option>
-                <option>icecoder</option>
-                <option>idea</option>
-                <option>isotope</option>
-                <option>juejin</option>
-                <option>lesser-dark</option>
-                <option>liquibyte</option>
-                <option>lucario</option>
-                <option>material</option>
-                <option>material-darker</option>
-                <option>material-palenight</option>
-                <option>material-ocean</option>
-                <option>mbo</option>
-                <option>mdn-like</option>
-                <option>midnight</option>
-                <option>monokai</option>
-                <option>moxer</option>
-                <option>neat</option>
-                <option>neo</option>
-                <option>night</option>
-                <option>nord</option>
-                <option>oceanic-next</option>
-                <option>panda-syntax</option>
-                <option>paraiso-dark</option>
-                <option>paraiso-light</option>
-                <option>pastel-on-dark</option>
-                <option>railscasts</option>
-                <option>rubyblue</option>
-                <option>seti</option>
-                <option>shadowfox</option>
-                <option>solarized dark</option>
-                <option>solarized light</option>
-                <option>the-matrix</option>
-                <option>tomorrow-night-bright</option>
-                <option>tomorrow-night-eighties</option>
-                <option>ttcn</option>
-                <option>twilight</option>
-                <option>vibrant-ink</option>
-                <option>xq-dark</option>
-                <option>xq-light</option>
-                <option>yeti</option>
-                <option>yonce</option>
-                <option>zenburn</option>
-            </select>
-            </p>
-        </div>
+        <script src="https://codemirror.net/mode/xml/xml.js"></script>
+        <script src="https://codemirror.net/mode/htmlmixed/htmlmixed.js"></script>
+        <script src="https://codemirror.net/mode/css/css.js"></script>
+
+<div style="text-align: center">
+<div style="display: inline-block; text-align: left">
+<textarea id="css-edit">
+{{ CSS_FILE_CONTENT }}
+</textarea>
+<p style="font-family: Monospace; text-align: center">
+    <select style="opacity: 0">
+    <!-- <option selected></option> -->
+    </select>
+</p>
+</div>
+
+<div style="display: inline-block; text-align: left">
+<textarea id="html-edit">
+{{ HTML_FILE_CONTENT }}
+</textarea>
+<p style="font-family: Monospace; text-align: center">
+    <select style="text-align: center; background-color: #292929; color: #32a852; font-family: Monospace; border: 0px; outine: none;" onchange="selectTheme()" id=select>
+    <option selected>default</option>
+    <option>3024-day</option>
+    <option>3024-night</option>
+    <option>abbott</option>
+    <option>abcdef</option>
+    <option>ambiance</option>
+    <option>ayu-dark</option>
+    <option>ayu-mirage</option>
+    <option>base16-dark</option>
+    <option>base16-light</option>
+    <option>bespin</option>
+    <option>blackboard</option>
+    <option>cobalt</option>
+    <option>colorforth</option>
+    <option>darcula</option>
+    <option>dracula</option>
+    <option>duotone-dark</option>
+    <option>duotone-light</option>
+    <option>eclipse</option>
+    <option>elegant</option>
+    <option>erlang-dark</option>
+    <option>gruvbox-dark</option>
+    <option>hopscotch</option>
+    <option>icecoder</option>
+    <option>idea</option>
+    <option>isotope</option>
+    <option>juejin</option>
+    <option>lesser-dark</option>
+    <option>liquibyte</option>
+    <option>lucario</option>
+    <option>material</option>
+    <option>material-darker</option>
+    <option>material-palenight</option>
+    <option>material-ocean</option>
+    <option>mbo</option>
+    <option>mdn-like</option>
+    <option>midnight</option>
+    <option>monokai</option>
+    <option>moxer</option>
+    <option>neat</option>
+    <option>neo</option>
+    <option>night</option>
+    <option>nord</option>
+    <option>oceanic-next</option>
+    <option>panda-syntax</option>
+    <option>paraiso-dark</option>
+    <option>paraiso-light</option>
+    <option>pastel-on-dark</option>
+    <option>railscasts</option>
+    <option>rubyblue</option>
+    <option>seti</option>
+    <option>shadowfox</option>
+    <option>solarized dark</option>
+    <option>solarized light</option>
+    <option>the-matrix</option>
+    <option>tomorrow-night-bright</option>
+    <option>tomorrow-night-eighties</option>
+    <option>ttcn</option>
+    <option>twilight</option>
+    <option>vibrant-ink</option>
+    <option>xq-dark</option>
+    <option>xq-light</option>
+    <option>yeti</option>
+    <option>yonce</option>
+    <option>zenburn</option>
+</select>
+</p>
+</div>  
+
+<div style="display: inline-block; text-align: left">
+<textarea id="js-edit">
+{{ JS_FILE_CONTENT }}
+</textarea>
+<p style="font-family: Monospace; text-align: center">
+    <select style="opacity: 0">
+    <!-- <option selected></option> -->
+    </select>
+</p>
+</div>
+</div>  
+
+<div style="background-color: #fff; color: #000; margin-left: 10%; margin-right: 10%" id="renderedHtml">
+{{ RENDERED_HTML_CONTENT }}
+</div>
         <!-- <script src="{{ JQUERY_JS }}"></script> -->
         <!-- <script src="jquery.js"></script> -->
         <!-- <script src="{{ MINIMAP_MIN_JS }}"></script> -->
         <!-- <script src="pagemap-1.4.0.min.js"></script> -->
         <!-- <script src="minimap.js"></script> -->
         <script>
-            var editor = CodeMirror.fromTextArea(document.getElementById("codemirror"), {
+            var htmlEditor = CodeMirror.fromTextArea(document.getElementById("html-edit"), {
                 value: "function myScript(){return 100;}\n",
                 lineNumbers: true,
                 electricChars: true,
                 lineSeparator: null,
-                mode:  "text/x-python",
+                mode:  "text/html",
                 indentUnit: 4,
                 foldGutter: true,
                 gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"],
                 // mode: "htmlmixed",
                 smartIndent: true,
-                theme: "abcdef",
+                theme: "dracula",
             });
-            editor.setSize(800, 600);
-            editor.setOption('viewportMargin', Infinity);
+            htmlEditor.setSize(350, 300);
+            htmlEditor.setOption('viewportMargin', Infinity);
+            htmlEditor.on('change', function(codeMirror) {
+                renderedHtml.innerHTML = codeMirror.getValue()
+            })
+            // CodeMirror.on(window, "hashchange", function() {
+            //     var theme = location.hash.slice(1);
+            //     if (theme) { input.value = theme; selectTheme(); }
+            // });
+
+            var cssEditor = CodeMirror.fromTextArea(document.getElementById("css-edit"), {
+                value: "function myScript(){return 100;}\n",
+                lineNumbers: true,
+                electricChars: true,
+                lineSeparator: null,
+                mode:  "text/css",
+                indentUnit: 4,
+                foldGutter: true,
+                gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"],
+                // mode: "htmlmixed",
+                smartIndent: true,
+                theme: "dracula",
+            });
+            cssEditor.setSize(350, 300);
+            cssEditor.setOption('viewportMargin', Infinity);
+            CodeMirror.on(window, "hashchange", function() {
+                var theme = location.hash.slice(1);
+                if (theme) { input.value = theme; selectTheme(); }
+            });
+
+            var jsEditor = CodeMirror.fromTextArea(document.getElementById("js-edit"), {
+                value: "function myScript(){return 100;}\n",
+                lineNumbers: true,
+                electricChars: true,
+                lineSeparator: null,
+                mode:  "text/javascript",
+                indentUnit: 4,
+                foldGutter: true,
+                gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"],
+                // mode: "htmlmixed",
+                smartIndent: true,
+                theme: "dracula",
+            });
+            jsEditor.setSize(350, 300);
+            jsEditor.setOption('viewportMargin', Infinity);
+            CodeMirror.on(window, "hashchange", function() {
+                var theme = location.hash.slice(1);
+                if (theme) { input.value = theme; selectTheme(); }
+            });
+
             var input = document.getElementById("select");
             function selectTheme() {
                 var theme = input.options[input.selectedIndex].textContent;
-                editor.setOption("theme", theme);
+                htmlEditor.setOption("theme", theme);
+                cssEditor.setOption("theme", theme);
+                jsEditor.setOption("theme", theme);
                 location.hash = "#" + theme;
             }
             var choice = (location.hash && location.hash.slice(1)) ||
@@ -215,15 +324,16 @@
                             decodeURIComponent(document.location.search.slice(1)));
             if (choice) {
                 input.value = choice;
-                editor.setOption("theme", choice);
+                htmlEditor.setOption("theme", choice);
+                cssEditor.setOption("theme", choice);
+                jsEditor.setOption("theme", choice);
             }
             CodeMirror.on(window, "hashchange", function() {
                 var theme = location.hash.slice(1);
                 if (theme) { input.value = theme; selectTheme(); }
             });
-
         </script>
-        <script>
+        <!-- <script>
             // Only run on browsers that support css transitions
             // See also example.css:15
             if(Modernizr.csstransforms) {
@@ -234,8 +344,8 @@
                         scrollWidth: 200, // Width of scrollbar
                         removeElements: 'script',
                         fixedElements: 'header.top, footer.bottom',
-                        contentWidth: 860, // Scroll viewport width
-                        contentHeight: 1000,
+                        contentWidth: 300, // Scroll viewport width
+                        contentHeight: 400,
                         minWidth: 1000 // Min width of window to display scroll
                     });
     
@@ -244,6 +354,6 @@
                     });
                 });
             }
-        </script>
+        </script> -->
     </body>
 </html>

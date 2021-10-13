@@ -194,6 +194,75 @@ class SunAnimation:
         self._start(count)
 
 
+class RainAnimation:
+    def __init__(self, parent=None, size: Tuple[int, int]=(50, 50), count: int=5):
+        self.rainDrops = []
+        self._size = size
+        self._count = count
+        for i in range(self.count):
+            self.addRainDrop(parent)
+        self._animation_group = QParallelAnimationGroup()
+
+    def __len__(self):
+        return self.count
+
+    def config(self, w: int, h: int, duration: int=5000):
+        gap = w / len(self)
+        jump = h // 10
+        for i, rainDrop in enumerate(self.rainDrops):
+            x1 = int(gap * i + gap / 2)
+            x2 = int(gap * i + gap / 2 - h / 3**0.5)
+            s_x, s_y = self.size
+            # print("(", x1, ", ", s_x, ") to (", x2, ", ", h-s_y, ")")
+            # add random offsets to the durations.
+            anim = QPropertyAnimation(rainDrop, b"pos")
+            anim.setStartValue(
+                QPoint(
+                    x1, s_x + jump * random.randint(0, 5)
+                )
+            )
+            anim.setEndValue(
+                QPoint(x2, h-s_y)
+            )
+            anim.setDuration(duration + 100*random.randint(-30, 0))
+            self._animation_group.addAnimation(anim)
+
+    def addRainDrop(self, parent=None):
+        rainDrop = QWidget(parent)
+        rainDrop.setStyleSheet('''
+            QWidget {
+                background: transparent;
+                background-image: url('/home/atharva/GUI/FigUI/FigUI/assets/icons/animations/raindrop30x30-330.png');
+                background-position: center;
+            }
+        ''')
+        rainDrop.resize(*self.size)
+        rainDrop.hide()
+        self.rainDrops.append(rainDrop)
+
+    def show(self):
+        for rainDrop in self.rainDrops:
+            rainDrop.show()
+
+    def start(self, count: int=1):
+        print("starting animation")
+        self.show()
+        self._animation_group.setLoopCount(count)
+        self._animation_group.start()
+
+    @property
+    def size(self):
+        return self._size
+
+    @property
+    def count(self):
+        return self._count
+
+    def hide(self):
+        for rainDrop in self.rainDrops:
+            rainDrop.hide()
+
+
 class SnowAnimation:
     def __init__(self, parent=None, size: Tuple[int, int]=(50, 50), count: int=5):
         self.snowFlakes = []
@@ -225,7 +294,7 @@ class SnowAnimation:
             anim.setEndValue(
                 QPoint(x2, h-s_y)
             )
-            anim.setDuration(duration + 100*random.randint(-10, 30))
+            anim.setDuration(duration + 100*random.randint(-30, 10))
             self._animation_group.addAnimation(anim)
 
     def addSnowFlake(self, parent=None):
@@ -322,6 +391,9 @@ class FigLauncher(QWidget):
                 border: 0px solid red;
                 border-radius: 4px;
                 background-color: #e38c59; /* #c70039; */
+            }
+            QScrollBar::handle:vertical:hover {         
+                background-color: #ff5e00;
             }
             QScrollBar::add-line:vertical {       
                 height: 0px;
@@ -452,7 +524,7 @@ class FigLauncher(QWidget):
             self.animations[-1].hide()
             self.showingWeatherAnimation = not(self.showingWeatherAnimation)
             return
-        weather = "snow"
+        weather = "rain"
         # dimensions of launcher window.
         w = self.width() # x coordinate of initial point.
         h = self.height() # y coordinate of initial point.s
@@ -492,7 +564,10 @@ class FigLauncher(QWidget):
             self.animations.append(sun_animation)
         
         elif weather == "rain":
-            pass
+            rain_animation = RainAnimation(parent=self, count=200, size=(30,30))
+            rain_animation.config(w, h)
+            rain_animation.start(1)
+            self.animations.append(rain_animation)
 
         elif weather == "windy":
             pass 

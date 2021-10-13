@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="en">
+    <style>
+        /* Chrome, safari */
+        *::-webkit-scrollbar {
+            width: 7px;
+            height: 7px;
+        }    
+        *::-webkit-scrollbar-track {
+            background-color: rgba(235, 235, 235, 0.1);
+        }
+
+        *::-webkit-scrollbar-thumb {
+            background-color: gray;
+        }
+        *::-webkit-scrollbar-thumb:hover {
+            background-color: orange;
+        }
+        *::-webkit-scrollbar-corner {
+            background-color: transparent;
+            /* background: rgba(235, 235, 235, 0.1); */
+        }
+        /* Firefox */
+        /* .selector {
+            scrollbar-width: none;
+        } */
+    </style>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+        <link rel="stylesheet" href="https://codemirror.net/lib/codemirror.css">
+        <!-- editor themes -->
+        <link rel="stylesheet" href="https://codemirror.net/theme/3024-day.css">
+        <link rel="stylesheet" href="https://codemirror.net/theme/3024-night.css">
+        <link rel="stylesheet" href="https://codemirror.net/theme/abbott.css">
+        <link rel="stylesheet" href="https://codemirror.net/theme/abcdef.css">
+        <link rel="stylesheet" href="https://codemirror.net/theme/ambiance-mobile.css">
+        <link rel="stylesheet" href="https://codemirror.net/theme/ambiance.css">
+        <link rel="stylesheet" href="https://codemirror.net/theme/ayu-dark.css">
+        <link rel="stylesheet" href="https://codemirror.net/theme/ayu-mirage.css">
+        <link rel="stylesheet" href="https://codemirror.net/theme/base16-dark.css">
+        <link rel="stylesheet" href="https://codemirror.net/theme/base16-light.css">
+        <link rel="stylesheet" href="https://codemirror.net/theme/bespin.css">
+        <link rel="stylesheet" href="https://codemirror.net/theme/blackboard.css">
+        <link rel="stylesheet" href="https://codemirror.net/theme/cobalt.css">
+        <link rel="stylesheet" href="https://codemirror.net/theme/colorforth.css">
+        <link rel="stylesheet" href="https://codemirror.net/theme/darcula.css">
+        <link rel="stylesheet" href="https://codemirror.net/theme/dracula.css">
+        <link rel="stylesheet" href="https://codemirror.net/theme/duotone-dark.css">
+        <link rel="stylesheet" href="https://codemirror.net/theme/duotone-light.css">
+        <link rel="stylesheet" href="https://codemirror.net/theme/eclipse.css">
+        <link rel="stylesheet" href="https://codemirror.net/theme/elegant.css">
+        <link rel="stylesheet" href="https://codemirror.net/theme/erlang-dark.css">
+        <link rel="stylesheet" href="https://codemirror.net/theme/gruvbox-dark.css">
+        <link rel="stylesheet" href="https://codemirror.net/theme/hopscotch.css">
+        <link rel="stylesheet" href="https://codemirror.net/theme/icecoder.css">
+        <link rel="stylesheet" href="https://codemirror.net/theme/idea.css">
+        <link rel="stylesheet" href="https://codemirror.net/theme/isotope.css">
+        <link rel="stylesheet" href="https://codemirror.net/theme/juejin.css">
+        <link rel="stylesheet" href="https://codemirror.net/theme/lesser-dark.css">
+        <link rel="stylesheet" href="https://codemirror.net/theme/liquibyte.css">
+        <link rel="stylesheet" href="https://codemirror.net/theme/lucario.css">
+        <link rel="stylesheet" href="https://codemirror.net/theme/material-darker.css">
+        <link rel="stylesheet" href="https://codemirror.net/theme/material-ocean.css">
+        <link rel="stylesheet" href="https://codemirror.net/theme/material-palenight.css">
+        <link rel="stylesheet" href="https://codemirror.net/theme/material.css">
+        <link rel="stylesheet" href="https://codemirror.net/theme/mbo.css">
+        <link rel="stylesheet" href="https://codemirror.net/theme/mdn-like.css">
+        <link rel="stylesheet" href="https://codemirror.net/theme/midnight.css">
+        <link rel="stylesheet" href="https://codemirror.net/theme/monokai.css">
+        <link rel="stylesheet" href="https://codemirror.net/theme/moxer.css">
+        <link rel="stylesheet" href="https://codemirror.net/theme/neat.css">
+        <link rel="stylesheet" href="https://codemirror.net/theme/neo.css">
+        <link rel="stylesheet" href="https://codemirror.net/theme/night.css">
+        <link rel="stylesheet" href="https://codemirror.net/theme/nord.css">
+        <link rel="stylesheet" href="https://codemirror.net/theme/oceanic-next.css">
+        <link rel="stylesheet" href="https://codemirror.net/theme/panda-syntax.css">
+        <link rel="stylesheet" href="https://codemirror.net/theme/paraiso-dark.css">
+        <link rel="stylesheet" href="https://codemirror.net/theme/paraiso-light.css">
+        <link rel="stylesheet" href="https://codemirror.net/theme/pastel-on-dark.css">
+        <link rel="stylesheet" href="https://codemirror.net/theme/railscasts.css">
+        <link rel="stylesheet" href="https://codemirror.net/theme/rubyblue.css">
+        <link rel="stylesheet" href="https://codemirror.net/theme/seti.css">
+        <link rel="stylesheet" href="https://codemirror.net/theme/shadowfox.css">
+        <link rel="stylesheet" href="https://codemirror.net/theme/solarized.css">
+        <link rel="stylesheet" href="https://codemirror.net/theme/ssms.css">
+        <link rel="stylesheet" href="https://codemirror.net/theme/the-matrix.css">
+        <link rel="stylesheet" href="https://codemirror.net/theme/tomorrow-night-bright.css">
+        <link rel="stylesheet" href="https://codemirror.net/theme/tomorrow-night-eighties.css">
+        <link rel="stylesheet" href="https://codemirror.net/theme/ttcn.css">
+        <link rel="stylesheet" href="https://codemirror.net/theme/twilight.css">
+        <link rel="stylesheet" href="https://codemirror.net/theme/vibrant-ink.css">
+        <link rel="stylesheet" href="https://codemirror.net/theme/xq-dark.css">
+        <link rel="stylesheet" href="https://codemirror.net/theme/xq-light.css">
+        <link rel="stylesheet" href="https://codemirror.net/theme/yeti.css">
+        <link rel="stylesheet" href="https://codemirror.net/theme/yonce.css">
+        <link rel="stylesheet" href="https://codemirror.net/theme/zenburn.css">
+        <!-- addon styling -->
+        <link rel="stylesheet" href="https://codemirror.net/addon/dialog/dialog.css">
+        <link rel="stylesheet" href="https://codemirror.net/addon/display/fullscreen.css">
+        <link rel="stylesheet" href="https://codemirror.net/addon/fold/foldgutter.css">
+        <link rel="stylesheet" href="https://codemirror.net/addon/search/matchesonscrollbar.css">
+        <link rel="stylesheet" href="https://codemirror.net/addon/scroll/simplescrollbars.css"></link>
+        <title>HTML Editor</title>
+    </head>
+    <body style="background-color: #292929; color: #fff">
+        <!-- qweb channel -->
+        <script src="PyQt5.QtCore.QUrl('file:///home/atharva/GUI/FigUI/FigUI/handler/Code/html/static/qwebchannel.js')"></script>
+        <!-- core javascript source -->
+        <script src="https://codemirror.net/lib/codemirror.js"></script>
+        <!-- addons -->
+        <script src="https://codemirror.net/addon/comment/comment.js"></script>
+        <script src="https://codemirror.net/addon/comment/continuecomment.js"></script>
+        <script src="https://codemirror.net/addon/dialog/dialog.js"></script>
+        <script src="https://codemirror.net/addon/wrap/hardwrap.js"></script>
+        <script src="https://codemirror.net/addon/display/autorefresh.js"></script>
+        <script src="https://codemirror.net/addon/display/fullscreen.js"></script>
+        <script src="https://codemirror.net/addon/display/panel.js"></script>
+        <script src="https://codemirror.net/addon/display/placeholder.js"></script>
+        <script src="https://codemirror.net/addon/display/rulers.js"></script>
+        <script src="https://codemirror.net/addon/fold/brace-fold.js"></script>
+        <script src="https://codemirror.net/addon/fold/comment-fold.js"></script>
+        <script src="https://codemirror.net/addon/fold/foldcode.js"></script>
+        <script src="https://codemirror.net/addon/fold/foldgutter.js"></script>
+        <script src="https://codemirror.net/addon/fold/indent-fold.js"></script>
+        <script src="https://codemirror.net/addon/fold/markdown-fold.js"></script>
+        <script src="https://codemirror.net/addon/fold/xml-fold.js"></script>
+        <script src="https://codemirror.net/addon/search/jump-to-line.js"></script>
+        <script src="https://codemirror.net/addon/search/match-highlighter.js"></script>
+        <script src="https://codemirror.net/addon/search/matchesonscrollbar.js"></script>
+        <script src="https://codemirror.net/addon/search/search.js"></script>
+        <script src="https://codemirror.net/addon/search/searchcursor.js"></script>
+        <script src="https://codemirror.net/addon/scroll/annotatescrollbar.js"></script>
+        <script src="https://codemirror.net/addon/scroll/scrollpastend.js"></script>
+        <script src="https://codemirror.net/addon/scroll/simplescrollbars.js"></script>
+        <!-- language highlighting scripts -->
+        <script src="https://codemirror.net/mode/javascript/javascript.js"></script>
+        <script src="https://codemirror.net/mode/xml/xml.js"></script>
+        <script src="https://codemirror.net/mode/htmlmixed/htmlmixed.js"></script>
+        <script src="https://codemirror.net/mode/css/css.js"></script>
+
+<div style="text-align: center">
+<div style="display: inline-block; text-align: left">
+<textarea id="css-edit">
+
+</textarea>
+<p style="font-family: Monospace; text-align: center">
+    <select style="opacity: 0">
+    <!-- <option selected></option> -->
+    </select>
+</p>
+</div>
+
+<div style="display: inline-block; text-align: left">
+<textarea id="html-edit">
+<!DOCTYPE html>
+	<html>	
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+	<link rel="shortcut icon" href="https://i.imgur.com/1qi0hvv.png" />
+	<meta name="fl-verify" content="d210b4e4e571b45242fbf7a2cc9b272a">
+
+	
+	<link rel="stylesheet" type="text/css" href="https://lovecalculator.site/css/combined.css?t=13">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pure/1.0.0/grids-responsive-min.css">
+
+	<title>Love Calculator Prank to know Secret Crush of Friends (BEST)</title>
+	<meta name="title" content="Real Love Calculator">
+	<meta name="description" content="This is a Special Love Calculator. Know Compatibility between You &amp; Your Partner using this Simple &amp; Amazing Love Calculator.">
+	
+	<!--  Bing Webmasters -->
+	<meta name="msvalidate.01" content="C2A35C1C72724D6AF99CF6783E8D9370" />
+
+	<meta property="og:title" content="Real Love Calculator" />
+	<meta property="og:image" content="https://lovecalculator.site/images/love.png">
+	<meta property="og:description" content="This is a Special Love Calculator. Know Compatibility between You &amp; Your Partner using this Simple &amp; Amazing Love Calculator.">
+	
+
+
+	<link href="https://fonts.googleapis.com/css?family=Merienda&display=swap" rel="stylesheet">
+
+	
+
+	
+	
+
+
+    <style>
+        body, p, h1, h2, h3, h4, a, span, div, button, .pure-button, .pure-g, input, optgroup, select, textarea{
+            line-height: 150%;
+            font-family: 'Merienda';
+            /*font-family: 'Metal Mania', cursive;*/
+            /*font-family: 'Abel', sans-serif;*/
+            /*font-family: 'Slabo 27px', serif;*/
+        }
+        body, p, h1, h2, h3, h4, a, span, div, input, optgroup, select, textarea{
+            /*color: black;*/
+        }
+
+        h3{
+            font-size: 20px !important;
+            font-weight: 200 !important;
+        }
+    </style>
+
+
+
+
+	<script async src="https://www.googletagmanager.com/gtag/js?id=UA-110561591-1"></script>
+	<script>
+	  window.dataLayer = window.dataLayer || [];
+	  function gtag(){dataLayer.push(arguments);}
+	  gtag('js', new Date());
+	  gtag('config', 'UA-110561591-1');
+	</script>
+
+	
+	<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+	<script>
+	     (adsbygoogle = window.adsbygoogle || []).push({
+	          google_ad_client: "ca-pub-9921439468083443",
+	          enable_page_level_ads: true
+	     });
+	</script>
+
+
+
+	<script>
+        
+        function setCookie1(cname, cvalue, exdays) {
+            var d = new Date();
+            d.setTime(d.getTime() + (exdays*24*60*60*1000));
+            var expires = "expires="+ d.toUTCString();
+            document.cookie = cname + "=" + encodeURIComponent(cvalue) + ";" + expires + ";path=/";
+        }
+
+        function getCookie1(cname) {
+            var name = cname + "=";
+            var cookie = document.cookie;
+            var ca = cookie.split(';');
+            for(var i = 0; i <ca.length; i++) {
+                var c = ca[i];
+                while (c.charAt(0) == ' ') {
+                    c = c.substring(1);
+                }
+                if (c.indexOf(name) == 0) {
+                    return decodeURIComponent(c.substring(name.length, c.length));
+                }
+            }
+            return "";
+        }
+
+    </script>
+
+
+
+	
+
+	  
+
+	
+
+
+	<script async src="https://securepubads.g.doubleclick.net/tag/js/gpt.js"></script>
+	<script>
+	  window.googletag = window.googletag || {cmd: []};
+	  googletag.cmd.push(function() {
+	    googletag.defineSlot('/21748487420/lovecalculator.site_300x250', [[300, 250], [336, 280]], 'div-gpt-ad-1586344114503-0').addService(googletag.pubads());
+	    googletag.defineSlot('/21748487420/lovecalculator.site_300x250', [[300, 250], [336, 280]], 'div-gpt-ad-1586533671266-0').addService(googletag.pubads());
+	    googletag.pubads().enableSingleRequest();
+	    googletag.enableServices();
+	  });
+	</script>
+
+
+
+</head>
+
+<body>
+
+<div class="pure-g">
+    <div class="pure-u-1-4"></div>
+
+    <div class="pure-u-1-2 center redbg content">
+
+	    <div class="well dashboard_link_top_block hidden">
+	    	<a href="" class="pure-button pure-button-primary" id="dashboard_link_top">My Dashboard</a>
+	    </div>
+
+
+<div class="after_calculate hidden">
+    <div class="content center well zeropxbottom">
+
+        <h2 class="zeropxtop fivepxbottom">You have been fooled by <b>Dvij kalaria</b></h2>
+        <p class="text-lg">Your name as well as name of your love has been sent to Dvij kalaria</p>
+
+        <br>
+        <img id="prank_img" src="" alt="">
+        <hr>
+        <p class="text-lg tenpxbottom">Register  NOW  to play the same prank on your friends.</p>
+        <a href="https://lovecalculator.site/register" class="pure-button pure-button-success">Register NOW</a>
+
+        <h3 class="tenpxbottom">How it works?</h3>
+
+        <table class="pure-table pure-table-horizontal well-grey black center">
+            <tr>
+                <td class="pure-visible-desktop">
+                    <span class='pure-button pure-button-warning pure-label'>Step 1
+                    </span>
+                </td>
+                <td>
+                    <div class='pure-hidden-desktop'>
+                        <p class='pure-button pure-button-warning pure-label center'>Step 1</p>
+                    </div>
+                <td>Register &amp; Share your link.</td>
+            </tr>
+            <tr>
+                <td class="pure-visible-desktop">
+                    <span class='pure-button pure-button-warning pure-label'>Step 2
+                    </span>
+                </td>
+                <td>
+                    <div class='pure-hidden-desktop'>
+                        <p class='pure-button pure-button-warning pure-label center'>Step 2</p>
+                    </div>
+                </td>
+                <td>Check your Friend&#039;s Secret Crush on your Secret link.</td>
+            </tr>
+        </table>
+
+        <br>
+        <a href="https://lovecalculator.site/register" class="pure-button pure-button-success">Register NOW</a>
+        <br>
+        <br>
+        
+    </div>
+</div>
+
+
+<div class="well loader hidden">
+    <br><br><br>
+    <img id="loader_img" src="" alt="">
+    <br><br><br>
+</div>
+
+
+<div class="well content love_form zeropxtop">
+    
+    
+
+    <div class="tenpxbottom adpushup_ad_small_disabled">
+        
+    </div>
+
+
+    <div class="center">
+        
+        <script>
+            if (getCookie1('visited') == '' || parseInt(getCookie1('visited')) < 2 ) {
+                document.getElementById("visited-ad").outerHTML = "";
+            }
+        </script>
+    </div>
+
+
+    <h2 class="center fivepxtop fivepxbottom heading">
+        Real Love Calculator
+    </h2>
+
+    <img class="heartlogo" src="https://lovecalculator.site/images/hearts.png"><br>
+
+    <div class="pure-control-group fivepxbottom">
+        
+        <form name="loveform" action="" method="POST" role="form" class="pure-form pure-form-stacked">
+
+
+            <input type="hidden" value="e5327f8a0c9461e5681ef826cdef6001" id='id_key'>
+        
+            <div class="pure-control-group white">
+                <label for="name" class="text-lg">Name</label>
+                <div class="input-box">
+                    <input id="name" name="name" maxlength="99" type="text" placeholder="Name">
+                </div>
+                <div class="pure-u-1 name_error error hidden left"></div>
+                <input id="id" type="hidden" value="7497330">
+            </div>
+
+            <div class="pure-control-group white">
+                <label for="name" class="text-lg">Your Love/Crush</label>
+                <div class="input-box">
+                    <input id="love1" name="love1" maxlength="99" type="text" placeholder="Love">
+                </div>
+                <div class="pure-u-1 crush_error error hidden left"></div>
+            </div>
+            
+                                                    
+            <span class="hidden">
+            <div class="pure-control-group">
+                <div class="input-box">
+                    <input id="love2" name="love2" placeholder="Love 2">
+                </div>
+            </div>
+            <div class="pure-control-group">
+                <div class="input-box">
+                    <input id="love3" name="love3" placeholder="Love 3">
+                </div>
+            </div>
+            </span>
+            
+            <a href="javascript:void(0)" class="pure-u-1 pure-button custom-button" id="lovesubmit">
+                <span class="custom-button-txt">♥&nbsp;&nbsp;Calculate&nbsp;&nbsp;♥</span>
+                <span class="register hidden">
+                    <img src="https://i.imgur.com/drfjFAk.gif" width="12px">
+                </span>
+                <span class="glyphicon glyphicon-heart"></span>
+            </a>
+
+
+        </form>
+
+    </div>
+</div>
+
+
+</div>
+<div class="pure-u-1-4"></div>
+
+</div>
+</body>
+
+
+<footer>
+
+<div class="pure-g">
+    <div class="pure-u-1-4"></div>
+    <div class="pure-u-1-2 redbg center">
+        
+        
+        
+
+        
+
+        
+        
+        <div id="dashboard_link" class="hidden">
+            <a href="" target='_blank' class="pure-button pure-button-success tenpxtop">My Dashboard</a>&nbsp;
+            <br>    
+        </div>
+        <br>
+
+        <hr>
+
+        <a href="https://lovecalculator.site/contact" class="white">
+            Contact Me
+        </a>
+        
+    <br><br>
+    </div>
+    <div class="pure-u-1-4"></div>
+</div>
+
+<script>
+	var locale = "en";
+	var locale_to_add = (locale == 'en') ? '' : locale + '/';
+    var domain = "https://lovecalculator.site";
+	var api_domain = "https://api.lovecalculator.site";
+
+	// Register
+	var name_validation = "Please enter your Name";
+
+	// love calculate
+    var crush_err = "Please enter the name of person you love.";
+
+    var title = "Dashboard";
+    var description = "common.dashboard.description";
+
+    var menu = '';
+        	var menu = 'love';
+    
+    var copied = 'Copied';
+    
+</script>
+
+
+<script src="https://sdki.truepush.com/sdk/v2.0.2/app.js"></script>
+<script>
+if (getCookie1('visited') != '' && getCookie1('visited') > 4) {
+    var truepush = window.truepush || [];
+    truepush.push({
+        operation: "add-tags",
+        data: [{ tagName: "locale", tagType: "string", tagValue: "en"}, { tagName: "domain", tagType: "string", tagValue: "https://lovecalculator.site"}],
+        callback: function(error,response){
+            console.log(error,response);
+        }
+    });
+    truepush.push(function(){
+        truepush.Init({
+            id: "5ec8fb865558cfe7cca43484"
+            }, function(error){
+              if(error) console.error(error);
+        });
+    });
+}
+</script>
+
+
+
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/zepto/1.2.0/zepto.min.js"></script>
+<script src="https://lovecalculator.site/js/script.js?n=1"></script>
+
+
+</footer>
+
+</html>
+
+</textarea>
+<p style="font-family: Monospace; text-align: center">
+    <select style="text-align: center; background-color: #292929; color: #32a852; font-family: Monospace; border: 0px; outine: none;" onchange="selectTheme()" id=select>
+    <option selected>default</option>
+    <option>3024-day</option>
+    <option>3024-night</option>
+    <option>abbott</option>
+    <option>abcdef</option>
+    <option>ambiance</option>
+    <option>ayu-dark</option>
+    <option>ayu-mirage</option>
+    <option>base16-dark</option>
+    <option>base16-light</option>
+    <option>bespin</option>
+    <option>blackboard</option>
+    <option>cobalt</option>
+    <option>colorforth</option>
+    <option>darcula</option>
+    <option>dracula</option>
+    <option>duotone-dark</option>
+    <option>duotone-light</option>
+    <option>eclipse</option>
+    <option>elegant</option>
+    <option>erlang-dark</option>
+    <option>gruvbox-dark</option>
+    <option>hopscotch</option>
+    <option>icecoder</option>
+    <option>idea</option>
+    <option>isotope</option>
+    <option>juejin</option>
+    <option>lesser-dark</option>
+    <option>liquibyte</option>
+    <option>lucario</option>
+    <option>material</option>
+    <option>material-darker</option>
+    <option>material-palenight</option>
+    <option>material-ocean</option>
+    <option>mbo</option>
+    <option>mdn-like</option>
+    <option>midnight</option>
+    <option>monokai</option>
+    <option>moxer</option>
+    <option>neat</option>
+    <option>neo</option>
+    <option>night</option>
+    <option>nord</option>
+    <option>oceanic-next</option>
+    <option>panda-syntax</option>
+    <option>paraiso-dark</option>
+    <option>paraiso-light</option>
+    <option>pastel-on-dark</option>
+    <option>railscasts</option>
+    <option>rubyblue</option>
+    <option>seti</option>
+    <option>shadowfox</option>
+    <option>solarized dark</option>
+    <option>solarized light</option>
+    <option>the-matrix</option>
+    <option>tomorrow-night-bright</option>
+    <option>tomorrow-night-eighties</option>
+    <option>ttcn</option>
+    <option>twilight</option>
+    <option>vibrant-ink</option>
+    <option>xq-dark</option>
+    <option>xq-light</option>
+    <option>yeti</option>
+    <option>yonce</option>
+    <option>zenburn</option>
+</select>
+</p>
+</div>  
+
+<div style="display: inline-block; text-align: left">
+<textarea id="js-edit">
+
+</textarea>
+<p style="font-family: Monospace; text-align: center">
+    <select style="opacity: 0">
+    <!-- <option selected></option> -->
+    </select>
+</p>
+</div>
+</div>  
+
+<div style="background-color: #fff; color: #000; margin-left: 10%; margin-right: 10%" id="renderedHtml">
+
+</div>
+        <!-- <script src=""></script> -->
+        <!-- <script src="jquery.js"></script> -->
+        <!-- <script src=""></script> -->
+        <!-- <script src="pagemap-1.4.0.min.js"></script> -->
+        <!-- <script src="minimap.js"></script> -->
+        <script>
+            var htmlEditor = CodeMirror.fromTextArea(document.getElementById("html-edit"), {
+                value: "function myScript(){return 100;}\n",
+                lineNumbers: true,
+                electricChars: true,
+                lineSeparator: null,
+                mode:  "text/html",
+                indentUnit: 4,
+                foldGutter: true,
+                gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"],
+                // mode: "htmlmixed",
+                smartIndent: true,
+                theme: "dracula",
+            });
+            htmlEditor.setSize(350, 300);
+            htmlEditor.setOption('viewportMargin', Infinity);
+            htmlEditor.on('change', function(codeMirror) {
+                renderedHtml.innerHTML = codeMirror.getValue()
+            })
+            // CodeMirror.on(window, "hashchange", function() {
+            //     var theme = location.hash.slice(1);
+            //     if (theme) { input.value = theme; selectTheme(); }
+            // });
+
+            var cssEditor = CodeMirror.fromTextArea(document.getElementById("css-edit"), {
+                value: "function myScript(){return 100;}\n",
+                lineNumbers: true,
+                electricChars: true,
+                lineSeparator: null,
+                mode:  "text/css",
+                indentUnit: 4,
+                foldGutter: true,
+                gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"],
+                // mode: "htmlmixed",
+                smartIndent: true,
+                theme: "dracula",
+            });
+            cssEditor.setSize(350, 300);
+            cssEditor.setOption('viewportMargin', Infinity);
+            CodeMirror.on(window, "hashchange", function() {
+                var theme = location.hash.slice(1);
+                if (theme) { input.value = theme; selectTheme(); }
+            });
+
+            var jsEditor = CodeMirror.fromTextArea(document.getElementById("js-edit"), {
+                value: "function myScript(){return 100;}\n",
+                lineNumbers: true,
+                electricChars: true,
+                lineSeparator: null,
+                mode:  "text/javascript",
+                indentUnit: 4,
+                foldGutter: true,
+                gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"],
+                // mode: "htmlmixed",
+                smartIndent: true,
+                theme: "dracula",
+            });
+            jsEditor.setSize(350, 300);
+            jsEditor.setOption('viewportMargin', Infinity);
+            CodeMirror.on(window, "hashchange", function() {
+                var theme = location.hash.slice(1);
+                if (theme) { input.value = theme; selectTheme(); }
+            });
+
+            var input = document.getElementById("select");
+            function selectTheme() {
+                var theme = input.options[input.selectedIndex].textContent;
+                htmlEditor.setOption("theme", theme);
+                cssEditor.setOption("theme", theme);
+                jsEditor.setOption("theme", theme);
+                location.hash = "#" + theme;
+            }
+            var choice = (location.hash && location.hash.slice(1)) ||
+                        (document.location.search &&
+                            decodeURIComponent(document.location.search.slice(1)));
+            if (choice) {
+                input.value = choice;
+                htmlEditor.setOption("theme", choice);
+                cssEditor.setOption("theme", choice);
+                jsEditor.setOption("theme", choice);
+            }
+            CodeMirror.on(window, "hashchange", function() {
+                var theme = location.hash.slice(1);
+                if (theme) { input.value = theme; selectTheme(); }
+            });
+        </script>
+        <!-- <script>
+            // Only run on browsers that support css transitions
+            // See also example.css:15
+            if(Modernizr.csstransforms) {
+                $(document).ready(function() {
+                    $.sublimeScroll({
+                        top: 20, // px to top
+                        bottom: 40, // px to bottom
+                        scrollWidth: 200, // Width of scrollbar
+                        removeElements: 'script',
+                        fixedElements: 'header.top, footer.bottom',
+                        contentWidth: 300, // Scroll viewport width
+                        contentHeight: 400,
+                        minWidth: 1000 // Min width of window to display scroll
+                    });
+    
+                    $('#content2').sublimeScroll({
+                        contentWidth: 583
+                    });
+                });
+            }
+        </script> -->
+    </body>
+</html>

@@ -799,6 +799,21 @@ class FigWindow(QMainWindow):
         QTabBar {
             border: 0px;
         }
+        QTabBar::close-button {
+            color: #fff;
+            background: url("/home/atharva/GUI/FigUI/FigUI/assets/icons/close-tab.svg");
+            background-repeat: no-repeat;
+            background-position: center;
+            subcontrol-position: right;
+            border-radius: 12px;
+        }
+        QTabBar::close-button:hover {
+            color: #fff;
+            background: url("/home/atharva/GUI/FigUI/FigUI/assets/icons/close-tab-hover.svg");
+            background-repeat: no-repeat;
+            background-position: center;
+            background-color: rgba(235, 235, 235, 0.50);
+        }
         QTabBar::tab {
             /* background: #292929; */
             /* background: qlineargradient(x1 : 0, y1 : 0, x2 : 0, y2 : 1, stop : 0.0 #6e6e6e, stop : 0.8 #4a4a4a, stop : 1.0 #292929); */
