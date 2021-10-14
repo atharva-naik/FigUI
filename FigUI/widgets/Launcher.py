@@ -206,25 +206,26 @@ class RainAnimation:
     def __len__(self):
         return self.count
 
-    def config(self, w: int, h: int, duration: int=5000):
+    def config(self, w: int, h: int, duration: int=2000):
         gap = w / len(self)
-        jump = h // 10
+        jump = h / len(self)
         for i, rainDrop in enumerate(self.rainDrops):
             x1 = int(gap * i + gap / 2)
             x2 = int(gap * i + gap / 2 - h / 3**0.5)
+            y1 = int(jump * random.randint(0, len(self)) + jump / 2)
             s_x, s_y = self.size
             # print("(", x1, ", ", s_x, ") to (", x2, ", ", h-s_y, ")")
             # add random offsets to the durations.
             anim = QPropertyAnimation(rainDrop, b"pos")
             anim.setStartValue(
                 QPoint(
-                    x1, s_x + jump * random.randint(0, 5)
+                    x1, y1
                 )
             )
             anim.setEndValue(
                 QPoint(x2, h-s_y)
             )
-            anim.setDuration(duration + 100*random.randint(-30, 0))
+            anim.setDuration(duration)
             self._animation_group.addAnimation(anim)
 
     def addRainDrop(self, parent=None):

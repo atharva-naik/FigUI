@@ -3,8 +3,8 @@ import mimetypes
 import os, sys, pathlib
 from typing import Union
 from jinja2 import Template
-from PyQt5.QtPrintSupport import *
-from PyQt5.QtCore import QThread, QUrl, QRegExp, QSize, Qt
+from PyQt5.QtWebChannel import QWebChannel
+from PyQt5.QtCore import QThread, QUrl, QRegExp, QSize, Qt, QObject, pyqtSlot
 from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEngineProfile, QWebEngineSettings
 from PyQt5.QtGui import QIcon, QFont, QKeySequence, QTransform, QTextCharFormat, QRegExpValidator, QSyntaxHighlighter, QFontDatabase
 from PyQt5.QtWidgets import QApplication, QAction, QDialog, QPushButton, QTabWidget, QStatusBar, QToolBar, QWidget, QLineEdit, QMainWindow, QHBoxLayout, QVBoxLayout, QPlainTextEdit, QToolBar, QFrame, QSizePolicy
@@ -17,64 +17,20 @@ def static(path):
     path = os.path.join(__current_dir__, rel_path)
 
     return path
-# def expandStatic(path):
-#     '''give relative path and get absolute static path.'''
-#     __current_dir__ = os.path.dirname(os.path.realpath(__file__))
-#     rel_path = os.path.join("static", path)
-#     path = os.path.join(__current_dir__, rel_path)
 
-#     return path
-# def iconUrl(path):
-#     '''give url and get icon uri'''
-#     __current_dir__ = os.path.dirname(os.path.realpath(__file__))
-#     rel_path = os.path.join("../../assests/icons/", path)
-#     path = os.path.join(__current_dir__, rel_path)
 
-#     return QUrl.fromLocalFile(path).toString()
-# class HTMLPreView(QWebEngineView):
-#     def __init__(self, parent=None):
-#         super(HTMLPreView, self).__init__(parent)
-#         self.consoleHistory = []
-#         self.settings().setAttribute(QWebEngineSettings.JavascriptEnabled, True)
-#         self.settings().setAttribute(QWebEngineSettings.LocalContentCanAccessRemoteUrls, True)
-#         self.settings().setAttribute(QWebEngineSettings.ErrorPageEnabled, True)
-#         self.settings().setAttribute(QWebEngineSettings.PluginsEnabled, True)
-#     # def dragEnterEvent(self, e):
-#     #     from pathlib import Path
-#     #     from pprint import pprint
-#     #     filename = e.mimeData().text().strip("\n").strip() 
-#     #     super(HTMLPreView, self).dragEnterEvent(e)
-#     # def dropEvent(self, e):
-#     #     e.ignore()
-#     def contextMenuEvent(self, event):
-#         self.menu = self.page().createStandardContextMenu()
-#         self.menu.addAction('Reload')
-#         self.menu.popup(event.globalPos())
+class OnChangeHandler(QObject):
+    def __init__(self, parent=None):
+        super(OnChangeHandler, self).__init__()
+        self.parent = parent
+        self.code = ""
 
-#     def execJS(self, script):
-#         self.loadFinished.connect(lambda: self.page().runJavaScript(script))
-# class CodeEditor(QWebEngineView):
-#     def __init__(self, parent=None):
-#         super(CodeEditor, self).__init__(parent)
-#         self.consoleHistory = []
-#         self.settings().setAttribute(QWebEngineSettings.JavascriptEnabled, True)
-#         self.settings().setAttribute(QWebEngineSettings.LocalContentCanAccessRemoteUrls, True)
-#         self.settings().setAttribute(QWebEngineSettings.ErrorPageEnabled, True)
-#         self.settings().setAttribute(QWebEngineSettings.PluginsEnabled, True)
-#     # def dragEnterEvent(self, e):
-#     #     from pathlib import Path
-#     #     from pprint import pprint
-#     #     filename = e.mimeData().text().strip("\n").strip() 
-#     #     super(HTMLPreView, self).dragEnterEvent(e)
-#     # def dropEvent(self, e):
-#     #     e.ignore()
-#     def contextMenuEvent(self, event):
-#         self.menu = self.page().createStandardContextMenu()
-#         self.menu.addAction('Reload')
-#         self.menu.popup(event.globalPos())
+    @pyqtSlot(str)
+    def sendCode(self, code: str):
+        if self.parent:
+            self.parent.refresHTML(code)
 
-#     def execJS(self, script):
-#         self.loadFinished.connect(lambda: self.page().runJavaScript(script))
+
 class HTMLEditor(QWebEngineView):
     def __init__(self, file: Union[str, pathlib.Path], parent=None):
         super(HTMLEditor, self).__init__(parent)
@@ -94,7 +50,7 @@ class HTMLEditor(QWebEngineView):
             "HTML_FILE_CONTENT": html,
             "QWEBCHANNEL_JS": QUrl.fromLocalFile(
                 static("qwebchannel.js")
-            )
+            ).toString()
         }
         # load template.
         editor_html = Template(
@@ -111,7 +67,10 @@ class HTMLEditor(QWebEngineView):
                 static("html_editor_rendered.html")
             )
         )
+        self.channel = QWebChannel()
+        self.page().setWebChannel(self.channel)
         self.html = html
+        self.setZoomFactor(1.3)
     
     def dragEnterEvent(self, e):
         super(HTMLEditor, self).dragEnterEvent(e)
@@ -140,23 +99,25 @@ class HTMLEditor(QWebEngineView):
 
 
 class HTMLPreview(QWebEngineView):
-    def __init__(self, file: Union[str, pathlib.Path], parent=None):
-        super(HTMLEditor, self).__init__(parent)
+    def __init__(self, parent=None):
+        super(HTMLPreview, self).__init__(parent)
         self.settings().setAttribute(QWebEngineSettings.JavascriptEnabled, True)
         self.settings().setAttribute(QWebEngineSettings.LocalContentCanAccessRemoteUrls, True)
         self.settings().setAttribute(QWebEngineSettings.ErrorPageEnabled, True)
         self.settings().setAttribute(QWebEngineSettings.PluginsEnabled, True)
+        self.handler = None
 
-    def refresHTML(self, content: str):
+    def connect(self, editor: QWebEngineView) -> None: 
+        self.handler = OnChangeHandler(parent=self) 
+        editor.channel.registerObject("backend", self.handler)
+
+    def refresHTML(self, content: str) -> None:
         '''re render content'''
         filename = static("rendered-content.html")
         with open(filename, "w") as f:
             f.write(content)
         uri = QUrl.fromLocalFile(filename)
         self.load(uri)
-
-    def connect(self, web_portal):
-        pass
 
 
 class FigHTMLEditor(QWidget):
@@ -172,10 +133,12 @@ class FigHTMLEditor(QWidget):
         # html preview.
         self.html_preview = HTMLPreview(parent=self)
         self.html_preview.refresHTML(self.html_editor())
+        self.html_preview.connect(self.html_editor)
         # setup layout.
         layout = QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
         layout.addWidget(self.html_editor)
+        layout.addWidget(self.html_preview)
         self.setLayout(layout)
 # class FigHTMLEditor(QWidget):
 #     '''
@@ -239,4 +202,17 @@ class FigHTMLEditor(QWidget):
 if __name__ == "__main__":
     test_app = QApplication(sys.argv)
     test_app.setCursorFlashTime(100)
-    
+# def expandStatic(path):
+#     '''give relative path and get absolute static path.'''
+#     __current_dir__ = os.path.dirname(os.path.realpath(__file__))
+#     rel_path = os.path.join("static", path)
+#     path = os.path.join(__current_dir__, rel_path)
+
+#     return path
+# def iconUrl(path):
+#     '''give url and get icon uri'''
+#     __current_dir__ = os.path.dirname(os.path.realpath(__file__))
+#     rel_path = os.path.join("../../assests/icons/", path)
+#     path = os.path.join(__current_dir__, rel_path)
+
+#     return QUrl.fromLocalFile(path).toString()

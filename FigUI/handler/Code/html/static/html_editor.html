@@ -142,8 +142,8 @@
 
 <div style="text-align: center">
 <div style="display: inline-block; text-align: left">
-<textarea id="css-edit">
-{{ CSS_FILE_CONTENT }}
+<textarea id="html-edit">
+{{ HTML_FILE_CONTENT }}
 </textarea>
 <p style="font-family: Monospace; text-align: center">
     <select style="opacity: 0">
@@ -153,8 +153,8 @@
 </div>
 
 <div style="display: inline-block; text-align: left">
-<textarea id="html-edit">
-{{ HTML_FILE_CONTENT }}
+<textarea id="css-edit">
+{{ CSS_FILE_CONTENT }}
 </textarea>
 <p style="font-family: Monospace; text-align: center">
     <select style="text-align: center; background-color: #292929; color: #32a852; font-family: Monospace; border: 0px; outine: none;" onchange="selectTheme()" id=select>
@@ -239,9 +239,9 @@
 </div>
 </div>  
 
-<div style="background-color: #fff; color: #000; margin-left: 10%; margin-right: 10%" id="renderedHtml">
+<!-- <div style="background-color: #fff; color: #000; margin-left: 10%; margin-right: 10%" id="renderedHtml">
 {{ RENDERED_HTML_CONTENT }}
-</div>
+</div> -->
         <!-- <script src="{{ JQUERY_JS }}"></script> -->
         <!-- <script src="jquery.js"></script> -->
         <!-- <script src="{{ MINIMAP_MIN_JS }}"></script> -->
@@ -264,7 +264,11 @@
             htmlEditor.setSize(350, 300);
             htmlEditor.setOption('viewportMargin', Infinity);
             htmlEditor.on('change', function(codeMirror) {
-                renderedHtml.innerHTML = codeMirror.getValue()
+                // renderedHtml.innerHTML = codeMirror.getValue()
+                new QWebChannel(qt.webChannelTransport, function(channel) {
+                    backend = channel.objects.backend;
+                    backend.sendCode(codeMirror.getValue());
+                });
             })
             // CodeMirror.on(window, "hashchange", function() {
             //     var theme = location.hash.slice(1);
