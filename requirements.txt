@@ -6,6 +6,7 @@ spacy
 jinja2
 pillow
 psutil
+qrcode
 easydev
 imageio
 moviepy

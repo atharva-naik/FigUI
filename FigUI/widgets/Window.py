@@ -692,7 +692,7 @@ class WebRenderEngine(QWebEngineView):
     #     e.ignore()
     def contextMenuEvent(self, event):
         self.menu = self.page().createStandardContextMenu()
-        self.menu.addAction('My action')
+        self.menu.addAction('QR Code')
         self.menu.popup(event.globalPos())
 
     def execJS(self, script):
