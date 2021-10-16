@@ -6,7 +6,7 @@
 from PyQt5.QtCore import QThread, QUrl, QSize, Qt, QProcess
 # from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEngineProfile, QWebEngineSettings
 from PyQt5.QtGui import QIcon, QColor, QFont, QKeySequence, QTransform, QTextCharFormat, QRegExpValidator, QSyntaxHighlighter, QFontDatabase, QWindow
-from PyQt5.QtWidgets import QPushButton, QWidget, QLineEdit, QMainWindow, QHBoxLayout, QVBoxLayout, QGridLayout, QPlainTextEdit, QSizePolicy, QTextEdit, QToolButton, QTabBar, QLabel, QSplitter, QTabWidget, QFrame, QGraphicsDropShadowEffect
+from PyQt5.QtWidgets import QAction, QPushButton, QWidget, QLineEdit, QMainWindow, QHBoxLayout, QVBoxLayout, QGridLayout, QPlainTextEdit, QSizePolicy, QTextEdit, QToolButton, QTabBar, QLabel, QSplitter, QTabWidget, QFrame, QGraphicsDropShadowEffect
 try:
     from FigUI.assets.Linker import FigLinker
     from FigUI.subSystem.Email.backend import IMapMailHandler
@@ -174,7 +174,6 @@ class FigEmailClient(QWidget):
                 color: #fff;
                 background: #292929;
                 font-size: 14px;
-                font-weight: bold;
             }
             QWidget#HomeMenu {
                 padding-top: 5px;
@@ -238,7 +237,6 @@ class FigEmailClient(QWidget):
                 padding-bottom: 2px;
                 background: '''+self.bgStyle+''';
                 font-size: 14px;
-                font-weight: bold;
             }
             QToolButton:hover {
                 background: qlineargradient(x1 : 0, y1 : 0, x2 : 0, y2 : 2, stop : 0.0 #3f0c5e, stop : 0.99 purple); 
@@ -413,11 +411,17 @@ class FigEmailClient(QWidget):
         forwardBtn.setStyleSheet(self.transStyle)
         respGroupLayout.addWidget(forwardBtn)
 
+        personAction = QAction('Person', findGroup)
+        personAction.setIcon(self.linker.FigIcon("email/people.svg"))
+        searchAction = QAction('Search', findGroup)
+        searchAction.setIcon(self.linker.FigIcon("ctrlbar/search.svg"))
         searchBar = QLineEdit(findGroup)
         searchBar.setPlaceholderText("Search People")
-        searchBar.setFixedWidth(200)
+        searchBar.setFixedWidth(190)
         searchBar.setStyleSheet("background: #fff; color: #000;")
         searchBar.setFixedHeight(22)
+        searchBar.addAction(personAction, searchBar.LeadingPosition)
+        searchBar.addAction(searchAction, searchBar.TrailingPosition)
         findGroupLayout.addWidget(searchBar)
 
         contactsBtn = QToolButton(findGroup)
@@ -515,17 +519,18 @@ class FigEmailClient(QWidget):
         # utilGroupLayout.addWidget(utilGroupLabel)
         # set container layouts.
         newGroup.setLayout(newGroupLayout)
-        newGroup.setFixedWidth(200)
+        newGroup.setMaximumWidth(200)
         delGroup.setLayout(delGroupLayout)
-        delGroup.setFixedWidth(190)
+        delGroup.setMaximumWidth(180)
         respGroup.setLayout(respGroupLayout)
-        respGroup.setFixedWidth(90)
+        respGroup.setMaximumWidth(90)
         findGroup.setLayout(findGroupLayout)
-        findGroup.setFixedWidth(200)
+        findGroup.setMaximumWidth(180)
         utilGroup.setLayout(utilGroupLayout)
-        utilGroup.setFixedWidth(70)
+        utilGroup.setMaximumWidth(70)
         miscGroup.setLayout(miscGroupLayout)
-        miscGroup.setFixedWidth(65)
+        miscGroup.setMaximumWidth(50)
+        miscGroup.setStyleSheet(self.transStyle)
         stretchGroup = QWidget()
         stretchGroup.setObjectName("StretchGroup")
         emailGroup = self.initEmailPanel()
@@ -534,6 +539,7 @@ class FigEmailClient(QWidget):
 
         # build menu layout.
         layout.addWidget(newGroup)
+        layout.addWidget(emailGroup)
         layout.addWidget(self.addSpacer(10))
         layout.addWidget(delGroup)
         layout.addWidget(self.addSpacer(10))
@@ -542,10 +548,8 @@ class FigEmailClient(QWidget):
         layout.addWidget(findGroup)
         layout.addWidget(self.addSpacer(10))
         layout.addWidget(utilGroup)
-        layout.addWidget(self.addSpacer(10))
+        # layout.addWidget(self.addSpacer(10))
         layout.addWidget(miscGroup)
-        layout.addWidget(self.addSpacer(10))
-        layout.addWidget(emailGroup)
         layout.addWidget(stretchGroup)
         # set menu layout.
         homeMenu.setLayout(layout)
@@ -647,7 +651,6 @@ class FigEmailClient(QWidget):
                 color: #fff;
                 background: #292929;
                 font-size: 14px;
-                font-weight: bold;
             }
             QWidget#ViewMenu {
                 padding-top: 5px;
@@ -856,12 +859,13 @@ class FigEmailClient(QWidget):
 
     def initEmailPanel(self):
         emailPanel = QWidget()
-        emailPanel.setStyleSheet('''
+        style = '''
             QToolButton {
-                color: #fff;
+                color: #fff;  
+                border: 0px;           
+                font-size: 12px;
                 background: #292929;
-                font-size: 14px;
-                font-weight: bold;
+                font-weight: normal;
             }
             QWidget {
                 background: '''+self.bgStyle+'''
@@ -869,21 +873,66 @@ class FigEmailClient(QWidget):
                 padding-bottom: 5px;
             }
             QToolButton:hover {
-                border: 0px;
                 background: qlineargradient(x1 : 0, y1 : 0, x2 : 0, y2 : 2, stop : 0.0 #3f0c5e, stop : 0.99 purple); 
-            }''')
+            }'''
+        emailPanel.setStyleSheet(style)
         panelLayout = QVBoxLayout()
         panelLayout.setContentsMargins(0, 0, 0, 0)
         panelLayout.setSpacing(0)
         # top and bottom ribbons.
         topRibbon = QWidget()
         topLayout = QHBoxLayout()
+        topRibbon.setStyleSheet(style)
         topLayout.setSpacing(0)
         topLayout.setContentsMargins(0, 0, 0, 0)
         bottomRibbon = QWidget()
         bottomLayout = QHBoxLayout()
+        bottomRibbon.setStyleSheet(style)
         bottomLayout.setSpacing(0)
         bottomLayout.setContentsMargins(0, 0, 0, 0)
+
+        markReadBtn = QToolButton(topRibbon)
+        markReadBtn.setIcon(self.linker.FigIcon("email/mark_read.svg"))
+        markReadBtn.setIconSize(QSize(16,16))
+        markReadBtn.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        markReadBtn.setText("Read")
+        topLayout.addWidget(markReadBtn)
+
+        notifsBtn = QToolButton(topRibbon)
+        notifsBtn.setIcon(self.linker.FigIcon("email/email_notifs.svg"))
+        notifsBtn.setIconSize(QSize(16,16))
+        notifsBtn.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        notifsBtn.setText("Notifs")
+        topLayout.addWidget(notifsBtn)
+
+        schedBtn = QToolButton(topRibbon)
+        schedBtn.setIcon(self.linker.FigIcon("email/email_schedule.svg"))
+        schedBtn.setIconSize(QSize(16,16))
+        schedBtn.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        schedBtn.setText("Schedule")
+        topLayout.addWidget(schedBtn)
+
+        unmarkReadBtn = QToolButton(bottomRibbon)
+        unmarkReadBtn.setIcon(self.linker.FigIcon("email/mark_unread.svg"))
+        unmarkReadBtn.setIconSize(QSize(16,16))
+        unmarkReadBtn.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        unmarkReadBtn.setText("Unread")
+        bottomLayout.addWidget(unmarkReadBtn)
+
+        settingsBtn = QToolButton(bottomRibbon)
+        settingsBtn.setIcon(self.linker.FigIcon("email/email_settings.svg"))
+        settingsBtn.setIconSize(QSize(16,16))
+        settingsBtn.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        settingsBtn.setText("Settings")
+        bottomLayout.addWidget(settingsBtn)
+
+        encryptBtn = QToolButton(bottomRibbon)
+        encryptBtn.setIcon(self.linker.FigIcon("email/email_encrypt.svg"))
+        encryptBtn.setIconSize(QSize(16,16))
+        encryptBtn.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        encryptBtn.setText("Encrypt")
+        bottomLayout.addWidget(encryptBtn)
+
         # set style of top and bootm ribbons. 
         topRibbon.setLayout(topLayout)
         bottomRibbon.setLayout(bottomLayout)
