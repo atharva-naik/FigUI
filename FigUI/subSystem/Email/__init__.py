@@ -6,7 +6,7 @@
 from PyQt5.QtCore import QThread, QUrl, QSize, Qt, QProcess
 # from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEngineProfile, QWebEngineSettings
 from PyQt5.QtGui import QIcon, QColor, QFont, QKeySequence, QTransform, QTextCharFormat, QRegExpValidator, QSyntaxHighlighter, QFontDatabase, QWindow
-from PyQt5.QtWidgets import QPushButton, QWidget, QLineEdit, QMainWindow, QHBoxLayout, QVBoxLayout, QPlainTextEdit, QSizePolicy, QTextEdit, QToolButton, QTabBar, QLabel, QSplitter, QTabWidget, QFrame, QGraphicsDropShadowEffect
+from PyQt5.QtWidgets import QPushButton, QWidget, QLineEdit, QMainWindow, QHBoxLayout, QVBoxLayout, QGridLayout, QPlainTextEdit, QSizePolicy, QTextEdit, QToolButton, QTabBar, QLabel, QSplitter, QTabWidget, QFrame, QGraphicsDropShadowEffect
 try:
     from FigUI.assets.Linker import FigLinker
     from FigUI.subSystem.Email.backend import IMapMailHandler
@@ -184,6 +184,10 @@ class FigEmailClient(QWidget):
                 border: 0px;
                 background: qlineargradient(x1 : 0, y1 : 0, x2 : 0, y2 : 2, stop : 0.0 #3f0c5e, stop : 0.99 purple); 
             }
+            QWidget#MiscGroup {
+                background: '''+self.bgStyle+'''
+                color: #000;
+            }
             QWidget#NewGroup {
                 background: '''+self.bgStyle+'''
                 color: #000;
@@ -212,12 +216,34 @@ class FigEmailClient(QWidget):
                 background: '''+self.bgStyle+'''
                 color: #000;
             }
+            QWidget#FindGroup {
+                background: '''+self.bgStyle+'''
+                color: #000;
+            }
+            QWidget#UtilGroup {
+                background: '''+self.bgStyle+'''
+                color: #000;
+            }
             QLabel {
                 padding: 5px;
                 background: transparent;
                 font-size: 14px;
                 color: violet;
             }''')
+        self.transStyle = '''
+            QToolButton {
+                color: #fff;
+                border: 0px;
+                padding-top: 2px;
+                padding-bottom: 2px;
+                background: '''+self.bgStyle+''';
+                font-size: 14px;
+                font-weight: bold;
+            }
+            QToolButton:hover {
+                background: qlineargradient(x1 : 0, y1 : 0, x2 : 0, y2 : 2, stop : 0.0 #3f0c5e, stop : 0.99 purple); 
+            }
+        '''
         # contains toolbar sets.
         layout = QHBoxLayout()
         layout.setSpacing(0)
@@ -236,11 +262,35 @@ class FigEmailClient(QWidget):
         delGroupLayout.setSpacing(0)
         delGroupLayout.setContentsMargins(0, 0, 0, 0)
 
+        addGroup = QWidget()
+        addGroup.setObjectName("AddGroup")
+        addGroupLayout = QVBoxLayout()
+        addGroupLayout.setSpacing(0)
+        addGroupLayout.setContentsMargins(0, 0, 0, 0)
+
+        utilGroup = QWidget()
+        utilGroup.setObjectName("UtilGroup")
+        utilGroupLayout = QVBoxLayout()
+        utilGroupLayout.setSpacing(0)
+        utilGroupLayout.setContentsMargins(0, 0, 0, 0)        
+
         respGroup = QWidget()
         respGroup.setObjectName("RespGroup")
         respGroupLayout = QVBoxLayout()
         respGroupLayout.setSpacing(0)
         respGroupLayout.setContentsMargins(0, 0, 0, 0)
+
+        findGroup = QWidget()
+        findGroup.setObjectName("FindGroup")
+        findGroupLayout = QVBoxLayout()
+        findGroupLayout.setSpacing(0)
+        findGroupLayout.setContentsMargins(0, 0, 0, 0)
+
+        miscGroup = QWidget()
+        miscGroup.setObjectName("MiscGroup")
+        miscGroupLayout = QGridLayout()
+        miscGroupLayout.setSpacing(0)
+        miscGroupLayout.setContentsMargins(0, 0, 0, 0)
 
         # toolbars
         newToolbar = QWidget()
@@ -284,12 +334,13 @@ class FigEmailClient(QWidget):
         newToolbarLayout.addWidget(newTagBtn)
 
         remTagBtn = QToolButton(delToolbar)
-        remTagBtn.setIcon(self.linker.FigIcon("email/email_archive.svg"))
+        remTagBtn.setIcon(self.linker.FigIcon("email/remove_tag.svg"))
         remTagBtn.setIconSize(QSize(14,14))
         remTagBtn.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
         remTagBtn.setText(" Tag ")
         remTagBtn.setToolTip("Remove tag")
         remTagBtn.setFixedWidth(60)
+        remTagBtn.setStyleSheet(self.transStyle)
         delRibbonLayout.addWidget(remTagBtn)
         # junk button to move to spam
         junkBtn = QToolButton(delToolbar) 
@@ -299,6 +350,7 @@ class FigEmailClient(QWidget):
         junkBtn.setText(" Junk")
         junkBtn.setToolTip("Move mail to spam")
         junkBtn.setFixedWidth(60)
+        junkBtn.setStyleSheet(self.transStyle)
         delRibbonLayout.addWidget(junkBtn)
         # button to delete attachment.
         delAttachBtn = QToolButton(delToolbar) 
@@ -308,6 +360,7 @@ class FigEmailClient(QWidget):
         delAttachBtn.setText(" File")
         delAttachBtn.setToolTip("Remove attachment/file")
         delAttachBtn.setFixedWidth(60)
+        delAttachBtn.setStyleSheet(self.transStyle)
         delRibbonLayout.addWidget(delAttachBtn)
         delRibbon.setLayout(delRibbonLayout)
         delToolbarLayout.addWidget(delRibbon)
@@ -335,27 +388,104 @@ class FigEmailClient(QWidget):
         
         replyBtn = QToolButton(respGroup)
         replyBtn.setIcon(self.linker.FigIcon("email/reply.svg"))   
-        replyBtn.setIconSize(QSize(14,14))
+        replyBtn.setIconSize(QSize(16,16))
         replyBtn.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
         replyBtn.setText(" Reply")
         replyBtn.setFixedWidth(90)
+        replyBtn.setStyleSheet(self.transStyle)
         respGroupLayout.addWidget(replyBtn)
 
         replyAllBtn = QToolButton(respGroup)
         replyAllBtn.setIcon(self.linker.FigIcon("email/reply_all.svg"))   
-        replyAllBtn.setIconSize(QSize(14,14))
+        replyAllBtn.setIconSize(QSize(16,16))
         replyAllBtn.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
         replyAllBtn.setText(" Reply All")
         replyAllBtn.setFixedWidth(90)
+        replyAllBtn.setStyleSheet(self.transStyle)
         respGroupLayout.addWidget(replyAllBtn)
 
         forwardBtn = QToolButton(respGroup)
         forwardBtn.setIcon(self.linker.FigIcon("email/forward.svg"))   
-        forwardBtn.setIconSize(QSize(14,14))
+        forwardBtn.setIconSize(QSize(16,16))
         forwardBtn.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
         forwardBtn.setText(" Forward")
         forwardBtn.setFixedWidth(90)
+        forwardBtn.setStyleSheet(self.transStyle)
         respGroupLayout.addWidget(forwardBtn)
+
+        searchBar = QLineEdit(findGroup)
+        searchBar.setPlaceholderText("Search People")
+        searchBar.setFixedWidth(200)
+        searchBar.setStyleSheet("background: #fff; color: #000;")
+        searchBar.setFixedHeight(22)
+        findGroupLayout.addWidget(searchBar)
+
+        contactsBtn = QToolButton(findGroup)
+        contactsBtn.setIcon(self.linker.FigIcon("email/contacts.svg"))
+        contactsBtn.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
+        contactsBtn.setIconSize(QSize(16,16))
+        contactsBtn.setText("Address Book")
+        contactsBtn.setFixedWidth(150)
+        contactsBtn.setStyleSheet(self.transStyle)
+        findGroupLayout.addWidget(contactsBtn)
+        
+        phishingBtn = QToolButton(miscGroup)
+        phishingBtn.setIcon(self.linker.FigIcon("email/report_phishing.svg"))
+        # phishingBtn.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        phishingBtn.setIconSize(QSize(20,20))
+        # phishingBtn.setText("Phishing")
+
+        starBtn = QToolButton(miscGroup)
+        starBtn.setIcon(self.linker.FigIcon("email/star.svg"))
+        starBtn.setIconSize(QSize(20,20))
+
+        spamBtn = QToolButton(miscGroup)
+        spamBtn.setIcon(self.linker.FigIcon("email/report_spam.svg"))
+        # spamBtn.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        spamBtn.setIconSize(QSize(20,20))
+        # spamBtn.setText("Spam")
+        importantBtn = QToolButton(miscGroup)
+        importantBtn.setIcon(self.linker.FigIcon("email/important.svg"))
+        # importantBtn.setToolButtonStyle(sQt.ToolButtonTextUnderIcon)
+        importantBtn.setIconSize(QSize(20,20))
+        # importantBtn.setText("Important")
+        flagBtn = QToolButton(miscGroup)
+        flagBtn.setIcon(self.linker.FigIcon("email/mark_follow_up.svg"))
+        flagBtn.setIconSize(QSize(20,20))
+        # flagBtn.setToolButtonStyle(Qt.ToolBsuttonTextUnderIcon)
+        # flagBtn.setText("Follow Up")
+        unflagBtn = QToolButton(miscGroup)
+        unflagBtn.setIcon(self.linker.FigIcon("email/unmark_follow_up.svg"))
+        unflagBtn.setIconSize(QSize(20,20))
+        # unflagBtn.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        # unflagBtn.setText("Follow Up")
+        miscGroupLayout.addWidget(phishingBtn, 0, 0)
+        miscGroupLayout.addWidget(spamBtn, 0, 1)
+        miscGroupLayout.addWidget(starBtn, 1, 0)
+        miscGroupLayout.addWidget(importantBtn, 1, 1)
+        miscGroupLayout.addWidget(flagBtn, 2, 0)
+        miscGroupLayout.addWidget(unflagBtn, 2, 1)
+
+        templateBtn = QToolButton(utilGroup)
+        templateBtn.setIcon(self.linker.FigIcon("email/template.svg"))
+        templateBtn.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        templateBtn.setIconSize(QSize(18,18))
+        templateBtn.setText("Template")
+        templateBtn.setFixedWidth(70)
+        templateBtn.setStyleSheet(self.transStyle)
+        utilGroupLayout.addWidget(templateBtn)
+
+        ruleBtn = QToolButton(utilGroup)
+        ruleBtn.setIcon(self.linker.FigIcon("email/rules.svg"))
+        ruleBtn.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        ruleBtn.setIconSize(QSize(18,18))
+        ruleBtn.setText("Rules")
+        ruleBtn.setFixedWidth(70)
+        ruleBtn.setStyleSheet(self.transStyle)
+        utilGroupLayout.addWidget(ruleBtn)
+
+        filterBar = self.initFilterBar()
+        findGroupLayout.addWidget(filterBar)
 
         # set toolbar layouts.
         newToolbar.setLayout(newToolbarLayout)
@@ -375,6 +505,14 @@ class FigEmailClient(QWidget):
         respGroupLabel = QLabel("respond", parent=respGroup)
         respGroupLabel.setAlignment(Qt.AlignCenter)
         respGroupLayout.addWidget(respGroupLabel)
+
+        findGroupLabel = QLabel("find", parent=findGroup)
+        findGroupLabel.setAlignment(Qt.AlignCenter)
+        findGroupLayout.addWidget(findGroupLabel)
+
+        utilGroupLabel = QLabel("", parent=utilGroup)
+        utilGroupLayout.setAlignment(Qt.AlignCenter)
+        # utilGroupLayout.addWidget(utilGroupLabel)
         # set container layouts.
         newGroup.setLayout(newGroupLayout)
         newGroup.setFixedWidth(200)
@@ -382,8 +520,16 @@ class FigEmailClient(QWidget):
         delGroup.setFixedWidth(190)
         respGroup.setLayout(respGroupLayout)
         respGroup.setFixedWidth(90)
+        findGroup.setLayout(findGroupLayout)
+        findGroup.setFixedWidth(200)
+        utilGroup.setLayout(utilGroupLayout)
+        utilGroup.setFixedWidth(70)
+        miscGroup.setLayout(miscGroupLayout)
+        miscGroup.setFixedWidth(65)
         stretchGroup = QWidget()
         stretchGroup.setObjectName("StretchGroup")
+        emailGroup = self.initEmailPanel()
+        # emailGroup.setFixedWidth(200)
         stretchGroup.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
         # build menu layout.
@@ -392,11 +538,105 @@ class FigEmailClient(QWidget):
         layout.addWidget(delGroup)
         layout.addWidget(self.addSpacer(10))
         layout.addWidget(respGroup)
+        layout.addWidget(self.addSpacer(10))
+        layout.addWidget(findGroup)
+        layout.addWidget(self.addSpacer(10))
+        layout.addWidget(utilGroup)
+        layout.addWidget(self.addSpacer(10))
+        layout.addWidget(miscGroup)
+        layout.addWidget(self.addSpacer(10))
+        layout.addWidget(emailGroup)
         layout.addWidget(stretchGroup)
         # set menu layout.
         homeMenu.setLayout(layout)
 
         return homeMenu
+
+    def initFilterBar(self):
+        '''create filter bar.'''
+        filterBar = QWidget()
+        filterBar.setObjectName("FilterBar")
+        
+        filterBarLayout = QHBoxLayout()
+        filterBarLayout.setSpacing(0)
+        filterBarLayout.setContentsMargins(0, 0, 0, 0)
+
+        filterBar.setStyleSheet('''
+            QToolButton {
+                color: #fff;
+                background: #292929;
+                font-size: 14px;
+                font-weight: bold;
+            }
+            QWidget#FilterBar {
+                padding-top: 5px;
+                padding-bottom: 5px;
+                background: '''+self.bgStyle+'''
+            }
+            QToolButton:hover {
+                border: 0px;
+                background: qlineargradient(x1 : 0, y1 : 0, x2 : 0, y2 : 2, stop : 0.0 #3f0c5e, stop : 0.99 purple); 
+            }''')
+        btnSize = QSize(18,18)
+        filtBtn = QToolButton(self)
+        filtBtn.setIcon(self.linker.FigIcon("email/filter.svg"))
+        filtBtn.setIconSize(btnSize)
+        filtBtn.setToolTip("apply filters")
+        filtBtn.setStyleSheet(self.transStyle)
+        filterBarLayout.addWidget(filtBtn)
+
+        filtAddBtn = QToolButton(self)
+        filtAddBtn.setIcon(self.linker.FigIcon("email/filter_add.svg"))
+        filtAddBtn.setIconSize(btnSize)
+        filtAddBtn.setToolTip("add filter")
+        filtAddBtn.setStyleSheet(self.transStyle)
+        filterBarLayout.addWidget(filtAddBtn)
+
+        filtNegBtn = QToolButton(self)
+        filtNegBtn.setIcon(self.linker.FigIcon("email/filter_negate.svg"))
+        filtNegBtn.setIconSize(btnSize)
+        filtNegBtn.setToolTip("negate filter")
+        filtNegBtn.setStyleSheet(self.transStyle)
+        filterBarLayout.addWidget(filtNegBtn)
+
+        filtEditBtn = QToolButton(self)
+        filtEditBtn.setIcon(self.linker.FigIcon("email/filter_edit.svg"))
+        filtEditBtn.setIconSize(btnSize)
+        filtEditBtn.setToolTip("edit filter")
+        filtEditBtn.setStyleSheet(self.transStyle)
+        filterBarLayout.addWidget(filtEditBtn)
+
+        filtDelBtn = QToolButton(self)
+        filtDelBtn.setIcon(self.linker.FigIcon("email/filter_delete.svg"))
+        filtDelBtn.setIconSize(btnSize)
+        filtDelBtn.setToolTip("remove all filters")
+        filtDelBtn.setStyleSheet(self.transStyle)
+        filterBarLayout.addWidget(filtDelBtn)
+
+        filtReadBtn = QToolButton(self)
+        filtReadBtn.setIcon(self.linker.FigIcon("email/filter_read.svg"))
+        filtReadBtn.setIconSize(btnSize)
+        filtReadBtn.setToolTip("filter read emails")
+        filtReadBtn.setStyleSheet(self.transStyle)
+        filterBarLayout.addWidget(filtReadBtn)
+
+        filtImpBtn = QToolButton(self)
+        filtImpBtn.setIcon(self.linker.FigIcon("email/filter_important.svg"))
+        filtImpBtn.setIconSize(btnSize)
+        filtImpBtn.setToolTip("filter important emails")
+        filtImpBtn.setStyleSheet(self.transStyle)
+        filterBarLayout.addWidget(filtImpBtn)
+
+        filtFavBtn = QToolButton(self)
+        filtFavBtn.setIcon(self.linker.FigIcon("email/filter_favourite.svg"))
+        filtFavBtn.setIconSize(btnSize)
+        filtFavBtn.setToolTip("filter favourited emails")
+        filtFavBtn.setStyleSheet(self.transStyle)
+        filterBarLayout.addWidget(filtFavBtn)
+
+        filterBar.setLayout(filterBarLayout)
+
+        return filterBar
 
     def initViewMenu(self):
         '''create mail view menu.'''
@@ -613,6 +853,45 @@ class FigEmailClient(QWidget):
         viewMenu.setLayout(layout)
 
         return viewMenu
+
+    def initEmailPanel(self):
+        emailPanel = QWidget()
+        emailPanel.setStyleSheet('''
+            QToolButton {
+                color: #fff;
+                background: #292929;
+                font-size: 14px;
+                font-weight: bold;
+            }
+            QWidget {
+                background: '''+self.bgStyle+'''
+                padding-top: 5px;
+                padding-bottom: 5px;
+            }
+            QToolButton:hover {
+                border: 0px;
+                background: qlineargradient(x1 : 0, y1 : 0, x2 : 0, y2 : 2, stop : 0.0 #3f0c5e, stop : 0.99 purple); 
+            }''')
+        panelLayout = QVBoxLayout()
+        panelLayout.setContentsMargins(0, 0, 0, 0)
+        panelLayout.setSpacing(0)
+        # top and bottom ribbons.
+        topRibbon = QWidget()
+        topLayout = QHBoxLayout()
+        topLayout.setSpacing(0)
+        topLayout.setContentsMargins(0, 0, 0, 0)
+        bottomRibbon = QWidget()
+        bottomLayout = QHBoxLayout()
+        bottomLayout.setSpacing(0)
+        bottomLayout.setContentsMargins(0, 0, 0, 0)
+        # set style of top and bootm ribbons. 
+        topRibbon.setLayout(topLayout)
+        bottomRibbon.setLayout(bottomLayout)
+        panelLayout.addWidget(topRibbon)
+        panelLayout.addWidget(bottomRibbon)
+        emailPanel.setLayout(panelLayout)
+
+        return emailPanel
 
     def addSpacer(self, width=10, background=None):
         if background is None: 
