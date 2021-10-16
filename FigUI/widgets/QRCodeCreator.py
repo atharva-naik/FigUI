@@ -44,20 +44,21 @@ class QRImage(qrcode.image.base.BaseImage):
   
 class FigQRCodeWindow(QMainWindow):
     '''QR Code Window'''
-    def __init__(self, initial_text="your text here"):
+    def __init__(self, initial_text=None, clipboard=None):
         QMainWindow.__init__(self)
-        self.initial_text = initial_text
+        self.initial_text = initial_text if initial_text else "your text here"
         self.setGeometry(100, 100, 300, 300)
         # creating a label to show the qr code
         self.label = QLabel(self)
         # create initial qrcode for blank text.
-        qr_image = qrcode.make(initial_text, image_factory=QRImage).pixmap()
+        qr_image = qrcode.make(self.initial_text, image_factory=QRImage).pixmap()
         self.label.setPixmap(qr_image)
         # create text bar.
         self.textBar = self.initTextBar()
         # create title bar.
         self.titleBar = self.initTitleBar()
         self.setAttribute(Qt.WA_TranslucentBackground)
+        self.clipboard = clipboard
 
         # create vertical layout.
         widget = QWidget()
@@ -80,7 +81,7 @@ class FigQRCodeWindow(QMainWindow):
             color: #fff;
         ''')
         self.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.FramelessWindowHint)
-        self.setWindowTitle(f"QR for: {initial_text}")
+        self.setWindowTitle(f"QR for: {self.initial_text}")
         # self.setWindowOpacity(0.9)
         # self.label.setWindowOpacity(1)
     def mousePressEvent(self, event):
@@ -90,6 +91,10 @@ class FigQRCodeWindow(QMainWindow):
         delta = QPoint(event.globalPos() - self.oldPos)
         self.move(self.x() + delta.x(), self.y() + delta.y())
         self.oldPos = event.globalPos()
+
+    def copyQRToClipboard(self):
+        if self.clipboard:
+            self.clipboard.setPixmap(self.label.pixmap())
 
     def initTextBar(self):
         toolbar = QWidget()
@@ -113,7 +118,8 @@ class FigQRCodeWindow(QMainWindow):
         self.copyBtn.setObjectName("QRCopyBtn")
         self.copyBtn.setToolTip("copy QR image to clipboard")
         self.copyBtn.setIcon(FigIcon("qrcreator/copy.svg"))
-        
+        self.copyBtn.clicked.connect(self.copyQRToClipboard)
+
         self.clearBtn = QToolButton(self)
         self.clearBtn.setObjectName("QRClearBtn")
         self.clearBtn.setToolTip("clear text")

@@ -153,11 +153,12 @@ class SunAnimation:
                      initial_state: Union[QPoint, Tuple[int, int]],
                      goal_state: Union[QPoint, Tuple[int, int]]=QPoint(800, 0), 
                      duration: int=1000,
-                     curve: QEasingCurve=QEasingCurve.OutBounce):
+                     curve: Union[QEasingCurve, None]=None):
         anim = QPropertyAnimation(self.sunSprite, b"pos")
         anim.setStartValue(initial_state)
         anim.setEndValue(goal_state)
-        anim.setEasingCurve(curve)
+        if curve:
+            anim.setEasingCurve(curve)
         anim.setDuration(duration)
         self._animation_group.addAnimation(anim)
 
@@ -374,24 +375,58 @@ class FigLauncher(QWidget):
         self.scroll.setWidgetResizable(True)
         self.scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
         self.scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        # self.scroll.setStyleSheet('''
+            # QScrollArea {
+            #     /* background-color: rgba(90, 12, 63, 0.5); */
+            #     background: url('''+ f"'{self.bg_url}'" +'''); /* no-repeat; */
+            #     background-position: center;
+            #     border: 0px;
+            # }
+            # QScrollBar:vertical {
+            #     border: 0px solid #999999;
+            #     width: 8px;    
+            #     margin: 0px 0px 0px 0px;
+            #     background-color: rgba(227, 140, 89, 0.5);
+            # }
+            # QScrollBar::handle:vertical {         
+            #     min-height: 0px;
+            #     border: 0px solid red;
+            #     border-radius: 4px;
+            #     background-color: #e38c59; /* #c70039; */
+            # }
+            # QScrollBar::handle:vertical:hover {         
+            #     background-color: #ff5e00;
+            # }
+            # QScrollBar::add-line:vertical {       
+            #     height: 0px;
+            #     subcontrol-position: bottom;
+            #     subcontrol-origin: margin;
+            # }
+            # QScrollBar::sub-line:vertical {
+            #     height: 0 px;
+            #     subcontrol-position: top;
+            #     subcontrol-origin: margin;
+        #     }''')
         self.scroll.setStyleSheet('''
             QScrollArea {
-                /* background-color: rgba(90, 12, 63, 0.5); */
-                background: url('''+ f"'{self.bg_url}'" +'''); /* no-repeat; */
+                /* background: url(''' + f"'{self.bg_url}'" + '''); */
                 background-position: center;
                 border: 0px;
             }
             QScrollBar:vertical {
                 border: 0px solid #999999;
-                width: 8px;    
+                width: 10px;    
                 margin: 0px 0px 0px 0px;
-                background-color: rgba(227, 140, 89, 0.5);
+                background-color: rgba(255, 255, 255, 0);
+            }
+            QScrollBar:vertical:hover {
+                background-color: rgba(255, 255, 255, 0.3);
             }
             QScrollBar::handle:vertical {         
                 min-height: 0px;
                 border: 0px solid red;
-                border-radius: 4px;
-                background-color: #e38c59; /* #c70039; */
+                border-radius: 0px;
+                background-color: gray; /* #c70039; */
             }
             QScrollBar::handle:vertical:hover {         
                 background-color: #ff5e00;
@@ -405,12 +440,12 @@ class FigLauncher(QWidget):
                 height: 0 px;
                 subcontrol-position: top;
                 subcontrol-origin: margin;
-            }''')
+        }''')
         # self.scroll.setStyleSheet('''background: rgba(73, 44, 94, 0.5);''')
         self.glowEffect = QGraphicsDropShadowEffect(self)
         self.glowEffect.setOffset(2, 2)
         self.glowEffect.setColor(QColor(255, 132, 0))
-        self.glowEffect.setBlurRadius(50)
+        self.glowEffect.setBlurRadius(20)
         # add glow to vertical scroll bar.
         self.vscrollBar = self.scroll.verticalScrollBar()
         self.vscrollBar.setGraphicsEffect(self.glowEffect)
@@ -525,7 +560,7 @@ class FigLauncher(QWidget):
             self.animations[-1].hide()
             self.showingWeatherAnimation = not(self.showingWeatherAnimation)
             return
-        weather = "rain"
+        weather = "snow"
         # dimensions of launcher window.
         w = self.width() # x coordinate of initial point.
         h = self.height() # y coordinate of initial point.s
@@ -539,27 +574,27 @@ class FigLauncher(QWidget):
             # add all animations to the sequence.
             sun_animation.addAnimation(initial_state=initial_state, 
                                        goal_state=mid_state,
-                                       curve=QEasingCurve.OutBounce,
+                                       curve=QEasingCurve.InQuad,
                                        duration=1000)
             sun_animation.addAnimation(initial_state=mid_state, 
                                        goal_state=origin_state,
-                                       curve=QEasingCurve.InBounce,
+                                       curve=QEasingCurve.OutQuad,
                                        duration=1000)
             sun_animation.addAnimation(initial_state=origin_state, 
                                        goal_state=mid_state,
-                                       curve=QEasingCurve.OutBounce,
+                                       curve=QEasingCurve.InQuad,
                                        duration=1000)
             sun_animation.addAnimation(initial_state=mid_state, 
                                        goal_state=initial_state,
-                                       curve=QEasingCurve.InBounce,
+                                       curve=QEasingCurve.OutQuad,
                                        duration=1000)
             sun_animation.addAnimation(initial_state=initial_state, 
                                        goal_state=goal_state,
-                                       curve=QEasingCurve.OutBounce,
+                                       curve=QEasingCurve.InQuad,
                                        duration=1000)
             sun_animation.addAnimation(initial_state=goal_state, 
                                        goal_state=initial_state,
-                                       curve=QEasingCurve.InBounce,
+                                       curve=QEasingCurve.OutQuad,
                                        duration=1000)
             sun_animation.start(count=1)
             self.animations.append(sun_animation)

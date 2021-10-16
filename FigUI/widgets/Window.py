@@ -24,6 +24,7 @@ try:
     from FigUI.widgets.SearchBar import FigSearchBar
     from FigUI.subSystem.History import HistoryLogger
     from FigUI.subSystem.TaskViewer import FigTaskWebView
+    from FigUI.widgets.QRCodeCreator import FigQRCodeWindow
     from FigUI.widgets.ActivityPanel import FigActivityPanel
     from FigUI.handler.Code.QtColorPicker import ColorPicker
     from FileViewer import FigFileViewer, FigTreeFileExplorer
@@ -42,6 +43,7 @@ except ImportError:
     # from ..handler.Code import CodeEditor
     from ..subSystem.Clock import FigClock
     from ..subSystem.Shell import FigShell
+    from .QRCodeCreator import FigQRCodeWindow
     from ..subSystem.ChatBot import FigChatBot
     from .ActivityPanel import FigActivityPanel
     from ..subSystem.Email import FigEmailClient
@@ -54,6 +56,14 @@ except ImportError:
     from .FileViewer import FigFileViewer, FigTreeFileExplorer
     from ..subSystem.System.Display import BrightnessController
 #     from .utils import *
+def openQRCodeWindow(url=None, clipboard=None):
+    qrCodeWindow = FigQRCodeWindow(url, clipboard)
+    qrCodeWindow.show()
+
+def openCalculator():
+    calculator = FigCalculator()
+    calculator.show()
+
 def FigIcon(name, w=None, h=None):
     __current_dir__ = os.path.dirname(os.path.realpath(__file__))
     __icons__ = os.path.join(__current_dir__, "../assets/icons")
@@ -780,7 +790,7 @@ class FigWindow(QMainWindow):
         self.addToolBarBreak(Qt.TopToolBarArea)
 
         self.tabs = QTabWidget() # tab widget
-        self.tabs.setDocumentMode(True) # making document mode true
+        # self.tabs.setDocumentMode(True) # making document mode true
         self.tabs.tabBarDoubleClicked.connect(self.addNewTab)
         # adding action when tab is changed
         self.tabs.currentChanged.connect(self.onCurrentTabChange)
@@ -1312,6 +1322,14 @@ class FigWindow(QMainWindow):
         ocrBtn.setToolTip("Open optical character recognition")
         ocrBtn.setIcon(FigIcon("sidebar/ocr.svg"))
         ocrBtn.setIconSize(btnSize)
+        # qr code generator.
+        qrBtn = QPushButton()#("QR", self)
+        qrBtn.setToolTip("Open qr code generator")
+        qrBtn.setIcon(FigIcon("sidebar/qrcode.svg"))
+        qrBtn.setIconSize(btnSize)
+        qrBtn.clicked.connect(lambda: openQRCodeWindow(
+            clipboard=self.clipboard)
+        )
         # open p2p chat server.
         chatBtn = QPushButton()#("Chat", self)
         chatBtn.setToolTip("Open chat server")
@@ -1327,7 +1345,7 @@ class FigWindow(QMainWindow):
         mathBtn = QPushButton()#("Math", self)
         mathBtn.setToolTip("Open scientific calculator.")
         mathBtn.setIcon(FigIcon("sidebar/calculator.svg"))
-        mathBtn.clicked.connect(FigCalculator().show)
+        mathBtn.clicked.connect(openCalculator)
         mathBtn.setIconSize(btnSize)
         # open newsfeed.
         newsBtn = QPushButton()#("Newsfeed", self)
@@ -1418,6 +1436,7 @@ class FigWindow(QMainWindow):
         subbar.addWidget(transBtn)
         subbar.addWidget(ttsBtn)
         subbar.addWidget(ocrBtn)
+        subbar.addWidget(qrBtn)
         subbar.addWidget(b1)
         subbar.addWidget(chatBtn)
         subbar.addWidget(asstBtn)
@@ -1427,12 +1446,11 @@ class FigWindow(QMainWindow):
         subbar.addWidget(clockBtn)
         subbar.addWidget(weatherBtn)
         subbar.addWidget(newsBtn)
-        subbar.addWidget(b3)
+        # subbar.addWidget(b3)
         subbar.addWidget(wbBtn)
         subbar.addWidget(illuBtn)
         subbar.addWidget(kanbanBtn)
         subbar.addWidget(b4)
-        subbar.addWidget(histBtn)
         # subbar.addSeparator()
         # subbar.addWidget(QHLine())
         # subbar.addSeparator()
@@ -1440,7 +1458,8 @@ class FigWindow(QMainWindow):
         top_spacer.setAttribute(Qt.WA_TranslucentBackground)
         top_spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
-        sysbar.addWidget(top_spacer)
+        sysbar.addWidget(histBtn)
+        # sysbar.addWidget(top_spacer)
         sysbar.addWidget(hardwareBtn)
         sysbar.addWidget(passBtn)
         sysbar.addWidget(trash)
@@ -1456,7 +1475,6 @@ class FigWindow(QMainWindow):
             self.showMaximized()
             # self.subSysBar1.show()
             # self.subSysBar2.show()
-
     def colorPickerDialog(self):
         colorPicker = ColorPicker(useAlpha=True)
         picked_color = colorPicker.getColor((0,0,0,50))

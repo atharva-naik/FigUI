@@ -1,0 +1,34 @@
+<div style="background-color: #eee;" id="waterHolder">
+    <!-- <img src="https://ak.picdn.net/shutterstock/videos/17283157/thumb/1.jpg"/> -->
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+    <br>
+</div>
+<script src="watercanvas.js"></script>
+<script>
+    var width = 350;
+    var height = 275;
+
+    function init(){
+        var waterModel = new WaterModel(width, height, {
+                resolution:2.0,
+                interpolate:false,
+                damping:0.985,
+                clipping:5,
+                evolveThreshold:0.05,
+                maxFps:30,
+                showStats:true
+            });
+        var waterCanvas = new WaterCanvas(width, height,
+            "waterHolder", waterModel, {
+                backgroundImageUrl:"https://ak.picdn.net/shutterstock/videos/17283157/thumb/1.jpg",
+                lightRefraction:9.0,
+                lightReflection:0.1,
+                maxFps:20,
+                showStats:true
+            });
+    }
+</script>
