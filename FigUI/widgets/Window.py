@@ -8,7 +8,7 @@ from PyQt5.Qt import PYQT_VERSION_STR
 from PyQt5.QtCore import QThread, QUrl, pyqtSignal, QObject, QTimer, QPoint, QRect, QSize, Qt, QT_VERSION_STR
 from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEngineProfile, QWebEngineSettings
 from PyQt5.QtGui import QIcon, QFont, QKeySequence, QTransform, QCursor, QPixmap, QTextCharFormat, QSyntaxHighlighter, QFontDatabase, QTextFormat, QColor, QPainter, QDesktopServices
-from PyQt5.QtWidgets import QMenu, QApplication, QAction, QDialog, QPushButton, QTabWidget, QStatusBar, QToolBar, QWidget, QLineEdit, QMainWindow, QHBoxLayout, QVBoxLayout, QPlainTextEdit, QToolBar, QFrame, QSizePolicy, QTabBar, QDesktopWidget, QLabel, QToolButton, QTextEdit, QComboBox, QListWidget, QListWidgetItem, QScrollArea, QDockWidget, QGraphicsBlurEffect, QSplitter, QShortcut, QGraphicsDropShadowEffect, QGraphicsOpacityEffect
+from PyQt5.QtWidgets import QMenu, QShortcut, QApplication, QAction, QDialog, QPushButton, QTabWidget, QStatusBar, QToolBar, QWidget, QLineEdit, QMainWindow, QHBoxLayout, QVBoxLayout, QPlainTextEdit, QToolBar, QFrame, QSizePolicy, QTabBar, QDesktopWidget, QLabel, QToolButton, QTextEdit, QComboBox, QListWidget, QListWidgetItem, QScrollArea, QDockWidget, QGraphicsBlurEffect, QSplitter, QShortcut, QGraphicsDropShadowEffect, QGraphicsOpacityEffect
 
 try:
     from FigUI.utils import *
@@ -297,7 +297,6 @@ class FigTabWidget(QTabWidget):
         drag.setHotSpot(e.pos() - posInTab)
         drag.setDragCursor(cursor.pixmap(),Qt.MoveAction)
         dropAction = drag.exec_(Qt.MoveAction)
-
 
     def dragEnterEvent(self, e):
         e.accept()
@@ -1076,7 +1075,9 @@ class FigWindow(QMainWindow):
         fileTreeBtn = QAction("Explorer", self)
         fileTreeBtn.setToolTip("file explorer.")
         fileTreeBtn.setIcon(FigIcon("sysbar/explorer.svg"))
-        fileTreeBtn.triggered.connect(self.fileTree.toggle)
+        fileTreeBtn.triggered.connect(self.toggleCtrlB)
+        self.ctrlB = QShortcut(QKeySequence("Ctrl+B"), self)
+        self.ctrlB.activated.connect(self.toggleCtrlB)
         # activity panel.
         activityBtn = QAction("Activity", self)
         activityBtn.setToolTip("Check activity panel.")
@@ -1107,6 +1108,13 @@ class FigWindow(QMainWindow):
         sysbar.addAction(runBtn)
 
         return sysbar
+
+    def toggleCtrlB(self):
+        currentTab = self.tabs.currentWidget()
+        try:
+            currentTab.togglePreview()
+        except AttributeError:
+            self.fileTree.toggle()
 
     def initMediaBar(self):
         sysbar = QToolBar("Media Controls Bar Visibility")

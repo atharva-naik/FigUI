@@ -560,7 +560,7 @@ class FigLauncher(QWidget):
             self.animations[-1].hide()
             self.showingWeatherAnimation = not(self.showingWeatherAnimation)
             return
-        weather = "snow"
+        weather = "sunny"
         # dimensions of launcher window.
         w = self.width() # x coordinate of initial point.
         h = self.height() # y coordinate of initial point.s

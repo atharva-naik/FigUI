@@ -142,20 +142,17 @@
 
 <div style="text-align: center">
 <div style="display: inline-block; text-align: left">
-<textarea id="html-edit">
-{{ HTML_FILE_CONTENT }}
-</textarea>
 <p style="font-family: Monospace; text-align: center">
     <select style="opacity: 0">
     <!-- <option selected></option> -->
     </select>
 </p>
+<textarea id="html-edit">
+{{ HTML_FILE_CONTENT }}
+</textarea>
 </div>
 
 <div style="display: inline-block; text-align: left">
-<textarea id="css-edit">
-{{ CSS_FILE_CONTENT }}
-</textarea>
 <p style="font-family: Monospace; text-align: center">
     <select style="text-align: center; background-color: #292929; color: #32a852; font-family: Monospace; border: 0px; outine: none;" onchange="selectTheme()" id=select>
     <option selected>default</option>
@@ -225,17 +222,20 @@
     <option>zenburn</option>
 </select>
 </p>
+<textarea id="css-edit">
+{{ CSS_FILE_CONTENT }}
+</textarea>
 </div>  
 
 <div style="display: inline-block; text-align: left">
-<textarea id="js-edit">
-{{ JS_FILE_CONTENT }}
-</textarea>
 <p style="font-family: Monospace; text-align: center">
     <select style="opacity: 0">
     <!-- <option selected></option> -->
     </select>
 </p>
+<textarea id="js-edit">
+{{ JS_FILE_CONTENT }}
+</textarea>
 </div>
 </div>  
 
@@ -261,7 +261,7 @@
                 smartIndent: true,
                 theme: "dracula",
             });
-            htmlEditor.setSize(350, 300);
+            htmlEditor.setSize(430, 400);
             htmlEditor.setOption('viewportMargin', Infinity);
             htmlEditor.on('change', function(codeMirror) {
                 // renderedHtml.innerHTML = codeMirror.getValue()
@@ -288,7 +288,7 @@
                 smartIndent: true,
                 theme: "dracula",
             });
-            cssEditor.setSize(350, 300);
+            cssEditor.setSize(430, 400);
             cssEditor.setOption('viewportMargin', Infinity);
             CodeMirror.on(window, "hashchange", function() {
                 var theme = location.hash.slice(1);
@@ -308,7 +308,7 @@
                 smartIndent: true,
                 theme: "dracula",
             });
-            jsEditor.setSize(350, 300);
+            jsEditor.setSize(430, 400);
             jsEditor.setOption('viewportMargin', Infinity);
             CodeMirror.on(window, "hashchange", function() {
                 var theme = location.hash.slice(1);

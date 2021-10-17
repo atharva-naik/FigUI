@@ -1,4 +1,7 @@
 import os
+from pathlib import Path
+from typing import Union, List
+from argparse import Namespace
 from PyQt5.QtGui import QFont, QIcon
 from PyQt5.QtCore import QEventLoop, QTimer
 
@@ -87,3 +90,38 @@ def getThumbnail(path):
             return f"launcher/{ext}.svg"
         else: 
             return f"launcher/txt.png" # if ext is not recognized set it to txt
+
+
+class FigNS:
+    '''Global object FIG. Stores themes and other config info.'''
+    def __init__(self, path: Union[str, None, Path]=None):
+        from colormap import rgb2hex
+        from colormap import hex2rgb
+
+        if path:
+            self.reset(path)
+            return
+        self._FileViewer = Namespace()
+        self._FileViewer.CLHEX = "#89ff69" 
+        self._FileViewer.CDHEX = "#207869"
+        self._FileViewer.CLRGB = hex2rgb(self._FileViewer.CLHEX)
+        self._FileViewer.CDRGB = hex2rgb(self._FileViewer.CDHEX)
+        self._FileViewer.SCHEX = "#89ff69"
+        self._FileViewer.SCRGB = hex2rgb(self._FileViewer.SCHEX)
+        self._FileViewer.HCHEX = "#207869"
+        self._FileViewer.HCRGB = hex2rgb(self._FileViewer.HCHEX)
+
+    def reset(self, path: Union[str, Path]):
+        path = str(path)
+
+    @property
+    def FileViewer(self):
+        return self._FileViewer
+
+    @FileViewer.setter
+    def FileViewer(self, value):
+        '''basically make this read only.'''
+        pass
+
+
+Fig = FigNS()

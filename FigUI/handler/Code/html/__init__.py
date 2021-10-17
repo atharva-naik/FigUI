@@ -6,8 +6,8 @@ from jinja2 import Template
 from PyQt5.QtWebChannel import QWebChannel
 from PyQt5.QtCore import QThread, QUrl, QRegExp, QSize, Qt, QObject, pyqtSlot
 from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEngineProfile, QWebEngineSettings
-from PyQt5.QtGui import QIcon, QFont, QKeySequence, QTransform, QTextCharFormat, QRegExpValidator, QSyntaxHighlighter, QFontDatabase
-from PyQt5.QtWidgets import QApplication, QAction, QDialog, QPushButton, QTabWidget, QStatusBar, QToolBar, QWidget, QLineEdit, QMainWindow, QHBoxLayout, QVBoxLayout, QPlainTextEdit, QToolBar, QFrame, QSizePolicy
+from PyQt5.QtGui import QKeySequence
+from PyQt5.QtWidgets import QApplication, QToolBar, QSplitter, QShortcut
 
 
 def static(path):
@@ -120,13 +120,13 @@ class HTMLPreview(QWebEngineView):
         self.load(uri)
 
 
-class FigHTMLEditor(QWidget):
+class FigHTMLEditor(QSplitter):
     '''
     A code editor specialized for html files, with file support for
     rendering file previews.
     '''
     def __init__(self, path, parent=None):
-        super(FigHTMLEditor, self).__init__(parent=parent)
+        super(FigHTMLEditor, self).__init__(Qt.Vertical, parent=parent)
         self.path = path
         # html editor.
         self.html_editor = HTMLEditor(path, self)
@@ -135,11 +135,21 @@ class FigHTMLEditor(QWidget):
         self.html_preview.refresHTML(self.html_editor())
         self.html_preview.connect(self.html_editor)
         # setup layout.
-        layout = QVBoxLayout()
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.addWidget(self.html_editor)
-        layout.addWidget(self.html_preview)
-        self.setLayout(layout)
+        # layout = QVBoxLayout()
+        # layout.setContentsMargins(0, 0, 0, 0)
+        self.addWidget(self.html_editor)
+        self.addWidget(self.html_preview)
+        # self.ctrlB = QShortcut(QKeySequence("Ctrl+B"), self)
+        # self.ctrlB.activated.connect(self.togglePreview)
+        self.preview_visible = True
+        # self.setLayout(layout)
+    def togglePreview(self):
+        if self.preview_visible:
+            self.html_preview.hide()
+        else:
+            self.html_preview.show()
+        self.preview_visible = not self.preview_visible
+
 # class FigHTMLEditor(QWidget):
 #     '''
 #     A code editor specialized for html files, with file support for

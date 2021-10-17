@@ -7,9 +7,9 @@ from typing import Union, List
 import os, re, sys, glob, pathlib, datetime
 import argparse, mimetypes, platform, textwrap, subprocess
 from PyQt5.QtPrintSupport import *
-from PyQt5.QtCore import QThread, QUrl, QDir, QSize, Qt, QEvent, pyqtSlot, pyqtSignal, QObject
-from PyQt5.QtGui import QIcon, QKeySequence, QTransform, QFont, QFontDatabase, QMovie, QPixmap
-from PyQt5.QtWidgets import QAction, QWidget, QToolBar, QLabel, QVBoxLayout, QHBoxLayout, QToolButton, QScrollArea, QLineEdit, QFrame, QSizePolicy, QMessageBox, QTreeView, QFileSystemModel, QGraphicsDropShadowEffect
+from PyQt5.QtCore import QThread, QUrl, QDir, QSize, Qt, QEvent, pyqtSlot, pyqtSignal, QObject, QRect, QPoint
+from PyQt5.QtGui import QIcon, QKeySequence, QTransform, QFont, QFontDatabase, QMovie, QPixmap, QColor
+from PyQt5.QtWidgets import QAction, QWidget, QTabWidget, QToolBar, QTabBar, QLabel, QVBoxLayout, QHBoxLayout, QToolButton, QGraphicsView, QScrollArea, QLineEdit, QFrame, QSizePolicy, QMessageBox, QTreeView, QRubberBand,  QFileSystemModel, QGraphicsDropShadowEffect
 
 try:
     from utils import *
@@ -162,6 +162,35 @@ class FileViewerRefreshWorker(QObject):
         self.finished.emit()
 
 
+class GraphicsView(QGraphicsView):
+    rectChanged = pyqtSignal(QRect)
+
+    def __init__(self, *args, **kwargs):
+        QGraphicsView.__init__(self, *args, **kwargs)
+        self.rubberBand = QRubberBand(QRubberBand.Rectangle, self)
+        self.setMouseTracking(True)
+        self.origin = QPoint()
+        self.changeRubberBand = False
+
+    def mousePressEvent(self, event):
+        self.origin = event.pos()
+        self.rubberBand.setGeometry(QRect(self.origin, QSize()))
+        self.rectChanged.emit(self.rubberBand.geometry())
+        self.rubberBand.show()
+        self.changeRubberBand = True
+        QGraphicsView.mousePressEvent(self, event)
+
+    def mouseMoveEvent(self, event):
+        if self.changeRubberBand:
+            self.rubberBand.setGeometry(QRect(self.origin, event.pos()).normalized())
+            self.rectChanged.emit(self.rubberBand.geometry())
+        QGraphicsView.mouseMoveEvent(self, event)
+
+    def mouseReleaseEvent(self, event):
+        self.changeRubberBand = False
+        QGraphicsView.mouseReleaseEvent(self, event)
+
+
 class FigFileIcon(QToolButton):
     def __init__(self, path, parent=None, size=(120,120), textwidth=10):
         super(FigFileIcon, self).__init__(parent)
@@ -170,22 +199,26 @@ class FigFileIcon(QToolButton):
         self.path = path
         self.isfile = os.path.isfile(path)
         self.stem = pathlib.Path(path).stem
-        self.setStyleSheet('''
-            QToolTip {
-                border: 0px;
-                color: #fff;
-            }
-            QToolButton { 
-                border: 0px; 
-                background: transparent;
-                background-image: none;
-                color: #fff;
-            }
-            QToolButton:hover {
-                background: #e38c59; /* #009b9e; */
-                color: #292929;
-                font-weight: bold;
-        }''')
+        self.defaultStyle = '''
+        QToolTip {
+            border: 0px;
+            color: #fff;
+        }
+        QToolButton { 
+            border: 0px; 
+            background: transparent;
+            background-image: none;
+            color: #fff;
+        }
+        QToolButton:hover {
+            background: qlineargradient(x1 : 0, y1 : 0, x2 : 0, y2 : 2, stop : 0.0 '''+Fig.FileViewer.CDHEX+''', stop : 0.99 '''+Fig.FileViewer.CLHEX+'''); 
+            /* #e38c59; */ /* #009b9e; */
+            color: #292929;
+            font-weight: bold;
+        }        
+        ''' 
+        self.selectedStyle = f"background: {Fig.FileViewer.SCHEX}; color: #292929; font-weight: bold"
+        self.setStyleSheet(self.defaultStyle)
         self.setAttribute(Qt.WA_TranslucentBackground)
         self.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
         text = "\n".join(textwrap.wrap(self.name[:textwidth*3], width=textwidth))
@@ -196,6 +229,12 @@ class FigFileIcon(QToolButton):
         self._getFileProperties()
         self._setThumbnail()
         self._setPropertiesTip()
+
+    def unselect(self):
+        self.setStyleSheet(self.defaultStyle)
+
+    def select(self):
+        self.setStyleSheet(self.selectedStyle)
 
     def _getMimeType(self):
         mimeType,_ = mimetypes.guess_type(self.path) 
@@ -465,6 +504,8 @@ class FigFileViewer(QWidget):
         import time
         start = time.time()
 
+        self.bgStyle = "url('/home/atharva/GUI/FigUI/FigUI/assets/icons/email/bg_texture2.png');"
+
         self.init_thread = QThread()
         self.init_worker = FileViewerInitWorker()
         self.init_worker.moveToThread(self.init_thread)
@@ -493,10 +534,14 @@ class FigFileViewer(QWidget):
         self.propbar = self.initPropBar()
         self.editbar = self.initEditBar()
         self.viewbar = self.initViewBar()
+        self.mainMenu = self.initMainMenu()
         # self.utilbar = self.initUtilBar()
-        self.layout.addWidget(self.navbar)
-        self.layout.addWidget(self.editbar)
-        self.layout.addWidget(self.propbar)
+
+        # self.layout.addWidget(self.navbar)
+        # self.layout.addWidget(self.editbar)
+        # self.layout.addWidget(self.propbar)
+        
+        self.layout.addWidget(self.mainMenu)
         print("created toolbars:", time.time()-start)
         # self.layout.addWidget(self.viewbar)
         # self.layout.addWidget(self.utilbar)
@@ -508,12 +553,164 @@ class FigFileViewer(QWidget):
         # selBtn = self.gridLayout.itemAt(0).widget()
         # selBtn.setStyleSheet("background: color(0, 0, 255, 50)")
         # self.highlight(0)
-
+        self.ribbon_visible = True
         # link folder nav bar buttons.
         if self._parent:
             self._parent.backNavBtn.clicked.connect(self.prevPath)
             self._parent.nextNavBtn.clicked.connect(self.nextPath)
         print("created toolbars:", time.time()-start)
+
+    def hideRibbon(self):
+        if self.ribbon_visible:
+            self.mainMenu.setFixedHeight(30)
+            self.hideBtn.setIcon(FigIcon("fileviewer/show_ribbon.svg"))
+        else:
+            self.mainMenu.setMaximumHeight(130)
+            self.hideBtn.setIcon(FigIcon("fileviewer/hide_ribbon.svg"))
+        self.ribbon_visible = not(
+            self.ribbon_visible
+        )
+
+    def initSearchMenu(self):
+        searchMenu = QWidget()
+        return searchMenu
+
+    def initConvertMenu(self):
+        convertMenu = QWidget()
+        return convertMenu
+
+    def initMoreMenu(self):
+        moreMenu = QWidget()
+        return moreMenu
+
+    def initMainMenu(self):
+        '''create main menu for file browser.'''
+        tb = "\t"*4
+        mainMenu = QTabWidget()
+        self.fileMenu = self.initFileMenu()
+        mainMenu.addTab(self.fileMenu, tb+"File"+tb)
+        self.editMenu = self.initEditMenu()
+        mainMenu.addTab(self.editMenu, tb+"Edit"+tb)
+        self.homeMenu = self.initHomeMenu()
+        mainMenu.addTab(self.homeMenu, tb+"Home"+tb)
+        self.viewMenu = self.initViewMenu()
+        mainMenu.addTab(self.viewMenu, tb+"View"+tb)
+        self.propMenu = self.initPropMenu()
+        mainMenu.addTab(self.propMenu, tb+"Properties"+tb)
+        self.searchMenu = self.initSearchMenu()
+        mainMenu.addTab(self.searchMenu, tb+"Search"+tb)
+        self.convertMenu = self.initConvertMenu()
+        mainMenu.addTab(self.convertMenu, tb+"Convert"+tb)
+        self.shareMenu = self.initShareMenu()
+        mainMenu.addTab(self.shareMenu, tb+"Share"+tb)
+        self.moreMenu = self.initMoreMenu()
+        mainMenu.addTab(self.moreMenu, tb+"More"+tb)
+        # hide the ribbon.
+        self.hideBtn = QToolButton(mainMenu)
+        self.hideBtn.clicked.connect(self.hideRibbon)
+        self.hideBtn.setIcon(FigIcon("fileviewer/hide_ribbon.svg"))
+        self.hideBtn.setStyleSheet('''
+            QToolButton {
+                border: 0px;
+                background: transparent;
+            }''')
+        # info button.
+        self.infoBtn = QToolButton(mainMenu)
+        self.infoBtn.pressed.connect(lambda: print("info"))
+        self.infoBtn.setIcon(FigIcon("fileviewer/help.svg"))
+        self.infoBtn.setStyleSheet('''
+            QToolButton {
+                border: 0px;
+                background: transparent;
+            }''')
+
+        mainMenu.addTab(QWidget(), "")
+        mainMenu.addTab(QWidget(), "")
+        mainMenu.tabBar().setTabButton(9, QTabBar.RightSide, self.hideBtn)
+        mainMenu.tabBar().setTabButton(10, QTabBar.RightSide, self.infoBtn)
+
+        mainMenu.setCurrentIndex(0)
+        mainMenu.setStyleSheet('''
+            QTabWidget {
+                background: '''+self.bgStyle+'''
+                color: #000;
+                border: 0px;
+            }
+            QTabWidget::pane {
+                background: '''+self.bgStyle+'''
+                border: 0px;
+            }
+            QTabBar {
+                background: #484848;
+                border: 0px;
+            }
+            QTabBar::tab {
+                color: #fff;
+                border: 0px;
+                margin: 0px;
+                padding: 0px;
+                font-size: 16px;
+                background: #292929;
+            }
+            QTabBar::tab:hover {
+                /* background: qlineargradient(x1 : 0, y1 : 1, x2 : 0, y2 : 0, stop : 0.0 #70121c, stop : 0.6 #b31f2f, stop : 0.8 #de2336); */
+                /* background: #ffbb63; */
+                background: '''+ Fig.FileViewer.CLHEX +''';
+                color: #292929;
+            }
+            QTabBar::tab:selected {
+                /* background: qlineargradient(x1 : 0, y1 : 0, x2 : 0, y2 : 2, stop : 0.0 #de891b, stop : 0.99 #ffbb63); */
+                background: qlineargradient(x1 : 0, y1 : 0, x2 : 0, y2 : 2, stop : 0.0 '''+Fig.FileViewer.CDHEX+''', stop : 0.99 '''+Fig.FileViewer.CLHEX+'''); 
+                color: #fff;
+                /* font-weight: bold; */
+            }
+            QToolTip { 
+                color: #fff;
+                border: 0px;
+        }''')
+        glowEffect = QGraphicsDropShadowEffect()
+        glowEffect.setBlurRadius(50)
+        glowEffect.setOffset(30,0)
+        glowEffect.setColor(QColor(*Fig.FileViewer.CDRGB))
+        mainMenu.setGraphicsEffect(glowEffect)
+        mainMenu.setMaximumHeight(130)
+
+        return mainMenu
+
+    def initFileMenu(self):
+        fileMenu = QWidget()
+       
+        return fileMenu
+
+    def initHomeMenu(self):
+        homeMenu = QWidget()
+
+        return homeMenu
+
+    def initViewMenu(self):
+        viewMenu = QWidget()
+
+        return viewMenu
+
+    def initPropMenu(self):
+        propMenu = QWidget()
+
+        return propMenu
+
+    def initShareMenu(self):
+        shareMenu = QWidget()
+
+        return shareMenu
+
+    def initNavBar(self):
+        navbar = QWidget()
+
+        return navbar
+
+    def initEditMenu(self):
+        editMenu = QWidget()
+
+        return editMenu
 
     def initNavBar(self):
         navbar = QWidget()
@@ -977,12 +1174,12 @@ class FigFileViewer(QWidget):
     def highlight(self, j):
         try:
             selBtn = self.gridLayout.itemAt(self.j).widget()
-            selBtn.setStyleSheet("background: transparent; color: #fff; border: 0px")
+            selBtn.unselect()
             selBtn.setAttribute(Qt.WA_TranslucentBackground)
             self.j = j
             selBtn = self.gridLayout.itemAt(self.j).widget()
-            selBtn.setStyleSheet("background: #ff5e00; color: #292929; font-weight: bold")
-            #42f2f5
+            # selBtn.setStyleSheet("background: #ff5e00; color: #292929; font-weight: bold")
+            selBtn.select()
         except AttributeError:
             self.back()
     # def eventFilter(self, source, event):

@@ -68,23 +68,24 @@ class FigEmailClient(QWidget):
         mailMenu = QTabWidget()
         # add logo for fig mail.
         mailMenu.addTab(QWidget(), self.linker.FigIcon("sidebar/email.png"), "")
+        tb = "\t\t\t\t"
         # file menu tab.
         fileMenu = self.initFileMenu()
-        mailMenu.addTab(fileMenu, "\t\t\t\t\t\tFile\t\t\t\t\t\t")
+        mailMenu.addTab(fileMenu, f"{tb}File{tb}")
         # home menu tab.
         homeMenu = self.initHomeMenu()
-        mailMenu.addTab(homeMenu, "\t\t\t\t\t\tHome\t\t\t\t\t\t")
-        # folder menu tab.
-        folderMenu = self.initFolderMenu()
-        mailMenu.addTab(folderMenu, "\t\t\t\t\t\tFolder\t\t\t\t\t\t")
-        # view layout tab.
+        mailMenu.addTab(homeMenu, f"{tb}Home{tb}")
         viewMenu = self.initViewMenu()
-        mailMenu.addTab(viewMenu, "\t\t\t\t\t\tView\t\t\t\t\t\t")
-        # help tab.
-        helpMenu = self.initHelpMenu()
-        mailMenu.addTab(helpMenu, "\t\t\t\t\t\tHelp\t\t\t\t\t\t")
+        mailMenu.addTab(viewMenu, f"{tb}View{tb}")
+        # attachment tab.
+        attachMenu = self.initAttachMenu()
+        mailMenu.addTab(attachMenu, f"{tb}Attachments{tb}")
+        # view layout tab.
+        # Calendar tab.
+        calMenu = self.initCalendarMenu()
+        mailMenu.addTab(calMenu, f"{tb}Calendar{tb}")
         # tell me what to do.
-        mailMenu.addTab(QWidget(), self.linker.FigIcon("email/help.svg"), "Tell me what you want to do")
+        mailMenu.addTab(QWidget(), self.linker.FigIcon("email/help.svg"), "What can I help you with?")
         # mailMenu.setObjectName("MailMenu")
         mailMenu.setStyleSheet('''
             QTabWidget {
@@ -150,7 +151,10 @@ class FigEmailClient(QWidget):
 
         return helpBtn 
 
-    def initHelpMenu(self):
+    def initAttachMenu(self):
+        return QWidget()
+
+    def initCalendarMenu(self):
         return QWidget()
 
     def initFileMenu(self):
@@ -895,14 +899,16 @@ class FigEmailClient(QWidget):
         markReadBtn.setIcon(self.linker.FigIcon("email/mark_read.svg"))
         markReadBtn.setIconSize(QSize(16,16))
         markReadBtn.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
-        markReadBtn.setText("Read")
+        markReadBtn.setText(" Read ")
+        markReadBtn.setFixedWidth(50)
         topLayout.addWidget(markReadBtn)
 
         notifsBtn = QToolButton(topRibbon)
         notifsBtn.setIcon(self.linker.FigIcon("email/email_notifs.svg"))
         notifsBtn.setIconSize(QSize(16,16))
         notifsBtn.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
-        notifsBtn.setText("Notifs")
+        notifsBtn.setText(" Notifs ")
+        notifsBtn.setFixedWidth(60)
         topLayout.addWidget(notifsBtn)
 
         schedBtn = QToolButton(topRibbon)
@@ -910,6 +916,7 @@ class FigEmailClient(QWidget):
         schedBtn.setIconSize(QSize(16,16))
         schedBtn.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
         schedBtn.setText("Schedule")
+        schedBtn.setFixedWidth(60)
         topLayout.addWidget(schedBtn)
 
         unmarkReadBtn = QToolButton(bottomRibbon)
@@ -917,6 +924,7 @@ class FigEmailClient(QWidget):
         unmarkReadBtn.setIconSize(QSize(16,16))
         unmarkReadBtn.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
         unmarkReadBtn.setText("Unread")
+        unmarkReadBtn.setFixedWidth(50)
         bottomLayout.addWidget(unmarkReadBtn)
 
         settingsBtn = QToolButton(bottomRibbon)
@@ -924,13 +932,15 @@ class FigEmailClient(QWidget):
         settingsBtn.setIconSize(QSize(16,16))
         settingsBtn.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
         settingsBtn.setText("Settings")
+        settingsBtn.setFixedWidth(60)
         bottomLayout.addWidget(settingsBtn)
 
         encryptBtn = QToolButton(bottomRibbon)
         encryptBtn.setIcon(self.linker.FigIcon("email/email_encrypt.svg"))
         encryptBtn.setIconSize(QSize(16,16))
         encryptBtn.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
-        encryptBtn.setText("Encrypt")
+        encryptBtn.setText(" Encrypt")
+        encryptBtn.setFixedWidth(60)
         bottomLayout.addWidget(encryptBtn)
 
         # set style of top and bootm ribbons. 
