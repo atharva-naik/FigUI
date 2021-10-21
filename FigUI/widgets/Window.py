@@ -16,7 +16,7 @@ try:
     from Tab import FigTabWidget
     from Launcher import FigLauncher
     from FigUI.handler import FigHandler
-    # from FigUI.handler.Code import CodeEditor
+    from FigUI.handler.Code import CodeEditor
     from FigUI.subSystem.Clock import FigClock
     from FigUI.subSystem.Shell import FigShell
     from FigUI.subSystem.ChatBot import FigChatBot
@@ -40,7 +40,7 @@ except ImportError:
     from ..handler import FigHandler
     from .Launcher import FigLauncher
     from .SearchBar import FigSearchBar
-    # from ..handler.Code import CodeEditor
+    from ..handler.Code import CodeEditor
     from ..subSystem.Clock import FigClock
     from ..subSystem.Shell import FigShell
     from .QRCodeCreator import FigQRCodeWindow
@@ -790,10 +790,11 @@ class FigWindow(QMainWindow):
 
         self.tabs = QTabWidget() # tab widget
         # self.tabs.setDocumentMode(True) # making document mode true
+        # self.tabs.tabBar().setExpanding(True)
         self.tabs.tabBarDoubleClicked.connect(self.addNewTab)
         # adding action when tab is changed
         self.tabs.currentChanged.connect(self.onCurrentTabChange)
-        # making tabs closeable	 		
+        # making tabs closeable	
         self.tabs.setTabsClosable(True) 	
         self.tabs.tabCloseRequested.connect(self.onCurrentTabClose) # adding action when tab close is requested
         # self.tabs.setGraphicsEffect(self.blur_effect)
@@ -837,6 +838,7 @@ class FigWindow(QMainWindow):
             margin-right: 1px;
             margin-left: 1px;
             border: 0px;
+            font-size: 16px;
         }
         QTabBar::tab:hover {
             /* background: qlineargradient(x1 : 0, y1 : 1, x2 : 0, y2 : 0, stop : 0.0 #70121c, stop : 0.6 #b31f2f, stop : 0.8 #de2336); */
@@ -847,8 +849,8 @@ class FigWindow(QMainWindow):
             /* background: qlineargradient(x1 : 0, y1 : 0, x2 : 0, y2 : 1, stop : 0.0 #61313c, stop : 0.8 #451f2b, stop : 1.0 #331018); */
             background: qlineargradient(x1 : 0, y1 : 0, x2 : 0, y2 : 2, stop : 0.0 #e38c59, stop : 0.99 #ff5e00); 
             color: #fff;
-            padding-top: 5px;
-            padding-bottom: 5px;
+            padding-top: 2px;
+            padding-bottom: 2px;
             padding-left: 9px;
             padding-right: 5px;
             /* border-top-left-radius: 6px;
@@ -856,31 +858,42 @@ class FigWindow(QMainWindow):
         }
         ''') # TODO: theme
         self.logger = FigLogger(path=f"logs/{datetime.datetime.now().strftime('%d_%b_%Y_%H_%M_%S')}.log")
+        
+        self.wrapperWidget = QWidget()
+        self.wrapperWidgetLayout = QVBoxLayout()
+        self.wrapperWidgetLayout.setContentsMargins(0,0,0,0)
+        self.wrapperWidgetLayout.setSpacing(0)
+        self.mainMenu = self.initMainMenu() 
+        self.wrapperWidgetLayout.addWidget(self.mainMenu)
         self.centralWidget = QSplitter(Qt.Horizontal)
-        # self.centralWidget.layout = QHBoxLayout()
-        # self.centralWidget.layout.setContentsMargins(0, 0, 0, 0)
-        # side bar with hierarchical file explorer.
-        # self.centralWidget.layout.addWidget(self.fileTree)
-        # self.centralWidget.layout.addWidget(self.tabs)
         self.centralWidget.addWidget(self.fileTree)
         self.centralWidget.addWidget(self.tabs)
         self.centralWidget.addWidget(self.activity)
         self.centralWidget.setStyleSheet("background: #292929")
+        self.wrapperWidgetLayout.addWidget(self.centralWidget)
+        self.wrapperWidget.setLayout(self.wrapperWidgetLayout)
+        self.ribbon_visible = True
+        self.hideRibbon()
         # self.centralWidget.layout.addWidget(QPushButton("Wow"))
         # self.centralWidget.setLayout(self.centralWidget.layout)
-        self.setCentralWidget(self.centralWidget) # making tabs as central widget
+        self.setCentralWidget(self.wrapperWidget) # making tabs as central widget
         self.statusBar = QStatusBar() # creating a status bar
         self.handler = FigHandler(self)
         self.fig_history = HistoryLogger()
         self.fig_launcher = FigLauncher(self)
         # self.newTabBtn.clicked.connect(self.addNewTab)
         self.tabs.addTab(self.fig_launcher, FigIcon("launcher.png"), "\tLauncher")
-        self.tabs.tabBar().setTabButton(0, QTabBar.RightSide,None) # make launcher tab unclosable.
+        self.tabs.tabBar().setTabButton(0, QTabBar.RightSide,None) 
+        # make launcher tab unclosable.
         # self.setLayout(self.layout)
         self.setAttribute(Qt.WA_TranslucentBackground, True) # NOTE: need for rounded corners
         # fullscreen on F11.
         self.isfullscreen = False
         self.ctrlBar.hide()
+        self.debugBar.hide()
+        self.bottomBar.hide()
+        self.folderBar.hide()
+        self.shortcutBar.hide()
         self.browserNavBar.hide()
         # self.showFullScreen()
         if PLATFORM == "Linux":
@@ -1518,6 +1531,7 @@ class FigWindow(QMainWindow):
         # shell = QWidget.createWindowContainer(window)
         i = self.tabs.addTab(terminal, FigIcon("launcher/bash.png"), "\tTerminal")
         self.tabs.setCurrentIndex(i)
+        self.tabs.tabBar().setExpanding(True)
         # self.tabs.setTabWhatsThis(i, "xterm (embedded)")
         self.tabs.setTabToolTip(i, "xterm (embedded)")
         self.log("launcher/bash.png", "Terminal")
@@ -1633,6 +1647,20 @@ class FigWindow(QMainWindow):
     
     def onCurrentTabChange(self, i):
         '''when tab is changed.'''
+        currentWidget = self.tabs.currentWidget()
+        # print(type(currentWidget))
+        if isinstance(currentWidget, FigFileViewer):
+            self.folderBar.show()
+            self.shortcutBar.show()
+        else:
+            self.folderBar.hide()
+            self.shortcutBar.hide()
+        if isinstance(currentWidget, (CodeEditor)):
+            self.bottomBar.show()
+            self.debugBar.show()
+        else:
+            self.bottomBar.hide()
+            self.debugBar.hide()
         try:
             qurl = self.tabs.currentWidget().url() # get the curl
 		    # self.update_urlbar(qurl, self.tabs.currentWidget()) # update the url 
@@ -1640,12 +1668,7 @@ class FigWindow(QMainWindow):
             self.tabs.setTabText(i, qurl.toString())
         except AttributeError:
             self.browserNavBar.hide()
-        # shadow effect for tab.
-        # shadowEffect = QGraphicsDropShadowEffect(self)
-        # shadowEffect.setOffset(0, 0)
-        # shadowEffect.setColor(QColor(255, 213, 0))
-        # shadowEffect.setBlurRadius(50)
-        # tabBar.tabButton(i-1, right).setGraphicsEffect(shadowEffect)
+        
         self.langBtn.setIcon(self.tabs.tabIcon(i))
         filename = pathlib.Path(self.tabs.tabText(i).split("...")[0].strip()
         ).__str__().strip()
@@ -1710,7 +1733,8 @@ class FigWindow(QMainWindow):
             color: #fff;
             border-top-left-radius: 10px;
             border-top-right-radius: 10px;
-            background: qlineargradient(x1 : 0, y1 : 0, x2 : 0, y2 : 1, stop : 0.0 #6e6e6e, stop : 0.8 #4a4a4a, stop : 1.0 #292929);
+            background: url('/home/atharva/GUI/FigUI/FigUI/assets/icons/email/bg_texture2.png');
+            /* background: qlineargradient(x1 : 0, y1 : 0, x2 : 0, y2 : 1, stop : 0.0 #6e6e6e, stop : 0.8 #4a4a4a, stop : 1.0 #292929); */
         }''')
         toolbar.setIconSize(QSize(20,20))
         toolbar.setMovable(False)
@@ -1764,7 +1788,7 @@ class FigWindow(QMainWindow):
                 margin-bottom: 1px;
                 margin-left: 2px;
                 margin-right: 2px;
-                border-radius: 14px; 
+                border-radius: 16px; 
             }
             QToolButton:hover {
                 background: rgba(255, 223, 97, 0.5);
@@ -1823,6 +1847,7 @@ class FigWindow(QMainWindow):
         toolbar.addWidget(ontopBtn)
         toolbar.addWidget(opacDownBtn)
         toolbar.addWidget(blankR)
+        toolbar.setMaximumHeight(28)
 
         return toolbar
 
@@ -1907,32 +1932,32 @@ class FigWindow(QMainWindow):
     def folderNavBar(self):
         backBtnStyle = '''
         QPushButton:hover{
-                background: qlineargradient(x1 : 0, y1 : 0, x2 : 1, y2 : 0, stop : 0.0 #292929, stop : 0.2 #4a4a4a, stop : 1.0 #6e6e6d);
+            background: qlineargradient(x1 : 0, y1 : 0, x2 : 1, y2 : 0, stop : 0.0 #292929, stop : 0.2 #4a4a4a, stop : 1.0 #6e6e6d);
         }
 
         QPushButton {
-                border: 1px solid;
-                border-radius: 2px;
-                background: qlineargradient(x1 : 0, y1 : 0, x2 : 1, y2 : 0, stop : 0.0 #6e6e6d, stop : 0.8 #4a4a4a, stop : 1.0 #292929);
-                margin-left: 1px;
-                margin-right: 1px;
-                padding-top: 2px;
-                padding-bottom: 2px;
+            border: 1px solid;
+            border-radius: 2px;
+            background: qlineargradient(x1 : 0, y1 : 0, x2 : 1, y2 : 0, stop : 0.0 #6e6e6d, stop : 0.8 #4a4a4a, stop : 1.0 #292929);
+            margin-left: 1px;
+            margin-right: 1px;
+            padding-top: 2px;
+            padding-bottom: 2px;
         }
         '''
         nextBtnStyle = '''
         QPushButton:hover{
-                background: qlineargradient(x1 : 0, y1 : 0, x2 : 1, y2 : 0, stop : 0.0 #6e6e6d, stop : 0.8 #4a4a4a, stop : 1.0 #292929);
+            background: qlineargradient(x1 : 0, y1 : 0, x2 : 1, y2 : 0, stop : 0.0 #6e6e6d, stop : 0.8 #4a4a4a, stop : 1.0 #292929);
         }
 
         QPushButton {
-                border: 1px solid;
-                border-radius: 2px;
-                background: qlineargradient(x1 : 0, y1 : 0, x2 : 1, y2 : 0, stop : 0.0 #292929, stop : 0.2 #4a4a4a, stop : 1.0 #6e6e6d);
-                margin-left: 1px;
-                margin-right: 1px;
-                padding-top: 2px;
-                padding-bottom: 2px;
+            border: 1px solid;
+            border-radius: 2px;
+            background: qlineargradient(x1 : 0, y1 : 0, x2 : 1, y2 : 0, stop : 0.0 #292929, stop : 0.2 #4a4a4a, stop : 1.0 #6e6e6d);
+            margin-left: 1px;
+            margin-right: 1px;
+            padding-top: 2px;
+            padding-bottom: 2px;
         }
         '''
         # folderBtnStyle = '''
@@ -2000,6 +2025,105 @@ class FigWindow(QMainWindow):
         #         action = toolbar.addWidget(btn)
         #         self.folderBarActions.append(action)
         return toolbar
+
+    def hideRibbon(self):
+        if self.ribbon_visible:
+            self.mainMenu.setFixedHeight(25)
+            self.hideBtn.setIcon(FigIcon("fileviewer/show_ribbon.svg"))
+        else:
+            self.mainMenu.setMaximumHeight(80)
+            self.hideBtn.setIcon(FigIcon("fileviewer/hide_ribbon.svg"))
+        self.ribbon_visible = not(self.ribbon_visible)
+
+    def initMainMenu(self):
+        '''create main menu for file browser.'''
+        tb = "\t"*4
+        mainMenu = QTabWidget()
+        self.fileMenu = self.initAppMenu()
+        mainMenu.addTab(self.fileMenu, tb+"Apps"+tb)
+        # hide the ribbon.
+        self.hideBtn = QToolButton(mainMenu)
+        self.hideBtn.clicked.connect(self.hideRibbon)
+        self.hideBtn.setIcon(FigIcon("fileviewer/hide_ribbon.svg"))
+        self.hideBtn.setIconSize(QSize(23,23))
+        self.hideBtn.setStyleSheet('''
+        QToolButton {
+            border: 0px;
+            background: transparent;
+        }''')
+
+        mainMenu.addTab(QWidget(), "")
+        mainMenu.addTab(QWidget(), "")
+        mainMenu.tabBar().setTabButton(1, QTabBar.RightSide, self.hideBtn)
+
+        mainMenu.setCurrentIndex(0)
+        mainMenu.setStyleSheet('''
+        QTabWidget {
+            background:'''+Fig.Window.BG+'''
+            color: #000;
+            border: 0px;
+        }
+        QTabWidget::pane {
+            background:'''+Fig.Window.BG+'''
+            border: 0px;
+        }
+        QTabBar {
+            background:'''+Fig.Window.BG+'''
+            border: 0px;
+        }
+        QWidget {
+            background:'''+Fig.Window.BG+'''
+        }
+        QTabBar::tab {
+            color: #fff;
+            border: 0px;
+            margin: 0px;
+            padding: 0px;
+            font-size: 16px;
+            background: #292929;
+        }
+        QTabBar::tab:hover {
+            /* background: qlineargradient(x1 : 0, y1 : 1, x2 : 0, y2 : 0, stop : 0.0 #70121c, stop : 0.6 #b31f2f, stop : 0.8 #de2336); */
+            /* background: #ffbb63; */
+            background: '''+ Fig.Window.CLHEX +''';
+            color: #292929;
+        }
+        QTabBar::tab:selected {
+            /* background: qlineargradient(x1 : 0, y1 : 0, x2 : 0, y2 : 2, stop : 0.0 #de891b, stop : 0.99 #ffbb63); */
+            background: qlineargradient(x1 : 0, y1 : 0, x2 : 0, y2 : 2, stop : 0.0 '''+Fig.Window.CDHEX+''', stop : 0.99 '''+Fig.Window.CLHEX+'''); 
+            color: #fff;
+        }
+        QToolTip { 
+            color: #fff;
+            border: 0px;
+        }
+        QToolButton {
+            border: 0px;
+            font-size: 13px;
+            padding-left: 5px;
+            padding-right: 5px;
+            background: transparent;
+            color: #fff;
+        }
+        QToolButton:hover {
+            border: 0px;
+            background: qlineargradient(x1 : 0, y1 : 0, x2 : 0, y2 : 2, stop : 0.0 '''+Fig.Window.CDHEX+''', stop : 0.99 '''+Fig.Window.CLHEX+'''); 
+        }
+        QLabel { 
+            color: qlineargradient(x1 : 0, y1 : 0, x2 : 0, y2 : 1, stop : 0.0 '''+Fig.Window.CDHEX+''', stop : 0.99 '''+Fig.Window.CLHEX+''');
+            font-size: 14px;
+        }''')
+        glowEffect = QGraphicsDropShadowEffect()
+        glowEffect.setBlurRadius(50)
+        glowEffect.setOffset(30,0)
+        glowEffect.setColor(QColor(*Fig.Window.CDRGB))
+        mainMenu.setGraphicsEffect(glowEffect)
+        mainMenu.setMaximumHeight(80)
+
+        return mainMenu
+
+    def initAppMenu(self):
+        return QWidget()
 
     def packageManagerBar(self):
         toolbar = QToolBar("Package Manager Bar Visibility")

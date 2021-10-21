@@ -10,6 +10,7 @@ qrcode
 easydev
 imageio
 moviepy
+pydrive
 pymupdf
 pyttsx3
 colormap
@@ -25,6 +26,6 @@ matplotlib
 python-vlc
 py-wallpaper
 PyQtWebEngine
-# preview-generator
 charset-normalizer
+# preview-generator
 # screen-brightness-control

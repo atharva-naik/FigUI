@@ -173,6 +173,7 @@ class GraphicsView(QGraphicsView):
         self.changeRubberBand = False
 
     def mousePressEvent(self, event):
+        print("mouse press")
         self.origin = event.pos()
         self.rubberBand.setGeometry(QRect(self.origin, QSize()))
         self.rectChanged.emit(self.rubberBand.geometry())
@@ -428,10 +429,11 @@ Modified: {self.props.modified_time}
     #     self._gifLength = self._gifMovie.n_frames
     #     self.thread.start()
 
-class FigFileViewer(QWidget):
+class FigFileViewer(GraphicsView):
     def __init__(self, path=str(pathlib.Path.home()), parent=None, width=4, button_size=(100,100), icon_size=(60,60)):
         super(FigFileViewer, self).__init__(parent)   
         all_files = self.listFiles(path) # get list of all files and folders.
+        self.ribbon_visible = True
         self.path = path
         self._parent = parent
         self.scrollArea = QScrollArea()
@@ -532,17 +534,17 @@ class FigFileViewer(QWidget):
         start = time.time()
         self.navbar = self.initNavBar()
         self.propbar = self.initPropBar()
-        self.editbar = self.initEditBar()
+        # self.editbar = self.initEditBar()
         self.viewbar = self.initViewBar()
         self.mainMenu = self.initMainMenu()
         # self.utilbar = self.initUtilBar()
 
-        # self.layout.addWidget(self.navbar)
+        self.layout.addWidget(self.navbar)
         # self.layout.addWidget(self.editbar)
-        # self.layout.addWidget(self.propbar)
+        self.layout.addWidget(self.propbar)
         
         self.layout.addWidget(self.mainMenu)
-        print("created toolbars:", time.time()-start)
+        # print("created toolbars:", time.time()-start)
         # self.layout.addWidget(self.viewbar)
         # self.layout.addWidget(self.utilbar)
 
@@ -553,27 +555,23 @@ class FigFileViewer(QWidget):
         # selBtn = self.gridLayout.itemAt(0).widget()
         # selBtn.setStyleSheet("background: color(0, 0, 255, 50)")
         # self.highlight(0)
-        self.ribbon_visible = True
         # link folder nav bar buttons.
+        self.hideRibbon()
         if self._parent:
             self._parent.backNavBtn.clicked.connect(self.prevPath)
             self._parent.nextNavBtn.clicked.connect(self.nextPath)
-        print("created toolbars:", time.time()-start)
-
+        # print("created toolbars:", time.time()-start)
+        # self.setLayout(self.gridLayout)
     def hideRibbon(self):
         if self.ribbon_visible:
-            self.mainMenu.setFixedHeight(30)
+            self.mainMenu.setFixedHeight(25)
             self.hideBtn.setIcon(FigIcon("fileviewer/show_ribbon.svg"))
         else:
-            self.mainMenu.setMaximumHeight(130)
+            self.mainMenu.setMaximumHeight(120)
             self.hideBtn.setIcon(FigIcon("fileviewer/hide_ribbon.svg"))
         self.ribbon_visible = not(
             self.ribbon_visible
         )
-
-    def initSearchMenu(self):
-        searchMenu = QWidget()
-        return searchMenu
 
     def initConvertMenu(self):
         convertMenu = QWidget()
@@ -609,20 +607,22 @@ class FigFileViewer(QWidget):
         self.hideBtn = QToolButton(mainMenu)
         self.hideBtn.clicked.connect(self.hideRibbon)
         self.hideBtn.setIcon(FigIcon("fileviewer/hide_ribbon.svg"))
+        self.hideBtn.setIconSize(QSize(23,23))
         self.hideBtn.setStyleSheet('''
-            QToolButton {
-                border: 0px;
-                background: transparent;
-            }''')
+        QToolButton {
+            border: 0px;
+            background: transparent;
+        }''')
         # info button.
         self.infoBtn = QToolButton(mainMenu)
         self.infoBtn.pressed.connect(lambda: print("info"))
         self.infoBtn.setIcon(FigIcon("fileviewer/help.svg"))
         self.infoBtn.setStyleSheet('''
-            QToolButton {
-                border: 0px;
-                background: transparent;
-            }''')
+        QToolButton {
+            border: 0px;
+            background: transparent;
+        }''')
+        self.infoBtn.setIconSize(QSize(23,23))
 
         mainMenu.addTab(QWidget(), "")
         mainMenu.addTab(QWidget(), "")
@@ -631,42 +631,60 @@ class FigFileViewer(QWidget):
 
         mainMenu.setCurrentIndex(0)
         mainMenu.setStyleSheet('''
-            QTabWidget {
-                background: '''+self.bgStyle+'''
-                color: #000;
-                border: 0px;
-            }
-            QTabWidget::pane {
-                background: '''+self.bgStyle+'''
-                border: 0px;
-            }
-            QTabBar {
-                background: #484848;
-                border: 0px;
-            }
-            QTabBar::tab {
-                color: #fff;
-                border: 0px;
-                margin: 0px;
-                padding: 0px;
-                font-size: 16px;
-                background: #292929;
-            }
-            QTabBar::tab:hover {
-                /* background: qlineargradient(x1 : 0, y1 : 1, x2 : 0, y2 : 0, stop : 0.0 #70121c, stop : 0.6 #b31f2f, stop : 0.8 #de2336); */
-                /* background: #ffbb63; */
-                background: '''+ Fig.FileViewer.CLHEX +''';
-                color: #292929;
-            }
-            QTabBar::tab:selected {
-                /* background: qlineargradient(x1 : 0, y1 : 0, x2 : 0, y2 : 2, stop : 0.0 #de891b, stop : 0.99 #ffbb63); */
-                background: qlineargradient(x1 : 0, y1 : 0, x2 : 0, y2 : 2, stop : 0.0 '''+Fig.FileViewer.CDHEX+''', stop : 0.99 '''+Fig.FileViewer.CLHEX+'''); 
-                color: #fff;
-                /* font-weight: bold; */
-            }
-            QToolTip { 
-                color: #fff;
-                border: 0px;
+        QTabWidget {
+            background:'''+self.bgStyle+'''
+            color: #000;
+            border: 0px;
+        }
+        QTabWidget::pane {
+            background:'''+self.bgStyle+'''
+            border: 0px;
+        }
+        QTabBar {
+            background:'''+self.bgStyle+'''
+            border: 0px;
+        }
+        QWidget {
+            background:'''+self.bgStyle+'''
+        }
+        QTabBar::tab {
+            color: #fff;
+            border: 0px;
+            margin: 0px;
+            padding: 0px;
+            font-size: 16px;
+            background: #292929;
+        }
+        QTabBar::tab:hover {
+            /* background: qlineargradient(x1 : 0, y1 : 1, x2 : 0, y2 : 0, stop : 0.0 #70121c, stop : 0.6 #b31f2f, stop : 0.8 #de2336); */
+            /* background: #ffbb63; */
+            background: '''+ Fig.FileViewer.CLHEX +''';
+            color: #292929;
+        }
+        QTabBar::tab:selected {
+            /* background: qlineargradient(x1 : 0, y1 : 0, x2 : 0, y2 : 2, stop : 0.0 #de891b, stop : 0.99 #ffbb63); */
+            background: qlineargradient(x1 : 0, y1 : 0, x2 : 0, y2 : 2, stop : 0.0 '''+Fig.FileViewer.CDHEX+''', stop : 0.99 '''+Fig.FileViewer.CLHEX+'''); 
+            color: #fff;
+        }
+        QToolTip { 
+            color: #fff;
+            border: 0px;
+        }
+        QToolButton {
+            border: 0px;
+            font-size: 13px;
+            padding-left: 5px;
+            padding-right: 5px;
+            background: transparent;
+            color: #fff;
+        }
+        QToolButton:hover {
+            border: 0px;
+            background: qlineargradient(x1 : 0, y1 : 0, x2 : 0, y2 : 2, stop : 0.0 '''+Fig.FileViewer.CDHEX+''', stop : 0.99 '''+Fig.FileViewer.CLHEX+'''); 
+        }
+        QLabel { 
+            color: qlineargradient(x1 : 0, y1 : 0, x2 : 0, y2 : 1, stop : 0.0 '''+Fig.FileViewer.CDHEX+''', stop : 0.99 '''+Fig.FileViewer.CLHEX+''');
+            font-size: 14px;
         }''')
         glowEffect = QGraphicsDropShadowEffect()
         glowEffect.setBlurRadius(50)
@@ -679,16 +697,399 @@ class FigFileViewer(QWidget):
 
     def initFileMenu(self):
         fileMenu = QWidget()
-       
+        fileLayout = QHBoxLayout()
+        fileLayout.setSpacing(0)
+        fileLayout.setContentsMargins(0, 0, 0, 0)
+        # control groups
+        newGroup = QWidget() 
+        newLayout = QVBoxLayout()
+        newLayout.setSpacing(0)
+        newLayout.setContentsMargins(0, 0, 0, 0)
+        remGroup = QWidget() 
+        remLayout = QVBoxLayout()
+        remLayout.setSpacing(0)
+        remLayout.setContentsMargins(0, 0, 0, 0)
+        openGroup = QWidget()
+        openLayout = QVBoxLayout()
+        openLayout.setSpacing(0)
+        openLayout.setContentsMargins(0, 0, 0, 0)
+        renameGroup = QWidget()
+        renameLayout = QVBoxLayout()
+        renameLayout.setSpacing(0)
+        renameLayout.setContentsMargins(0, 0, 0, 0)
+
+        newToolBar = QWidget()
+        newToolBarLayout = QHBoxLayout()
+        newToolBarLayout.setSpacing(0)
+        newToolBarLayout.setContentsMargins(0, 0, 0, 0)   
+        
+        remToolBar = QWidget()
+        remToolBarLayout = QHBoxLayout()
+        remToolBarLayout.setSpacing(0)
+        remToolBarLayout.setContentsMargins(0, 0, 0, 0)
+
+        renameToolBar = QWidget()
+        renameToolBarLayout = QHBoxLayout()
+        renameToolBarLayout.setSpacing(0)
+        renameToolBarLayout.setContentsMargins(0, 0, 0, 0)
+
+        openToolBar = QWidget()
+        openToolBarLayout = QHBoxLayout()
+        openToolBarLayout.setSpacing(0)
+        openToolBarLayout.setContentsMargins(0, 0, 0, 0)
+
+        verticalRibbon = QWidget()
+        verticalRibbonLayout = QVBoxLayout()
+        verticalRibbonLayout.setSpacing(0)
+        verticalRibbonLayout.setContentsMargins(0, 0, 0, 0)
+
+        removeRibbon = QWidget()
+        removeRibbonLayout = QVBoxLayout()
+        removeRibbonLayout.setSpacing(0)
+        removeRibbonLayout.setContentsMargins(0, 0, 0, 0)
+
+        # create new link
+        newLinkBtn = QToolButton()
+        newLinkBtn.setIcon(FigIcon("fileviewer/softlink.svg"))
+        newLinkBtn.setIconSize(QSize(22,22))
+        newLinkBtn.setText("New Link")
+        newLinkBtn.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
+        verticalRibbonLayout.addWidget(newLinkBtn)
+        # create new note
+        newNoteBtn = QToolButton()
+        newNoteBtn.setIcon(FigIcon("fileviewer/add_note.svg"))
+        newNoteBtn.setIconSize(QSize(22,22))
+        newNoteBtn.setText("New Note")
+        newNoteBtn.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
+        verticalRibbonLayout.addWidget(newNoteBtn)
+        # create new tag
+        newTagBtn = QToolButton()
+        newTagBtn.setIcon(FigIcon("fileviewer/add_tags.svg"))
+        newTagBtn.setIconSize(QSize(22,22))
+        newTagBtn.setText("New Tag")
+        newTagBtn.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
+        verticalRibbonLayout.addWidget(newTagBtn)
+        verticalRibbon.setLayout(verticalRibbonLayout)
+        # create new file
+        newFileBtn = QToolButton()
+        newFileBtn.setIcon(FigIcon("fileviewer/new_file.svg"))
+        newFileBtn.setIconSize(QSize(30,30))
+        newFileBtn.setText("New File")
+        newFileBtn.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        newToolBarLayout.addWidget(newFileBtn)
+        # create new folder
+        newFolderBtn = QToolButton()
+        newFolderBtn.setIcon(FigIcon("fileviewer/new_folder.svg"))
+        newFolderBtn.setIconSize(QSize(30,30))
+        newFolderBtn.setText("New Folder")
+        newFolderBtn.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        newToolBarLayout.addWidget(newFolderBtn)
+        newToolBarLayout.addWidget(verticalRibbon)
+
+        # remove link
+        remLinkBtn = QToolButton()
+        remLinkBtn.setIcon(FigIcon("fileviewer/unlink.svg"))
+        remLinkBtn.setIconSize(QSize(22,22))
+        remLinkBtn.setText("Remove Link")
+        remLinkBtn.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
+        removeRibbonLayout.addWidget(remLinkBtn)
+        # remove note
+        remNoteBtn = QToolButton()
+        remNoteBtn.setIcon(FigIcon("fileviewer/rem_note.svg"))
+        remNoteBtn.setIconSize(QSize(22,22))
+        remNoteBtn.setText("Remove Note")
+        remNoteBtn.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
+        removeRibbonLayout.addWidget(remNoteBtn)
+        # remove tag
+        remTagBtn = QToolButton()
+        remTagBtn.setIcon(FigIcon("fileviewer/remove_tags.svg"))
+        remTagBtn.setIconSize(QSize(22,22))
+        remTagBtn.setText("Remove Tag")
+        remTagBtn.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
+        removeRibbonLayout.addWidget(remTagBtn)
+        removeRibbon.setLayout(removeRibbonLayout)
+        # delete folder/file
+        delBtn = QToolButton()
+        delBtn.setIcon(FigIcon("fileviewer/delete.svg"))
+        delBtn.setIconSize(QSize(30,30))
+        delBtn.setText("Delete")
+        delBtn.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        remToolBarLayout.addWidget(delBtn)
+        remToolBarLayout.addWidget(removeRibbon)
+        # rename file/folder
+        renameBtn = QToolButton()
+        renameBtn.setIcon(FigIcon("fileviewer/rename.svg"))
+        renameBtn.setIconSize(QSize(30,30))
+        renameBtn.setText("Rename")
+        delBtn.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        renameToolBarLayout.addWidget(renameBtn)
+
+        # open with.
+        openBtn = QToolButton()
+        openBtn.setIcon(FigIcon("fileviewer/open.svg"))
+        openBtn.setIconSize(QSize(30,30))
+        openBtn.setText("Open")
+        openBtn.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        openToolBarLayout.addWidget(openBtn)
+        # open in terminal
+        openInTermBtn = QToolButton()
+        openInTermBtn.setIcon(FigIcon("fileviewer/open_in_terminal.svg"))
+        openInTermBtn.setIconSize(QSize(30,30))
+        openInTermBtn.setText("Open in Terminal")
+        openInTermBtn.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        openInTermBtn.clicked.connect(self.openInTermTab)
+        openToolBarLayout.addWidget(openInTermBtn)
+        # open in browser
+        openInBrowserBtn = QToolButton()
+        openInBrowserBtn.setIcon(FigIcon("fileviewer/open_in_browser.svg"))
+        openInBrowserBtn.setIconSize(QSize(30,30))
+        openInBrowserBtn.setText("Open in Browser")
+        openInBrowserBtn.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        openToolBarLayout.addWidget(openInBrowserBtn)
+
+        # construct groups
+        ## new group
+        newToolBar.setLayout(newToolBarLayout)
+        newLayout.addWidget(newToolBar)
+        newLabel = QLabel("New")
+        newLabel.setAlignment(Qt.AlignCenter)
+        newLayout.addWidget(newLabel)
+        newGroup.setLayout(newLayout)
+        ## remove group
+        remToolBar.setLayout(remToolBarLayout)
+        remLayout.addWidget(remToolBar)
+        remLabel = QLabel("Remove")
+        remLabel.setAlignment(Qt.AlignCenter)
+        remLayout.addWidget(remLabel)
+        remGroup.setLayout(remLayout)
+        ## open group
+        openToolBar.setLayout(openToolBarLayout)
+        openLayout.addWidget(openToolBar)
+        openLabel = QLabel("Open")
+        openLabel.setAlignment(Qt.AlignCenter)
+        openLabel.setMaximumHeight(30)
+        openLayout.addWidget(openLabel)
+        openGroup.setLayout(openLayout)
+        ## rename group
+        renameToolBar.setLayout(renameToolBarLayout)
+        renameLayout.addWidget(renameToolBar)
+        renameLabel = QLabel("Rename")
+        renameLabel.setMaximumHeight(30)
+        renameLabel.setAlignment(Qt.AlignCenter)
+        renameLayout.addWidget(renameLabel)
+        renameGroup.setLayout(renameLayout)
+
+        # add groups.
+        fileLayout.addWidget(newGroup)
+        fileLayout.addWidget(self.addSpacer())
+        fileLayout.addWidget(remGroup)
+        fileLayout.addWidget(self.addSpacer())
+        fileLayout.addWidget(openGroup)
+        fileLayout.addWidget(self.addSpacer())
+        fileLayout.addWidget(renameGroup)
+        fileLayout.addWidget(self.addSpacer())
+        fileLayout.addWidget(self.addStretch())
+
+        # set layout
+        fileMenu.setLayout(fileLayout)
+
         return fileMenu
 
     def initHomeMenu(self):
+        '''
+        bookmark, history (version control), favourite (star), set as wallpaper, desktop shortcut, zip, select, encrypt etc.'''
         homeMenu = QWidget()
+        homeLayout = QHBoxLayout()
+        homeLayout.setSpacing(0)
+        homeLayout.setContentsMargins(0, 0, 0, 0)
+        # # control groups
+        # moveGroup = QWidget() 
+        # moveLayout = QVBoxLayout()
+        # moveLayout.setSpacing(0)
+        # moveLayout.setContentsMargins(0, 0, 0, 0)
+           
+        # pin to quick access.
+        pinBtn = QToolButton()
+        pinBtn.setIcon(FigIcon("fileviewer/pin.svg"))
+        pinBtn.setIconSize(QSize(35,35))
+        pinBtn.setText("\nPin to Quick\naccess")
+        pinBtn.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+
+        # add all groups
+        homeLayout.addWidget(pinBtn)
+        homeLayout.addWidget(self.addSpacer())
+        homeLayout.addWidget(self.addStretch())
+        homeMenu.setLayout(homeLayout)
 
         return homeMenu
 
+    def initSearchMenu(self):
+        searchMenu = QWidget()
+        searchLayout = QHBoxLayout()
+        searchLayout.setSpacing(0)
+        searchLayout.setContentsMargins(0, 0, 0, 0)
+        # control groups
+        filterGroup = QWidget()
+        filterLayout = QVBoxLayout()
+        filterLayout.setSpacing(0)
+        filterLayout.setContentsMargins(0, 0, 0, 0)
+        
+        filterLowerRibbon = QWidget()
+        filterUpperRibbon = QWidget()
+        filterUpperRibbonLayout = QHBoxLayout()
+        filterLowerRibbonLayout = QHBoxLayout()
+        filterUpperRibbonLayout.setSpacing(0)
+        filterLowerRibbonLayout.setSpacing(0)
+        filterUpperRibbonLayout.setContentsMargins(0, 0, 0, 0)
+        filterLowerRibbonLayout.setContentsMargins(0, 0, 0, 0)     
+        # filter
+        filtBtn = QToolButton()
+        filtBtn.setIcon(FigIcon("fileviewer/filter.svg"))
+        filtBtn.setIconSize(QSize(18,18))
+        filtBtn.setText(" Filter ")
+        filtBtn.setMinimumWidth(65)
+        filtBtn.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        filterUpperRibbonLayout.addWidget(filtBtn)
+        # filter add
+        filtAddBtn = QToolButton()
+        filtAddBtn.setIcon(FigIcon("fileviewer/filter_add.svg"))
+        filtAddBtn.setIconSize(QSize(18,18))
+        filtAddBtn.setText("   Add  ")
+        filtAddBtn.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        filterUpperRibbonLayout.addWidget(filtAddBtn)
+        # filter delete
+        filtDelBtn = QToolButton()
+        filtDelBtn.setIcon(FigIcon("fileviewer/filter_delete.svg"))
+        filtDelBtn.setIconSize(QSize(18,18))
+        filtDelBtn.setText(" Delete ")
+        filtDelBtn.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        filterUpperRibbonLayout.addWidget(filtDelBtn)
+        # filter negate
+        filtNegBtn = QToolButton()
+        filtNegBtn.setIcon(FigIcon("fileviewer/filter_negate.svg"))
+        filtNegBtn.setIconSize(QSize(18,18))
+        filtNegBtn.setText(" Negate ")
+        filtNegBtn.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        filterUpperRibbonLayout.addWidget(filtNegBtn)
+        # filter favourites
+        filtFavBtn = QToolButton()
+        filtFavBtn.setIcon(FigIcon("fileviewer/filter_favourites.svg"))
+        filtFavBtn.setIconSize(QSize(18,18))
+        filtFavBtn.setText("Favorite")
+        filtFavBtn.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        filterLowerRibbonLayout.addWidget(filtFavBtn)
+        # filter edit
+        filtEditBtn = QToolButton()
+        filtEditBtn.setIcon(FigIcon("fileviewer/filter_edit.svg"))
+        filtEditBtn.setIconSize(QSize(18,18))
+        filtEditBtn.setText("  Edit  ")
+        filtEditBtn.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        filterLowerRibbonLayout.addWidget(filtEditBtn)
+        # right expander
+        right = QWidget()
+        right.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        filterLowerRibbonLayout.addWidget(right)
+
+        filterLowerRibbon.setLayout(filterLowerRibbonLayout)
+        filterUpperRibbon.setLayout(filterUpperRibbonLayout)   
+        filterLayout.addWidget(filterUpperRibbon)
+        filterLayout.addWidget(filterLowerRibbon)
+        filterLabel = QLabel("Filter") 
+        filterLabel.setAlignment(Qt.AlignCenter)
+        filterLayout.addWidget(filterLabel)
+
+        filterGroup.setLayout(filterLayout)
+        filterGroup.setMaximumWidth(240)
+        # add all groups
+        searchLayout.addWidget(filterGroup)
+        searchLayout.addWidget(self.addSpacer())
+        searchLayout.addWidget(self.addStretch())
+        searchMenu.setLayout(searchLayout)
+
+        return searchMenu
+
     def initViewMenu(self):
         viewMenu = QWidget()
+        viewLayout = QHBoxLayout()
+        viewLayout.setSpacing(0)
+        viewLayout.setContentsMargins(0, 0, 0, 0)
+        # control groups
+        layoutGroup = QWidget() 
+        layoutLayout = QVBoxLayout()
+        layoutLayout.setSpacing(0)
+        layoutLayout.setContentsMargins(0, 0, 0, 0)
+
+        layoutToolBar = QWidget()
+        layoutToolBarLayout = QHBoxLayout()
+        layoutToolBarLayout.setSpacing(0)
+        layoutToolBarLayout.setContentsMargins(0, 0, 0, 0)
+        layoutToolBar.setLayout(layoutToolBarLayout)
+
+        sortRibbon = QWidget()
+        sortLayout = QVBoxLayout()
+        sortLayout.setSpacing(0)
+        sortLayout.setContentsMargins(0, 0, 0, 0)
+        sortRibbon.setLayout(sortLayout)
+
+        # sort ascending.
+        sortUpBtn = QToolButton()
+        sortUpBtn.setIcon(FigIcon("fileviewer/sort_ascending.svg"))
+        sortUpBtn.setIconSize(QSize(25,25))
+        sortUpBtn.clicked.connect(lambda: self.refresh(self.path, reverse=False))
+        sortUpBtn.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
+        sortUpBtn.setText("A to Z")
+        sortLayout.addWidget(sortUpBtn)
+        # sort descending.
+        sortDownBtn = QToolButton()
+        sortDownBtn.setIcon(FigIcon("fileviewer/sort_descending.svg"))
+        sortDownBtn.setIconSize(QSize(25,25))
+        sortDownBtn.clicked.connect(lambda: self.refresh(self.path, reverse=True))
+        sortDownBtn.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
+        sortLayout.addWidget(sortDownBtn)
+        sortDownBtn.setText("Z to A")
+        layoutToolBarLayout.addWidget(sortRibbon)
+
+        # # recently accessed files.
+        # recentBtn = QToolButton()
+        # recentBtn.setIcon(FigIcon("fileviewer/recent.svg"))
+        # propLayout.addWidget(recentBtn)
+        # # view hidden files.
+        # unhideBtn = QToolButton()
+        # unhideBtn.setIcon(FigIcon("fileviewer/unhide.svg"))
+        # unhideBtn.clicked.connect(lambda: self.unhide(self.path))
+        # propLayout.addWidget(unhideBtn)
+
+        # hideBtn = QToolButton()
+        # hideBtn.setIcon(FigIcon("fileviewer/hide.svg"))
+        # hideBtn.clicked.connect(lambda: self.refresh(self.path))
+        # propLayout.addWidget(hideBtn)
+        # # viewLayout.addWidget(QVLine())
+        # listViewBtn = QToolButton() # toggle list view.
+        # listViewBtn.setIcon(FigIcon("fileviewer/listview.svg"))
+        # propLayout.addWidget(listViewBtn)
+
+        # blockViewBtn = QToolButton() # toggle block view.
+        # blockViewBtn.setIcon(FigIcon("fileviewer/blockview.svg"))
+        # propLayout.addWidget(blockViewBtn) 
+
+        # # right spacer.
+        # right_spacer = QWidget()
+        # right_spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        # propLayout.addWidget(right_spacer)
+
+        # construct groups
+        layoutLayout.addWidget(layoutToolBar)
+        layoutLabel = QLabel("Layout")
+        layoutLabel.setAlignment(Qt.AlignCenter)
+        layoutLabel.setMaximumHeight(30)
+        layoutLayout.addWidget(layoutLabel)
+        layoutGroup.setLayout(layoutLayout)
+
+        # add all groups
+        viewLayout.addWidget(layoutGroup)
+        viewLayout.addWidget(self.addSpacer())
+        viewLayout.addWidget(self.addStretch())
+        viewMenu.setLayout(viewLayout)
 
         return viewMenu
 
@@ -702,32 +1103,161 @@ class FigFileViewer(QWidget):
 
         return shareMenu
 
-    def initNavBar(self):
-        navbar = QWidget()
-
-        return navbar
-
     def initEditMenu(self):
         editMenu = QWidget()
+        editLayout = QHBoxLayout()
+        editLayout.setSpacing(0)
+        editLayout.setContentsMargins(0, 0, 0, 0)
+        # control groups
+        moveGroup = QWidget() 
+        moveLayout = QVBoxLayout()
+        moveLayout.setSpacing(0)
+        moveLayout.setContentsMargins(0, 0, 0, 0)
+        
+        moveLowerRibbon = QWidget()
+        moveUpperRibbon = QWidget()
+        moveLowerRibbonLayout = QHBoxLayout()
+        moveUpperRibbonLayout = QHBoxLayout()
+        moveUpperRibbonLayout.setSpacing(0)
+        moveLowerRibbonLayout.setSpacing(0)
+        moveUpperRibbonLayout.setContentsMargins(0, 0, 0, 0)
+        moveLowerRibbonLayout.setContentsMargins(0, 0, 0, 0)     
+        
+        # cut file/folder
+        cutBtn = QToolButton()
+        cutBtn.setIcon(FigIcon("fileviewer/cut.png"))
+        cutBtn.setIconSize(QSize(22,22))
+        cutBtn.setText("Cut")
+        cutBtn.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        moveUpperRibbonLayout.addWidget(cutBtn)
+        # copy file/folder
+        copyBtn = QToolButton()
+        copyBtn.setIcon(FigIcon("fileviewer/copy.png"))
+        copyBtn.setIconSize(QSize(22,22))
+        copyBtn.setText("Copy")
+        copyBtn.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        moveUpperRibbonLayout.addWidget(copyBtn)
+        # paste file/folder
+        pasteBtn = QToolButton()
+        pasteBtn.setIcon(FigIcon("fileviewer/paste.png"))
+        pasteBtn.setIconSize(QSize(22,22))
+        pasteBtn.setText("Paste")
+        pasteBtn.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        moveUpperRibbonLayout.addWidget(pasteBtn)
+        # editLayout.addWidget(QVLine())
+        # undo
+        undoBtn = QToolButton()
+        undoBtn.setIcon(FigIcon("fileviewer/undo.svg"))
+        undoBtn.setIconSize(QSize(22,22))
+        # undoBtn.setText("Undo")
+        # undoBtn.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        moveLowerRibbonLayout.addWidget(undoBtn)
+        # redo
+        redoBtn = QToolButton()
+        redoBtn.setIcon(FigIcon("fileviewer/redo.svg"))
+        redoBtn.setIconSize(QSize(22,22))
+        # redoBtn.setText("Redo")
+        # redoBtn.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        moveLowerRibbonLayout.addWidget(redoBtn)
+        # copy absolute path.
+        copyPathBtn = QToolButton()
+        copyPathBtn.setIcon(FigIcon("fileviewer/copy_path.png"))
+        copyPathBtn.setIconSize(QSize(22,22))
+        # copyPathBtn.setText("Copy Path")
+        copyPathBtn.clicked.connect(self.copyPathToClipboard)
+        # copyPathBtn.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        moveLowerRibbonLayout.addWidget(copyPathBtn)
+
+        moveLowerRibbon.setLayout(moveLowerRibbonLayout)
+        moveUpperRibbon.setLayout(moveUpperRibbonLayout)   
+        moveLayout.addWidget(moveUpperRibbon)
+        moveLayout.addWidget(moveLowerRibbon)
+        moveGroupLabel = QLabel("Move") 
+        moveGroupLabel.setAlignment(Qt.AlignCenter)
+        moveLayout.addWidget(moveGroupLabel)
+
+        moveGroup.setLayout(moveLayout)
+
+        # add all groups
+        editLayout.addWidget(moveGroup)
+        editLayout.addWidget(self.addSpacer())
+        editLayout.addWidget(self.addStretch())
+        editMenu.setLayout(editLayout)
 
         return editMenu
 
     def initNavBar(self):
         navbar = QWidget()
         navLayout = QHBoxLayout() 
+        # step back one folder.
+        backBtn = QToolButton()
+        backBtn.setIcon(FigIcon("fileviewer/stepback.svg"))
+        backBtn.clicked.connect(self.back)
+        navLayout.addWidget(backBtn)
+        # prev item
+        prevBtn = QToolButton()
+        prevBtn.setIcon(FigIcon("fileviewer/back.svg"))
+        prevBtn.clicked.connect(self.prevPath)
+        navLayout.addWidget(prevBtn)
+        # next item
+        nextBtn = QToolButton()
+        nextBtn.setIcon(FigIcon("fileviewer/forward.svg"))
+        nextBtn.clicked.connect(self.nextPath)
+        navLayout.addWidget(nextBtn)
+        # search bar
         searchBar = QLineEdit()
         searchBar.setStyleSheet("background: #fff; color: #000")
         navLayout.addWidget(searchBar)
-        
+        # search button
         searchBtn = QToolButton()
         searchBtn.setIcon(FigIcon("fileviewer/search.svg"))
         searchBtn.setStyleSheet("border: 0px")
         navLayout.addWidget(searchBtn)
+        # match case.
+        caseBtn = QToolButton()
+        caseBtn.setIcon(FigIcon("fileviewer/case-sensitive.svg"))
+        # caseBtn.clicked.connect(self.back)
+        navLayout.addWidget(caseBtn)
+        # match whole word.
+        entireBtn = QToolButton()
+        entireBtn.setIcon(FigIcon("fileviewer/whole-word.svg"))
+        # backBtn.clicked.connect(self.back)
+        navLayout.addWidget(entireBtn)
+        # use regex search
+        regexBtn = QToolButton()
+        regexBtn.setIcon(FigIcon("fileviewer/regex_search.svg"))
+        # regexBtn.clicked.connect(self.back)
+        navLayout.addWidget(regexBtn)
 
         navLayout.setContentsMargins(5, 0, 5, 0)
         navbar.setLayout(navLayout) 
 
         return navbar
+
+    def addStretch(self):
+        stretchGroup = QWidget()
+        stretchGroup.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+
+        return stretchGroup
+
+    def addSpacer(self, width=10, background=None):
+        if background is None: 
+            background = self.bgStyle
+        spacer = QFrame(self)
+        spacer.setStyleSheet('''
+            QFrame {
+                border: 0px;
+                background: '''+background+''';
+            }
+            QFrame::VLine{
+                border: 1px;
+            }''')
+        spacer.setFrameShape(QFrame.VLine)
+        spacer.setFrameShadow(QFrame.Sunken)
+        spacer.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Expanding)
+        spacer.setFixedWidth(width)
+
+        return spacer
 
     def initPropBar(self):
         '''
@@ -784,16 +1314,6 @@ class FigFileViewer(QWidget):
         propBtn = QToolButton()
         propBtn.setIcon(FigIcon("fileviewer/properties.svg"))
         propLayout.addWidget(propBtn)
-        # open in terminal
-        openInTermBtn = QToolButton()
-        openInTermBtn.setIcon(FigIcon("fileviewer/open_in_terminal.svg"))
-        openInTermBtn.clicked.connect(self.openInTermTab)
-        propLayout.addWidget(openInTermBtn)
-        # open with.
-        openBtn = QToolButton()
-        openBtn.setIcon(FigIcon("fileviewer/open.svg"))
-        propLayout.addWidget(openBtn)
-        propLayout.addWidget(QVLine())
         # encrypt
         encryptBtn = QToolButton()
         encryptBtn.setIcon(FigIcon("fileviewer/encrypt.svg"))
@@ -811,23 +1331,10 @@ class FigFileViewer(QWidget):
         unzipBtn = QToolButton()
         unzipBtn.setIcon(FigIcon("fileviewer/zip.svg"))
         propLayout.addWidget(unzipBtn)
-        # notes
-        noteBtn = QToolButton()
-        noteBtn.setIcon(FigIcon("fileviewer/add_note.svg"))
-        propLayout.addWidget(noteBtn)
         # view and edit tags
         vETagsBtn = QToolButton()
         vETagsBtn.setIcon(FigIcon("fileviewer/tags.svg"))
         propLayout.addWidget(vETagsBtn)
-        # add tags
-        addTagBtn = QToolButton()
-        addTagBtn.setIcon(FigIcon("fileviewer/add_tags.svg"))
-        propLayout.addWidget(addTagBtn)
-        # clear all tags
-        clearTagsBtn = QToolButton()
-        clearTagsBtn.setIcon(FigIcon("fileviewer/remove_tags.svg"))
-        propLayout.addWidget(clearTagsBtn)
-        propLayout.addWidget(QVLine())
         # file share.
         fileShareBtn = QToolButton()
         fileShareBtn.setIcon(FigIcon("fileviewer/file_share.svg"))
@@ -836,55 +1343,8 @@ class FigFileViewer(QWidget):
         emailBtn = QToolButton()
         emailBtn.setIcon(FigIcon("fileviewer/email.svg"))
         propLayout.addWidget(emailBtn)
-        # copy absolute path.
-        copyPathBtn = QToolButton()
-        copyPathBtn.setIcon(FigIcon("fileviewer/copy_path.svg"))
-        copyPathBtn.clicked.connect(self.copyPathToClipboard)
-        propLayout.addWidget(copyPathBtn)
-        propLayout.addWidget(QVLine())
 
         #####
-        # sort ascending.
-        sortUpBtn = QToolButton()
-        sortUpBtn.setIcon(FigIcon("fileviewer/sort_ascending.svg"))
-        sortUpBtn.clicked.connect(lambda: self.refresh(self.path, reverse=False))
-        propLayout.addWidget(sortUpBtn)
-        # sort descending.
-        sortDownBtn = QToolButton()
-        sortDownBtn.setIcon(FigIcon("fileviewer/sort_descending.svg"))
-        sortDownBtn.clicked.connect(lambda: self.refresh(self.path, reverse=True))
-        propLayout.addWidget(sortDownBtn)
-        # viewLayout.addWidget(QVLine())
-        # recently accessed files.
-        recentBtn = QToolButton()
-        recentBtn.setIcon(FigIcon("fileviewer/recent.svg"))
-        # sortUpBtn.clicked.connect(self.nextPath)
-        propLayout.addWidget(recentBtn)
-        # view hidden files.
-        unhideBtn = QToolButton()
-        unhideBtn.setIcon(FigIcon("fileviewer/unhide.svg"))
-        unhideBtn.clicked.connect(lambda: self.unhide(self.path))
-        propLayout.addWidget(unhideBtn)
-
-        hideBtn = QToolButton()
-        hideBtn.setIcon(FigIcon("fileviewer/hide.svg"))
-        hideBtn.clicked.connect(lambda: self.refresh(self.path))
-        propLayout.addWidget(hideBtn)
-        # viewLayout.addWidget(QVLine())
-        listViewBtn = QToolButton() # toggle list view.
-        listViewBtn.setIcon(FigIcon("fileviewer/listview.svg"))
-        propLayout.addWidget(listViewBtn)
-
-        blockViewBtn = QToolButton() # toggle block view.
-        blockViewBtn.setIcon(FigIcon("fileviewer/blockview.svg"))
-        propLayout.addWidget(blockViewBtn) 
-        #####
-
-        # right spacer.
-        right_spacer = QWidget()
-        right_spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        propLayout.addWidget(right_spacer)
-
         propLayout.setContentsMargins(5, 0, 5, 0)
         propbar.setLayout(propLayout)        
 
@@ -929,41 +1389,6 @@ class FigFileViewer(QWidget):
         left_spacer = QWidget()
         left_spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         editLayout.addWidget(left_spacer)
-        # step back one folder.
-        backBtn = QToolButton()
-        backBtn.setIcon(FigIcon("fileviewer/stepback.svg"))
-        backBtn.clicked.connect(self.back)
-        editLayout.addWidget(backBtn)
-        # prev item
-        prevBtn = QToolButton()
-        prevBtn.setIcon(FigIcon("fileviewer/back.svg"))
-        prevBtn.clicked.connect(self.prevPath)
-        editLayout.addWidget(prevBtn)
-        # next item
-        nextBtn = QToolButton()
-        nextBtn.setIcon(FigIcon("fileviewer/forward.svg"))
-        nextBtn.clicked.connect(self.nextPath)
-        editLayout.addWidget(nextBtn)
-        editLayout.addWidget(QVLine())
-        # cut/copy/paste
-        cutBtn = QToolButton()
-        cutBtn.setIcon(FigIcon("fileviewer/cut.svg"))
-        editLayout.addWidget(cutBtn)
-        copyBtn = QToolButton()
-        copyBtn.setIcon(FigIcon("fileviewer/copy.svg"))
-        editLayout.addWidget(copyBtn)
-        pasteBtn = QToolButton()
-        pasteBtn.setIcon(FigIcon("fileviewer/paste.svg"))
-        editLayout.addWidget(pasteBtn)
-        # editLayout.addWidget(QVLine())
-        # undo/redo
-        undoBtn = QToolButton()
-        undoBtn.setIcon(FigIcon("fileviewer/undo.svg"))
-        editLayout.addWidget(undoBtn)
-        redoBtn = QToolButton()
-        redoBtn.setIcon(FigIcon("fileviewer/redo.svg"))
-        editLayout.addWidget(redoBtn)
-        editLayout.addWidget(QVLine()) 
         # new file
         newFileBtn = QToolButton()
         newFileBtn.setIcon(FigIcon("fileviewer/new_file.svg"))
@@ -1016,21 +1441,6 @@ class FigFileViewer(QWidget):
         filtStarBtn.setIcon(FigIcon("fileviewer/filter_remove.svg"))
         editLayout.addWidget(filtStarBtn)
         # editLayout.addWidget(QVLine())
-        # match case.
-        caseBtn = QToolButton()
-        caseBtn.setIcon(FigIcon("fileviewer/case-sensitive.svg"))
-        # caseBtn.clicked.connect(self.back)
-        editLayout.addWidget(caseBtn)
-        # match whole word.
-        entireBtn = QToolButton()
-        entireBtn.setIcon(FigIcon("fileviewer/whole-word.svg"))
-        # backBtn.clicked.connect(self.back)
-        editLayout.addWidget(entireBtn)
-        # use regex search
-        regexBtn = QToolButton()
-        regexBtn.setIcon(FigIcon("fileviewer/regex_search.svg"))
-        # regexBtn.clicked.connect(self.back)
-        editLayout.addWidget(regexBtn)
         # right spacer.
         right_spacer = QWidget()
         right_spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
@@ -1138,10 +1548,10 @@ class FigFileViewer(QWidget):
 
         return utilbar
 
-    def eventFilter(self, obj, event):
-        if (event.type() == QEvent.Resize):
-            print( 'Inside event Filter')
-        return super().eventFilter(obj, event)
+    # def eventFilter(self, obj, event):
+    #     if (event.type() == QEvent.Resize):
+    #         print( 'Inside event Filter')
+    #     return super().eventFilter(obj, event)
 
     def highlightOnClick(self):
         sendingBtn = self.sender()

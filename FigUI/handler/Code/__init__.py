@@ -78,6 +78,7 @@ class CursorPosHandler(QObject):
         if self.parent:
             # get parent (CodeWebView) of parent (CodeEditor)
             if self.parent._parent:
+                self.parent._parent.bottomBar.show()
                 self.parent._parent.cursorBtn.setText(f"Ln {line+1}, Col {col+1}")
 
 

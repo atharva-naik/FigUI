@@ -111,6 +111,19 @@ class FigNS:
         self._FileViewer.HCHEX = "#207869"
         self._FileViewer.HCRGB = hex2rgb(self._FileViewer.HCHEX)
 
+        self._Window = Namespace()
+        self._Window.CLHEX = "#89ff69" 
+        self._Window.CDHEX = "#207869"
+        self._Window.CLRGB = hex2rgb(self._Window.CLHEX)
+        self._Window.CDRGB = hex2rgb(self._Window.CDHEX)
+        self._Window.SCHEX = "#89ff69"
+        self._Window.SCRGB = hex2rgb(self._Window.SCHEX)
+        self._Window.HCHEX = "#207869"
+        self._Window.HCRGB = hex2rgb(self._Window.HCHEX)
+        self._Window.BG = "url('/home/atharva/GUI/FigUI/FigUI/assets/icons/email/bg_texture2.png');"
+        self._Window.MINH = 30 
+        self._Window.MAXH = 80
+
     def reset(self, path: Union[str, Path]):
         path = str(path)
 
@@ -118,8 +131,17 @@ class FigNS:
     def FileViewer(self):
         return self._FileViewer
 
+    @property
+    def Window(self):
+        return self._Window
+
     @FileViewer.setter
     def FileViewer(self, value):
+        '''basically make this read only.'''
+        pass
+
+    @Window.setter
+    def Window(self, value):
         '''basically make this read only.'''
         pass
 
