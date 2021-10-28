@@ -110,6 +110,8 @@ class FigNS:
         self._FileViewer.SCRGB = hex2rgb(self._FileViewer.SCHEX)
         self._FileViewer.HCHEX = "#207869"
         self._FileViewer.HCRGB = hex2rgb(self._FileViewer.HCHEX)
+        self._FileViewer.FVBG = "url('/home/atharva/GUI/FigUI/FigUI/assets/icons/fileviewer/marble.png');"
+        self._FileViewer.MMBG = "url('/home/atharva/GUI/FigUI/FigUI/assets/icons/email/bg_texture2.png');"
 
         self._Window = Namespace()
         self._Window.CLHEX = "#89ff69" 
@@ -121,8 +123,8 @@ class FigNS:
         self._Window.HCHEX = "#207869"
         self._Window.HCRGB = hex2rgb(self._Window.HCHEX)
         self._Window.BG = "url('/home/atharva/GUI/FigUI/FigUI/assets/icons/email/bg_texture2.png');"
-        self._Window.MINH = 30 
-        self._Window.MAXH = 80
+        self._Window.MINH = 25 
+        self._Window.MAXH = 100
 
     def reset(self, path: Union[str, Path]):
         path = str(path)

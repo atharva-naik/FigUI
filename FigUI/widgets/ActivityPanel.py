@@ -131,7 +131,7 @@ class FigActivityPanel(QWidget):
         # print(self._parent)
         if not self.is_visible:
             self.show()
-            self.resize(QSize(300,700))
+            self.resize(QSize(10,700))
             # self.setSize()
         else:
             self.hide()

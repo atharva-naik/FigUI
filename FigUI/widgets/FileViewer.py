@@ -252,7 +252,14 @@ class FigFileIcon(QToolButton):
                 return "Unknown"
 
     def _getFileProperties(self):
-        stat = os.stat(self.path)
+        try:
+            stat = os.stat(self.path)
+        except (PermissionError, FileNotFoundError) as e: 
+            self.props = argparse.Namespace()
+            self.props.access_time = datetime.datetime.now().strftime("%b,%b %d %Y %H:%M:%S")
+            self.props.modified_time = datetime.datetime.now().strftime("%b,%b %d %Y %H:%M:%S")
+            self.props.size = "0B"
+            return 
         self.props = argparse.Namespace()
         if PLATFORM == "Linux":
             self.props.access_time = datetime.datetime.fromtimestamp(stat.st_atime).strftime("%b,%b %d %Y %H:%M:%S")
@@ -500,6 +507,9 @@ class FigFileViewer(GraphicsView):
         self.layout.setSpacing(0)
 
         self.viewer = QWidget()
+        self.viewer.setStyleSheet('''
+        background: ''' + Fig.FileViewer.FVBG + '''
+        ''')
         self.history = [path]
         self.i = 0
         self.j = 0

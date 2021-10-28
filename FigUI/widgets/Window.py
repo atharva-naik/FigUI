@@ -7,7 +7,7 @@ import psutil, webbrowser, threading
 from PyQt5.Qt import PYQT_VERSION_STR
 from PyQt5.QtCore import QThread, QUrl, pyqtSignal, QObject, QTimer, QPoint, QRect, QSize, Qt, QT_VERSION_STR
 from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEngineProfile, QWebEngineSettings
-from PyQt5.QtGui import QIcon, QFont, QKeySequence, QTransform, QCursor, QPixmap, QTextCharFormat, QSyntaxHighlighter, QFontDatabase, QTextFormat, QColor, QPainter, QDesktopServices
+from PyQt5.QtGui import QIcon, QFont, QKeySequence, QPainter, QTransform, QCursor, QPixmap, QTextCharFormat, QSyntaxHighlighter, QFontDatabase, QTextFormat, QColor, QPainter, QDesktopServices
 from PyQt5.QtWidgets import QMenu, QShortcut, QApplication, QAction, QDialog, QPushButton, QTabWidget, QStatusBar, QToolBar, QWidget, QLineEdit, QMainWindow, QHBoxLayout, QVBoxLayout, QPlainTextEdit, QToolBar, QFrame, QSizePolicy, QTabBar, QDesktopWidget, QLabel, QToolButton, QTextEdit, QComboBox, QListWidget, QListWidgetItem, QScrollArea, QDockWidget, QGraphicsBlurEffect, QSplitter, QShortcut, QGraphicsDropShadowEffect, QGraphicsOpacityEffect
 
 try:
@@ -263,68 +263,67 @@ class QFolderNavBtn(QPushButton):
 #         fmt = self._highlight_lines.get(line)
 #         if fmt is not None:
 #             self.setFormat(0, len(text), fmt)
-class FigTabWidget(QTabWidget):
-    '''
-    https://forum.qt.io/topic/67542/drag-tabs-between-qtabwidgets/6
-    '''
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.parent = parent
-        self.setAcceptDrops(True)
-        self.tabBar = self.tabBar()
-        self.tabBar.setMouseTracking(True)
-        self.indexTab = None
-        self.setMovable(True)
-        # self.addTab(QWidget(self), 'Tab One')
-        # self.addTab(QWidget(self), 'Tab Two')
-    def mouseMoveEvent(self, e):
-        if e.buttons() != Qt.RightButton:
-            return
+# class FigTabWidget(QTabWidget):
+#     '''
+#     https://forum.qt.io/topic/67542/drag-tabs-between-qtabwidgets/6
+#     '''
+#     def __init__(self, parent=None):
+#         super().__init__(parent)
+#         self.parent = parent
+#         self.setAcceptDrops(True)
+#         self.tabBar = self.tabBar()
+#         self.tabBar.setMouseTracking(True)
+#         self.indexTab = None
+#         self.setMovable(True)
+#         # self.addTab(QWidget(self), 'Tab One')
+#         # self.addTab(QWidget(self), 'Tab Two')
+#     def mouseMoveEvent(self, e):
+#         if e.buttons() != Qt.RightButton:
+#             return
 
-        globalPos = self.mapToGlobal(e.pos())
-        tabBar = self.tabBar
-        posInTab = tabBar.mapFromGlobal(globalPos)
-        self.indexTab = tabBar.tabAt(e.pos())
-        tabRect = tabBar.tabRect(self.indexTab)
+#         globalPos = self.mapToGlobal(e.pos())
+#         tabBar = self.tabBar
+#         posInTab = tabBar.mapFromGlobal(globalPos)
+#         self.indexTab = tabBar.tabAt(e.pos())
+#         tabRect = tabBar.tabRect(self.indexTab)
 
-        pixmap = QPixmap(tabRect.size())
-        tabBar.render(pixmap,QPoint(),QRegion(tabRect))
-        mimeData = QMimeData()
-        drag = QDrag(tabBar)
-        drag.setMimeData(mimeData)
-        drag.setPixmap(pixmap)
-        cursor = QCursor(Qt.OpenHandCursor)
-        drag.setHotSpot(e.pos() - posInTab)
-        drag.setDragCursor(cursor.pixmap(),Qt.MoveAction)
-        dropAction = drag.exec_(Qt.MoveAction)
+#         pixmap = QPixmap(tabRect.size())
+#         tabBar.render(pixmap,QPoint(),QRegion(tabRect))
+#         mimeData = QMimeData()
+#         drag = QDrag(tabBar)
+#         drag.setMimeData(mimeData)
+#         drag.setPixmap(pixmap)
+#         cursor = QCursor(Qt.OpenHandCursor)
+#         drag.setHotSpot(e.pos() - posInTab)
+#         drag.setDragCursor(cursor.pixmap(),Qt.MoveAction)
+#         dropAction = drag.exec_(Qt.MoveAction)
 
-    def dragEnterEvent(self, e):
-        e.accept()
-        if e.source().parentWidget() != self:
-            return
+#     def dragEnterEvent(self, e):
+#         e.accept()
+#         if e.source().parentWidget() != self:
+#             return
 
-        print(self.indexOf(self.widget(self.indexTab)))
-        self.parent.TABINDEX = self.indexOf(self.widget(self.indexTab))
-
-
-    def dragLeaveEvent(self,e):
-        e.accept()
+#         print(self.indexOf(self.widget(self.indexTab)))
+#         self.parent.TABINDEX = self.indexOf(self.widget(self.indexTab))
 
 
-    def dropEvent(self, e):
-        print(self.parent.TABINDEX)
-        if e.source().parentWidget() == self:
-            return
+#     def dragLeaveEvent(self,e):
+#         e.accept()
 
-        e.setDropAction(Qt.MoveAction)
-        e.accept()
-        counter = self.count()
 
-        if counter == 0:
-            self.addTab(e.source().parentWidget().widget(self.parent.TABINDEX),e.source().tabText(self.parent.TABINDEX))
-        else:
-            self.insertTab(counter + 1 ,e.source().parentWidget().widget(self.parent.TABINDEX),e.source().tabText(self.parent.TABINDEX))
+#     def dropEvent(self, e):
+#         print(self.parent.TABINDEX)
+#         if e.source().parentWidget() == self:
+#             return
 
+#         e.setDropAction(Qt.MoveAction)
+#         e.accept()
+#         counter = self.count()
+
+#         if counter == 0:
+#             self.addTab(e.source().parentWidget().widget(self.parent.TABINDEX),e.source().tabText(self.parent.TABINDEX))
+#         else:
+#             self.insertTab(counter + 1 ,e.source().parentWidget().widget(self.parent.TABINDEX),e.source().tabText(self.parent.TABINDEX))
 class FigLogger:
     def __init__(self, path="system.log"):
         self.path = path
@@ -751,14 +750,15 @@ class FigWindow(QMainWindow):
         # initialize activity panel.
         self.activity = FigActivityPanel(parent=self)
 
+        self.opacLevel = 0.99
+        self.ontopFlag = True
+
         self.ctrlBar = self.initCtrlBar()
         self.bottomBar = self.initBottomBar()
-        self.subSysBar1, self.subSysBar2 = self.subSystemsBar()
-        # self.subSysBar1.hide()
-        # self.subSysBar2.hide()
+        self.subSysBar = self.subSystemsBar()
         self.debugBar = self.initDebugBar()
-        self.mediaBar = self.initMediaBar()
-        self.systemBar = self.systemBar()
+        # self.mediaBar = self.initMediaBar()
+        # self.systemBar = self.systemBar()
         self.titleBar = self.initTitleBar()
         self.folderBar = self.folderNavBar()
         # currently displayed path (on the folder bar)
@@ -777,12 +777,12 @@ class FigWindow(QMainWindow):
         self.addToolBarBreak(Qt.TopToolBarArea)
         self.addToolBar(Qt.TopToolBarArea, self.browserNavBar)
         self.addToolBar(Qt.LeftToolBarArea, self.debugBar)
-        self.addToolBar(Qt.LeftToolBarArea, self.mediaBar)
-        self.addToolBar(Qt.LeftToolBarArea, self.systemBar)
+        # self.addToolBar(Qt.LeftToolBarArea, self.mediaBar)
+        # self.addToolBar(Qt.LeftToolBarArea, self.systemBar)
         self.addToolBarBreak(Qt.LeftToolBarArea)
         # self.addToolBar(Qt.LeftToolBarArea, self.packmanBar)
-        self.addToolBar(Qt.RightToolBarArea, self.subSysBar1)
-        self.addToolBar(Qt.RightToolBarArea, self.subSysBar2)
+        self.addToolBar(Qt.RightToolBarArea, self.subSysBar)
+        # self.addToolBar(Qt.RightToolBarArea, self.subSysBar2)
         self.addToolBar(Qt.BottomToolBarArea, self.ctrlBar)
         self.addToolBarBreak(Qt.BottomToolBarArea)
         self.addToolBar(Qt.BottomToolBarArea, self.bottomBar)
@@ -838,7 +838,7 @@ class FigWindow(QMainWindow):
             margin-right: 1px;
             margin-left: 1px;
             border: 0px;
-            font-size: 16px;
+            font-size: 18px;
         }
         QTabBar::tab:hover {
             /* background: qlineargradient(x1 : 0, y1 : 1, x2 : 0, y2 : 0, stop : 0.0 #70121c, stop : 0.6 #b31f2f, stop : 0.8 #de2336); */
@@ -858,19 +858,29 @@ class FigWindow(QMainWindow):
         }
         ''') # TODO: theme
         self.logger = FigLogger(path=f"logs/{datetime.datetime.now().strftime('%d_%b_%Y_%H_%M_%S')}.log")
-        
+        # wrapper widget has the top ribbon and the central widget-terminal splitter.
         self.wrapperWidget = QWidget()
         self.wrapperWidgetLayout = QVBoxLayout()
         self.wrapperWidgetLayout.setContentsMargins(0,0,0,0)
         self.wrapperWidgetLayout.setSpacing(0)
+        # vertical splitter between the central tab widget and the FigTerminal.
+        self.centralTermSplitter = QSplitter(Qt.Vertical)
+        # the main menu top ribbon.
         self.mainMenu = self.initMainMenu() 
         self.wrapperWidgetLayout.addWidget(self.mainMenu)
+        # the central widget: a horizontal splitter with file tree, tabwidget and activity sidepanel.
         self.centralWidget = QSplitter(Qt.Horizontal)
         self.centralWidget.addWidget(self.fileTree)
         self.centralWidget.addWidget(self.tabs)
         self.centralWidget.addWidget(self.activity)
         self.centralWidget.setStyleSheet("background: #292929")
-        self.wrapperWidgetLayout.addWidget(self.centralWidget)
+        self.centralTermSplitter.addWidget(self.centralWidget)
+        # the fig terminal (add to the centralTermSplitter)
+        self.fig_terminal = self.initFigTerminal()
+        self.fig_terminal.hide()
+        self.centralTermSplitter.addWidget(self.fig_terminal)
+        # add centralTermSplitter to wrapper widget.
+        self.wrapperWidgetLayout.addWidget(self.centralTermSplitter)
         self.wrapperWidget.setLayout(self.wrapperWidgetLayout)
         self.ribbon_visible = True
         self.hideRibbon()
@@ -883,7 +893,9 @@ class FigWindow(QMainWindow):
         self.fig_launcher = FigLauncher(self)
         # self.newTabBtn.clicked.connect(self.addNewTab)
         self.tabs.addTab(self.fig_launcher, FigIcon("launcher.png"), "\tLauncher")
-        self.tabs.tabBar().setTabButton(0, QTabBar.RightSide,None) 
+        transBtn = QToolButton(self.tabs)
+        transBtn.setAttribute(Qt.WA_TranslucentBackground)
+        self.tabs.tabBar().setTabButton(0, QTabBar.RightSide, transBtn) 
         # make launcher tab unclosable.
         # self.setLayout(self.layout)
         self.setAttribute(Qt.WA_TranslucentBackground, True) # NOTE: need for rounded corners
@@ -924,6 +936,15 @@ class FigWindow(QMainWindow):
             self.showFullScreen()
         self.isfullscreen = not self.isfullscreen
 
+    def toggleTerminal(self):
+        if self.isterm_visible:
+            self.fig_terminal.hide()
+            self.termBtn.setText("show\nterminal")
+        else:
+            self.fig_terminal.show()
+            self.termBtn.setText("hide\nterminal")
+        self.isterm_visible = not(self.isterm_visible)
+
     def onKey(self, key):
         if key == Qt.Key_F11:
             if platform.system() == "Windows":
@@ -940,6 +961,10 @@ class FigWindow(QMainWindow):
         else:
             self.setWindowFlags(self.windowFlags() & Qt.WindowStaysOnTopHint)
         self.ontopFlag = not self.ontopFlag
+
+    def initFigTerminal(self):
+        term = QLabel("TERMINAL")
+        return term
 
     def initBrowserNavBar(self):
         '''create the navbar for borwser instances.'''
@@ -1010,6 +1035,7 @@ class FigWindow(QMainWindow):
         pictures = os.path.join(home, "Pictures")
         documents = os.path.join(home, "Documents")
         downloads = os.path.join(home, "Downloads")
+        trash = os.path.join(home, ".local/share/Trash/files")
 
         sysbar = QToolBar("Shortcuts Bar Visibility")
         sysbar.setIconSize(QSize(22,22))
@@ -1056,6 +1082,10 @@ class FigWindow(QMainWindow):
         videosBtn = QAction("Videos", self)
         videosBtn.setIcon(FigIcon("sysbar/videos.svg"))
         videosBtn.triggered.connect(lambda: self.addNewFileViewer(path=videos))
+        # trash.
+        trashBtn = QAction("Trash", self)
+        trashBtn.setIcon(FigIcon("sidebar/trash.svg"))
+        trashBtn.triggered.connect(lambda: self.addNewFileViewer(path=trash))
         # blank.
         blank = QWidget()
         blank.setFixedWidth(20)
@@ -1069,17 +1099,18 @@ class FigWindow(QMainWindow):
         sysbar.addAction(musicBtn)
         sysbar.addAction(picturesBtn)
         sysbar.addAction(videosBtn)
+        sysbar.addAction(trashBtn)
         sysbar.addWidget(blank)
 
         return sysbar
 
     def initDebugBar(self):
         sysbar = QToolBar("Coding ToolBar Visibility")
-        sysbar.setIconSize(QSize(25,25))
+        sysbar.setIconSize(QSize(30,30))
         sysbar.setStyleSheet('''
             padding: 3px; 
             margin: 0px; 
-            background: #292929; 
+            background: url('/home/atharva/GUI/FigUI/FigUI/assets/icons/email/bg_texture2.png');
             color: #fff; 
             border: 0px
         ''')
@@ -1112,6 +1143,17 @@ class FigWindow(QMainWindow):
         runBtn = QAction("Run Code", self)
         runBtn.setToolTip("Run code for testing.") 
         runBtn.setIcon(FigIcon("sysbar/run.svg"))
+        # expander.
+        expander = QWidget()
+        expander.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Expanding)
+        # user settings.
+        userBtn = QAction("User Settings", self)
+        userBtn.setToolTip("Open user/admin system settings.")
+        userBtn.setIcon(FigIcon("sysbar/user_settings.svg"))
+        # settings.
+        settingsBtn = QAction("Settings", self)
+        settingsBtn.setToolTip("Open system settings.")
+        settingsBtn.setIcon(FigIcon("sysbar/settings.svg"))
 
         sysbar.addAction(fileTreeBtn)
         sysbar.addAction(activityBtn)
@@ -1119,6 +1161,9 @@ class FigWindow(QMainWindow):
         sysbar.addAction(labBtn)
         sysbar.addAction(gitHubBtn)
         sysbar.addAction(runBtn)
+        sysbar.addWidget(expander)
+        sysbar.addAction(userBtn)
+        sysbar.addAction(settingsBtn)
 
         return sysbar
 
@@ -1128,108 +1173,72 @@ class FigWindow(QMainWindow):
             currentTab.togglePreview()
         except AttributeError:
             self.fileTree.toggle()
+    # def initMediaBar(self):
+    #     sysbar = QToolBar("Media Controls Bar Visibility")
+    #     sysbar.setIconSize(QSize(25,25))
+    #     sysbar.setStyleSheet('''
+    #         padding: 3px; 
+    #         margin: 0px; 
+    #         background: #292929; 
+    #         color: #fff; 
+    #         border: 0px
+    #     ''')
+    #     # decrease volume .
+    #     volMinusBtn = QAction("Volume Minus", self)
+    #     volMinusBtn.setToolTip("Decrease volume.")
+    #     volMinusBtn.setIcon(FigIcon("sysbar/volminus.svg"))
+    #     volMinusBtn.triggered.connect(lambda: os.system("xdotool key XF86AudioLowerVolume")) 
+    #     # increase volume .
+    #     volPlusBtn = QAction("Volume Plus", self)
+    #     volPlusBtn.setToolTip("Increase volume.")
+    #     volPlusBtn.setIcon(FigIcon("sysbar/volplus.svg")) 
+    #     volPlusBtn.triggered.connect(lambda: os.system("xdotool key XF86AudioRaiseVolume"))
+    #     # mute.
+    #     muteBtn = QAction("Mute", self)
+    #     muteBtn.setToolTip("Mute.")
+    #     muteBtn.setIcon(FigIcon("sysbar/mute.svg"))
+    #     muteBtn.triggered.connect(lambda: os.system("xdotool key XF86AudioMute"))
+    #     # play or pause media.
+    #     playBtn = QAction("Play/Pause", self)
+    #     playBtn.setToolTip("Play or pause media.")
+    #     playBtn.setIcon(FigIcon("sysbar/play.svg"))
+    #     playBtn.triggered.connect(lambda: os.system("xdotool key XF86AudioPlay"))
+    #     # previous media.
+    #     prevBtn = QAction("Prev", self)
+    #     prevBtn.setToolTip("Previous media.")
+    #     prevBtn.setIcon(FigIcon("sysbar/prev.svg"))
+    #     prevBtn.triggered.connect(lambda: os.system("xdotool key XF86AudioPrev"))
+    #     # next media.
+    #     nextBtn = QAction("Next", self)
+    #     nextBtn.setToolTip("Next media.")
+    #     nextBtn.setIcon(FigIcon("sysbar/next.svg"))
+    #     nextBtn.triggered.connect(lambda: os.system("xdotool key XF86AudioNext"))
+    #     blank1 = QAction("", self)
+    #     blank2 = QAction("", self)
+    #     # add actions.
+    #     sysbar.addAction(blank1)
+    #     sysbar.addAction(volPlusBtn)
+    #     sysbar.addAction(volMinusBtn)
+    #     sysbar.addAction(muteBtn)
+    #     sysbar.addAction(playBtn)
+    #     sysbar.addAction(prevBtn)
+    #     sysbar.addAction(nextBtn)
+    #     sysbar.addAction(blank2)
 
-    def initMediaBar(self):
-        sysbar = QToolBar("Media Controls Bar Visibility")
-        sysbar.setIconSize(QSize(25,25))
-        sysbar.setStyleSheet('''
-            padding: 3px; 
-            margin: 0px; 
-            background: #292929; 
-            color: #fff; 
-            border: 0px
-        ''')
-        # decrease volume .
-        volMinusBtn = QAction("Volume Minus", self)
-        volMinusBtn.setToolTip("Decrease volume.")
-        volMinusBtn.setIcon(FigIcon("sysbar/volminus.svg"))
-        volMinusBtn.triggered.connect(lambda: os.system("xdotool key XF86AudioLowerVolume")) 
-        # increase volume .
-        volPlusBtn = QAction("Volume Plus", self)
-        volPlusBtn.setToolTip("Increase volume.")
-        volPlusBtn.setIcon(FigIcon("sysbar/volplus.svg")) 
-        volPlusBtn.triggered.connect(lambda: os.system("xdotool key XF86AudioRaiseVolume"))
-        # mute.
-        muteBtn = QAction("Mute", self)
-        muteBtn.setToolTip("Mute.")
-        muteBtn.setIcon(FigIcon("sysbar/mute.svg"))
-        muteBtn.triggered.connect(lambda: os.system("xdotool key XF86AudioMute"))
-        # play or pause media.
-        playBtn = QAction("Play/Pause", self)
-        playBtn.setToolTip("Play or pause media.")
-        playBtn.setIcon(FigIcon("sysbar/play.svg"))
-        playBtn.triggered.connect(lambda: os.system("xdotool key XF86AudioPlay"))
-        # previous media.
-        prevBtn = QAction("Prev", self)
-        prevBtn.setToolTip("Previous media.")
-        prevBtn.setIcon(FigIcon("sysbar/prev.svg"))
-        prevBtn.triggered.connect(lambda: os.system("xdotool key XF86AudioPrev"))
-        # next media.
-        nextBtn = QAction("Next", self)
-        nextBtn.setToolTip("Next media.")
-        nextBtn.setIcon(FigIcon("sysbar/next.svg"))
-        nextBtn.triggered.connect(lambda: os.system("xdotool key XF86AudioNext"))
-        blank1 = QAction("", self)
-        blank2 = QAction("", self)
-        # add actions.
-        sysbar.addAction(blank1)
-        sysbar.addAction(volPlusBtn)
-        sysbar.addAction(volMinusBtn)
-        sysbar.addAction(muteBtn)
-        sysbar.addAction(playBtn)
-        sysbar.addAction(prevBtn)
-        sysbar.addAction(nextBtn)
-        sysbar.addAction(blank2)
+    #     return sysbar
+    # def systemBar(self):
+    #     sysbar = QToolBar("System Controls Bar Visibility")
+    #     sysbar.setIconSize(QSize(25,25))
+    #     sysbar.setStyleSheet('''
+    #         padding: 3px; 
+    #         margin: 0px; 
+    #         background: #292929; 
+    #         color: #fff; 
+    #         border: 0px
+    #     ''')
+    #     sysbar.setMovable(False)
 
-        return sysbar
-
-    def systemBar(self):
-        sysbar = QToolBar("System Controls Bar Visibility")
-        sysbar.setIconSize(QSize(25,25))
-        sysbar.setStyleSheet('''
-            padding: 3px; 
-            margin: 0px; 
-            background: #292929; 
-            color: #fff; 
-            border: 0px
-        ''')
-        sysbar.setMovable(False)
-        # top spacer
-        top_spacer = QWidget()
-        top_spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        # lower brightness.
-        dimBtn = QAction("Lower Brightness", self)
-        dimBtn.setToolTip("Lower screen brightness.")
-        dimBtn.setIcon(FigIcon("sysbar/dim.svg"))
-        dimBtn.triggered.connect(brightnessCtrl.dec_brightness)
-        # increase brightness.
-        brightBtn = QAction("Increase Brightness", self)
-        brightBtn.setToolTip("Increase screen brightness.")
-        brightBtn.setIcon(FigIcon("sysbar/bright.svg"))
-        brightBtn.triggered.connect(brightnessCtrl.inc_brightness)
-        # user settings.
-        userBtn = QAction("User Settings", self)
-        userBtn.setToolTip("Open user/admin system settings.")
-        userBtn.setIcon(FigIcon("sysbar/user_settings.svg"))
-        # settings.
-        settingsBtn = QAction("Settings", self)
-        settingsBtn.setToolTip("Open system settings.")
-        settingsBtn.setIcon(FigIcon("sysbar/settings.svg"))
-        # exit fullscreen.
-        exitFullScreenBtn = QAction("Disable Full Screen", self)
-        exitFullScreenBtn.setIcon(FigIcon("sysbar/exit_fullscreen.svg"))
-        # exitFullScreenBtn.setStyleSheet(titleBtnStyle)
-        exitFullScreenBtn.setToolTip("Disable full screen mode")
-        exitFullScreenBtn.triggered.connect(self.showNormal)
-        # add actions and buttons.
-        sysbar.addAction(dimBtn)
-        sysbar.addAction(brightBtn)
-        sysbar.addAction(exitFullScreenBtn)
-        sysbar.addWidget(top_spacer)
-        sysbar.addAction(userBtn)
-        sysbar.addAction(settingsBtn)
-
-        return sysbar
+    #     return sysbar
 
     def subSystemsBar(self):
         subbar = QToolBar("App Launcher Bar Visibility")
@@ -1248,8 +1257,6 @@ class FigWindow(QMainWindow):
             background: rgba(0, 77, 57, 0.90);
             /* background: rgba(37, 21, 47, 0.80); */
             /* background: rgba(33, 10, 18, 0.80); */
-            /* background: url('/home/atharva/GUI/FigUI/FigUI/assets/icons/glass_texture.jpg') 0 0 0 0;
-            background-position: center; */
         } 
         QPushButton {
             /* background: qradialgradient(cx: 1, cy: 1, radius: 1, stop : 0 #7a4416, stop: 0.8 #fa8e34); */ /* #fa8e34 */
@@ -1318,39 +1325,6 @@ class FigWindow(QMainWindow):
         # open email client.
         size = QSize(20,20) 
         btnSize = QSize(20,20)
-        emailBtn = QPushButton()
-        emailBtn.setToolTip("Open email client")
-        emailBtn.setIcon(FigIcon("sidebar/email.svg"))
-        emailBtn.setIconSize(btnSize)
-        emailBtn.clicked.connect(self.addNewMailClient)
-        # open notes.
-        notesBtn = QPushButton()
-        notesBtn.setToolTip("Open note taking app")
-        notesBtn.setIcon(FigIcon("sidebar/contacts.svg"))
-        notesBtn.setIconSize(btnSize)
-        # open translator.
-        transBtn = QPushButton()#("Translator", self)
-        transBtn.setToolTip("Open translator")
-        transBtn.setIcon(FigIcon("sidebar/translate.svg"))
-        transBtn.setIconSize(btnSize)
-        # open text to speech.
-        ttsBtn = QPushButton()#("Text2Speech", self)
-        ttsBtn.setToolTip("Open text to speech")
-        ttsBtn.setIcon(FigIcon("sidebar/tts.svg"))
-        ttsBtn.setIconSize(btnSize)
-        # open optical character recognition.
-        ocrBtn = QPushButton()#("OCR", self)
-        ocrBtn.setToolTip("Open optical character recognition")
-        ocrBtn.setIcon(FigIcon("sidebar/ocr.svg"))
-        ocrBtn.setIconSize(btnSize)
-        # qr code generator.
-        qrBtn = QPushButton()#("QR", self)
-        qrBtn.setToolTip("Open qr code generator")
-        qrBtn.setIcon(FigIcon("sidebar/qrcode.svg"))
-        qrBtn.setIconSize(btnSize)
-        qrBtn.clicked.connect(lambda: openQRCodeWindow(
-            clipboard=self.clipboard)
-        )
         # open p2p chat server.
         chatBtn = QPushButton()#("Chat", self)
         chatBtn.setToolTip("Open chat server")
@@ -1388,22 +1362,6 @@ class FigWindow(QMainWindow):
         kanbanBtn.setToolTip("Open kanban board")
         kanbanBtn.setIcon(FigIcon("sidebar/kanban.svg"))
         kanbanBtn.setIconSize(btnSize)
-        # open history.
-        histBtn = QPushButton()#("History", self)
-        histBtn.setToolTip("Open history")
-        histBtn.setIcon(FigIcon("sidebar/history.svg"))
-        histBtn.clicked.connect(self.addNewHistoryViewer)
-        histBtn.setIconSize(btnSize)
-        # open password manager.
-        passBtn = QPushButton()#("PassMan", self)
-        passBtn.setToolTip("Open password manager")
-        passBtn.setIcon(FigIcon("sidebar/password.svg"))
-        passBtn.setIconSize(size)
-        # open hardware monitoring software package.
-        hardwareBtn = QPushButton()#("Hardware Manager", self)
-        hardwareBtn.setToolTip("Open hardware manager")
-        hardwareBtn.setIcon(FigIcon("sidebar/hard-ware.svg"))
-        hardwareBtn.setIconSize(size)
         # open date and time.
         calBtn = QPushButton()#("Calendar", self)
         calBtn.setToolTip("Open date/time widget")
@@ -1421,11 +1379,6 @@ class FigWindow(QMainWindow):
         weatherBtn.setIcon(FigIcon("sidebar/weather.svg"))
         weatherBtn.setIconSize(btnSize)
         self.weatherBtn = weatherBtn
-        # trash.
-        trash = QPushButton()#("Trash", self)
-        trash.setToolTip("Open trash folder.")
-        trash.setIcon(FigIcon("sidebar/trash.svg"))
-        trash.setIconSize(size)
         
         b1 = QPushButton()#("Weather", self)
         b1.setToolTip("Open weather forecast")
@@ -1452,13 +1405,6 @@ class FigWindow(QMainWindow):
         b4.setIconSize(btnSize)
 
         # add actions.
-        subbar.addWidget(emailBtn)
-        subbar.addWidget(notesBtn)
-        subbar.addWidget(transBtn)
-        subbar.addWidget(ttsBtn)
-        subbar.addWidget(ocrBtn)
-        subbar.addWidget(qrBtn)
-        subbar.addWidget(b1)
         subbar.addWidget(chatBtn)
         subbar.addWidget(asstBtn)
         # subbar.addWidget(b2)
@@ -1478,24 +1424,15 @@ class FigWindow(QMainWindow):
         top_spacer = QWidget()
         top_spacer.setAttribute(Qt.WA_TranslucentBackground)
         top_spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-
-        sysbar.addWidget(histBtn)
         # sysbar.addWidget(top_spacer)
-        sysbar.addWidget(hardwareBtn)
-        sysbar.addWidget(passBtn)
-        sysbar.addWidget(trash)
 
-        return subbar, sysbar
+        return subbar
 
     def maximize(self):
         if self.isMaximized():
             self.showNormal()
-            # self.subSysBar1.hide()
-            # self.subSysBar2.hide()
         else:
             self.showMaximized()
-            # self.subSysBar1.show()
-            # self.subSysBar2.show()
     def colorPickerDialog(self):
         colorPicker = ColorPicker(useAlpha=True)
         picked_color = colorPicker.getColor((0,0,0,50))
@@ -1731,8 +1668,8 @@ class FigWindow(QMainWindow):
             margin: 0px; 
             border: 0px; 
             color: #fff;
-            border-top-left-radius: 10px;
-            border-top-right-radius: 10px;
+            border-top-left-radius: 12px;
+            border-top-right-radius: 12px;
             background: url('/home/atharva/GUI/FigUI/FigUI/assets/icons/email/bg_texture2.png');
             /* background: qlineargradient(x1 : 0, y1 : 0, x2 : 0, y2 : 1, stop : 0.0 #6e6e6e, stop : 0.8 #4a4a4a, stop : 1.0 #292929); */
         }''')
@@ -1794,32 +1731,6 @@ class FigWindow(QMainWindow):
                 background: rgba(255, 223, 97, 0.5);
             }        
         '''
-        self.opacLevel = 0.99
-        self.ontopFlag = True
-        # stay on top.
-        ontopBtn = QToolButton(self)
-        ontopBtn.setIcon(FigIcon("sysbar/ontop.svg"))
-        ontopBtn.setStyleSheet(titleBtnStyle)
-        ontopBtn.setToolTip("stay on top")
-        ontopBtn.clicked.connect(self.stayOnTop)
-        # increase opacity.
-        opacUpBtn = QToolButton(self)
-        opacUpBtn.setIcon(FigIcon("sysbar/opacity_up.svg"))
-        opacUpBtn.setStyleSheet(titleBtnStyle)
-        opacUpBtn.setToolTip("increase opacity")
-        opacUpBtn.clicked.connect(self.incOpac)
-        # decrease opacity.
-        opacDownBtn = QToolButton(self)
-        opacDownBtn.setIcon(FigIcon("sysbar/opacity_down.svg"))
-        opacDownBtn.setStyleSheet(titleBtnStyle)
-        opacDownBtn.setToolTip("decrease opacity")
-        opacDownBtn.clicked.connect(self.decOpac)
-        # enable fullscreen.
-        fullScreenBtn = QToolButton(self)
-        fullScreenBtn.setIcon(FigIcon("sysbar/fullscreen.svg"))
-        fullScreenBtn.setStyleSheet(titleBtnStyle)
-        fullScreenBtn.setToolTip("Enable full screen mode")
-        fullScreenBtn.clicked.connect(self.showFullScreen)
 
         windowTitle = QLabel()
         windowTitle.setText("") # ("𝔽𝕚𝕘 𝕀𝕤 𝕒 𝔾𝕦𝕚") #("𝗙ig 𝗜s a 𝗚UI")
@@ -1842,10 +1753,6 @@ class FigWindow(QMainWindow):
         toolbar.addWidget(left_spacer)
         toolbar.addWidget(windowTitle)
         toolbar.addWidget(right_spacer)
-        toolbar.addWidget(fullScreenBtn)
-        toolbar.addWidget(opacUpBtn)
-        toolbar.addWidget(ontopBtn)
-        toolbar.addWidget(opacDownBtn)
         toolbar.addWidget(blankR)
         toolbar.setMaximumHeight(28)
 
@@ -2028,10 +1935,10 @@ class FigWindow(QMainWindow):
 
     def hideRibbon(self):
         if self.ribbon_visible:
-            self.mainMenu.setFixedHeight(25)
+            self.mainMenu.setFixedHeight(Fig.Window.MINH)
             self.hideBtn.setIcon(FigIcon("fileviewer/show_ribbon.svg"))
         else:
-            self.mainMenu.setMaximumHeight(80)
+            self.mainMenu.setFixedHeight(Fig.Window.MAXH)
             self.hideBtn.setIcon(FigIcon("fileviewer/hide_ribbon.svg"))
         self.ribbon_visible = not(self.ribbon_visible)
 
@@ -2039,8 +1946,14 @@ class FigWindow(QMainWindow):
         '''create main menu for file browser.'''
         tb = "\t"*4
         mainMenu = QTabWidget()
-        self.fileMenu = self.initAppMenu()
-        mainMenu.addTab(self.fileMenu, tb+"Apps"+tb)
+        self.appMenu = self.initAppMenu()
+        mainMenu.addTab(self.appMenu, tb+"Apps"+tb)
+        self.mediaMenu = self.initMediaMenu()
+        mainMenu.addTab(self.mediaMenu, tb+"Media"+tb)
+        self.viewMenu = self.initViewMenu()
+        mainMenu.addTab(self.viewMenu, tb+"View"+tb)
+        self.sysMenu = self.initSysMenu()
+        mainMenu.addTab(self.sysMenu, tb+"System"+tb)
         # hide the ribbon.
         self.hideBtn = QToolButton(mainMenu)
         self.hideBtn.clicked.connect(self.hideRibbon)
@@ -2051,10 +1964,22 @@ class FigWindow(QMainWindow):
             border: 0px;
             background: transparent;
         }''')
+        # toggle activity panel.
+        self.actBtn = QToolButton(mainMenu)
+        self.actBtn.setToolTip("Check activity panel.")
+        self.actBtn.setIcon(FigIcon("sysbar/activity.svg"))
+        self.actBtn.setIconSize(QSize(23,23))
+        self.actBtn.clicked.connect(self.activity.toggle)
+        self.actBtn.setStyleSheet('''
+        QToolButton {
+            border: 0px;
+            background: transparent;
+        }''')
 
         mainMenu.addTab(QWidget(), "")
         mainMenu.addTab(QWidget(), "")
-        mainMenu.tabBar().setTabButton(1, QTabBar.RightSide, self.hideBtn)
+        mainMenu.tabBar().setTabButton(4, QTabBar.RightSide, self.hideBtn)
+        mainMenu.tabBar().setTabButton(5, QTabBar.RightSide, self.actBtn)
 
         mainMenu.setCurrentIndex(0)
         mainMenu.setStyleSheet('''
@@ -2118,12 +2043,318 @@ class FigWindow(QMainWindow):
         glowEffect.setOffset(30,0)
         glowEffect.setColor(QColor(*Fig.Window.CDRGB))
         mainMenu.setGraphicsEffect(glowEffect)
-        mainMenu.setMaximumHeight(80)
+        mainMenu.setMaximumHeight(Fig.Window.MAXH)
 
-        return mainMenu
+        wrapperWidget = QWidget()
+        wrapperLayout = QVBoxLayout()
+        wrapperWidget.setStyleSheet('''
+        QWidget {
+            background: #292929;
+        }
+        ''')
+        wrapperLayout.setSpacing(0)
+        wrapperLayout.setContentsMargins(0, 0, 0, 0)
+        wrapperLayout.addWidget(mainMenu)
+        wrapperWidget.setLayout(wrapperLayout)
+
+        return wrapperWidget
 
     def initAppMenu(self):
         return QWidget()
+
+    def initSysMenu(self):
+        sysMenu = QWidget()
+        sysLayout = QHBoxLayout()
+        sysLayout.setSpacing(0)
+        sysLayout.setContentsMargins(0, 0, 0, 0)
+        sysMenu.setStyleSheet('''
+        QToolButton {
+            border: 0px;
+            font-size: 13px;
+            padding: 5px;
+            border-radius: 15px;
+            background: transparent;
+            color: #fff;
+        }
+        QToolTip {
+            background: #292929;
+            color: #fff;
+        }
+        QToolButton:hover {
+            background: rgba(255, 223, 97, 0.5);
+        } 
+        ''')
+        # increase opacity.
+        opacUpBtn = QToolButton(sysMenu)
+        opacUpBtn.setToolTip("increase opacity")
+        opacUpBtn.setIcon(FigIcon("sysbar/opacity_up.svg"))
+        opacUpBtn.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        opacUpBtn.setText("opac\nup")
+        opacUpBtn.clicked.connect(self.incOpac) 
+        sysLayout.addWidget(opacUpBtn)
+        # decrease opacity.
+        opacDownBtn = QToolButton(sysMenu)
+        opacDownBtn.setToolTip("increase opacity")
+        opacDownBtn.setIcon(FigIcon("sysbar/opacity_down.svg"))
+        opacDownBtn.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        opacDownBtn.setText("opac\ndown")
+        opacDownBtn.clicked.connect(self.decOpac) 
+        sysLayout.addWidget(opacDownBtn)
+        # lower brightness.
+        dimBtn = QToolButton(sysMenu)
+        dimBtn.setToolTip("Lower screen brightness.")
+        dimBtn.setIcon(FigIcon("sysbar/dim.svg"))
+        dimBtn.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        dimBtn.setText("lower\n")
+        dimBtn.clicked.connect(brightnessCtrl.dec_brightness)
+        sysLayout.addWidget(dimBtn)
+        # increase brightness.
+        brightBtn = QToolButton(sysMenu)
+        brightBtn.setToolTip("Increase screen brightness.")
+        brightBtn.setIcon(FigIcon("sysbar/bright.svg"))
+        brightBtn.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        brightBtn.setText("raise\n")
+        brightBtn.clicked.connect(brightnessCtrl.inc_brightness)
+        sysLayout.addWidget(brightBtn)
+        # stay on top.
+        onTopBtn = QToolButton(sysMenu)
+        onTopBtn.setToolTip("stay on top")
+        onTopBtn.setIcon(FigIcon("sysbar/ontop.svg"))
+        onTopBtn.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        onTopBtn.setText("on top\n ")
+        onTopBtn.clicked.connect(self.stayOnTop) 
+        sysLayout.addWidget(onTopBtn)
+        # enable fullscreen.
+        fullScreenBtn = QToolButton(sysMenu)
+        fullScreenBtn.setIcon(FigIcon("sysbar/fullscreen.svg"))
+        fullScreenBtn.setToolTip("Enable full screen mode")
+        fullScreenBtn.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        fullScreenBtn.setText("fullscreen\n ")
+        fullScreenBtn.clicked.connect(self.showFullScreen)
+        sysLayout.addWidget(fullScreenBtn)
+        # exit fullscreen.
+        exitFullScreenBtn = QToolButton(sysMenu)
+        exitFullScreenBtn.setIcon(FigIcon("sysbar/exit_fullscreen.svg"))
+        exitFullScreenBtn.setToolTip("Disable full screen mode")
+        exitFullScreenBtn.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        exitFullScreenBtn.setText("exit\nfullscreen")
+        exitFullScreenBtn.clicked.connect(self.showNormal)
+        sysLayout.addWidget(exitFullScreenBtn)
+        # open history.
+        histBtn = QToolButton(sysMenu)#("History", self)
+        histBtn.setToolTip("Open History.")
+        histBtn.setIcon(FigIcon("sidebar/history.svg"))
+        histBtn.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        histBtn.setText("history\n")
+        histBtn.clicked.connect(self.addNewHistoryViewer)
+        # histBtn.setIconSize()
+        sysLayout.addWidget(histBtn)
+        # open hardware monitoring dashboard.
+        hardwareBtn = QToolButton(sysMenu)
+        hardwareBtn.setToolTip("Open hardware dashboard.")
+        hardwareBtn.setIcon(FigIcon("sidebar/hard-ware.svg"))
+        hardwareBtn.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        hardwareBtn.setText("hardware\nmanager")
+        # hardwareBtn.clicked.connect()
+        # hardwareBtn.setIconSize(size)
+        sysLayout.addWidget(hardwareBtn)
+        # open password manager.
+        passBtn = QToolButton(sysMenu)
+        passBtn.setToolTip("Open password manager.")
+        passBtn.setIcon(FigIcon("sidebar/password.svg"))
+        passBtn.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        passBtn.setText("password\nmanager")
+        # passBtn.setIconSize(size)
+        sysLayout.addWidget(passBtn)
+        # trash.
+        # trash = QToolButton(sysMenu)
+        # trash.setToolTip("Open trash folder.")
+        # trash.setIcon(FigIcon("sidebar/trash.svg"))
+        # trash.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        # trash.setText("trash\n")
+        # # trash.setIconSize(size)
+        # sysLayout.addWidget(trash)
+        # email.
+        emailBtn = QToolButton(sysMenu)
+        emailBtn.setToolTip("Open email client")
+        emailBtn.setIcon(FigIcon("sidebar/email.svg"))
+        # emailBtn.setIconSize(btnSize)
+        emailBtn.clicked.connect(self.addNewMailClient)
+        emailBtn.setText("email\n")
+        emailBtn.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        sysLayout.addWidget(emailBtn)
+        # open notes.
+        notesBtn = QToolButton(sysMenu)
+        notesBtn.setToolTip("Open note taking app")
+        notesBtn.setIcon(FigIcon("sidebar/contacts.svg"))
+        # notesBtn.setIconSize(btnSize)
+        notesBtn.setText("notes\n")
+        notesBtn.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        sysLayout.addWidget(notesBtn)
+        # open translator.
+        transBtn = QToolButton(sysMenu)
+        transBtn.setToolTip("Open translator")
+        transBtn.setIcon(FigIcon("sidebar/translate.svg"))
+        transBtn.setText("translate\n")
+        transBtn.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        # transBtn.setIconSize(btnSize)
+        sysLayout.addWidget(transBtn)
+        # open text to speech.
+        ttsBtn = QToolButton(sysMenu)#("Text2Speech", self)
+        ttsBtn.setToolTip("Open text to speech")
+        ttsBtn.setIcon(FigIcon("sidebar/tts.svg"))
+        ttsBtn.setText("text to\nspeech")
+        ttsBtn.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        # ttsBtn.setIconSize(btnSize)
+        sysLayout.addWidget(ttsBtn)
+        # open optical character recognition.
+        ocrBtn = QToolButton(sysMenu)
+        ocrBtn.setToolTip("Open optical character recognition")
+        ocrBtn.setIcon(FigIcon("sidebar/ocr.svg"))
+        ocrBtn.setText("OCR\n")
+        ocrBtn.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        # ocrBtn.setIconSize(btnSize)
+        sysLayout.addWidget(ocrBtn)
+        # qr code generator.
+        qrBtn = QToolButton(sysMenu)
+        qrBtn.setToolTip("Open qr code generator")
+        qrBtn.setIcon(FigIcon("sidebar/qrcode.svg"))
+        qrBtn.setText("QR\n")
+        qrBtn.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        # qrBtn.setIconSize(btnSize)
+        qrBtn.clicked.connect(lambda: openQRCodeWindow(
+            clipboard=self.clipboard)
+        )
+        sysLayout.addWidget(qrBtn)
+        # blank
+        expander = QWidget()
+        expander.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        sysLayout.addWidget(expander)
+        # set layout.
+        sysMenu.setLayout(sysLayout)
+
+        return sysMenu
+
+    def initViewMenu(self):
+        viewMenu = QWidget()
+        viewLayout = QHBoxLayout()
+        viewLayout.setSpacing(0)
+        viewLayout.setContentsMargins(0, 0, 0, 0)
+        # show terminal button.
+        termBtn = QToolButton(viewMenu)
+        termBtn.setToolTip("Toggle terminal visibility.")
+        termBtn.setIcon(FigIcon("fileviewer/open_in_terminal.svg"))
+        termBtn.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        termBtn.setText("show\nterminal")
+        termBtn.clicked.connect(self.toggleTerminal) 
+        self.termBtn = termBtn
+        self.isterm_visible = False
+        viewLayout.addWidget(self.termBtn)
+        # expander
+        expander = QWidget()
+        expander.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        viewLayout.addWidget(expander)
+        
+        viewMenu.setStyleSheet('''
+        QToolButton {
+            border: 0px;
+            font-size: 13px;
+            padding: 5px;
+            border-radius: 15px;
+            background: transparent;
+            color: #fff;
+        }   
+        QToolTip {
+            background: #292929;
+            color: #fff;
+        }
+        QToolButton:hover {
+            background: rgba(255, 223, 97, 0.5);
+        }      
+        ''')
+        viewMenu.setLayout(viewLayout)
+
+        return viewMenu
+
+    def initMediaMenu(self):
+        mediaMenu = QWidget()
+        mediaLayout = QHBoxLayout()
+        mediaLayout.setSpacing(0)
+        mediaLayout.setContentsMargins(0, 0, 0, 0)
+        mediaMenu.setStyleSheet('''
+        QToolButton {
+            border: 0px;
+            font-size: 13px;
+            padding: 5px;
+            border-radius: 15px;
+            background: transparent;
+            color: #fff;
+        }
+        QToolTip {
+            background: #292929;
+            color: #fff;
+        }
+        QToolButton:hover {
+            background: rgba(255, 223, 97, 0.5);
+        } 
+        ''')
+        # decrease volume.
+        volMinusBtn = QToolButton(mediaMenu)
+        volMinusBtn.setToolTip("Decrease volume.")
+        volMinusBtn.setIcon(FigIcon("sysbar/volminus.svg"))
+        volMinusBtn.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        volMinusBtn.setText("lower vol")
+        volMinusBtn.clicked.connect(lambda: os.system("xdotool key XF86AudioLowerVolume")) 
+        # increase volume .
+        volPlusBtn = QToolButton(mediaMenu)
+        volPlusBtn.setToolTip("Increase volume.")
+        volPlusBtn.setIcon(FigIcon("sysbar/volplus.svg"))
+        volPlusBtn.setToolButtonStyle(Qt.ToolButtonTextUnderIcon) 
+        volPlusBtn.setText("raise vol")
+        volPlusBtn.clicked.connect(lambda: os.system("xdotool key XF86AudioRaiseVolume"))
+        # mute.
+        muteBtn = QToolButton(mediaMenu)
+        muteBtn.setToolTip("Mute.")
+        muteBtn.setIcon(FigIcon("sysbar/mute.svg"))
+        muteBtn.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        muteBtn.setText("mute")
+        muteBtn.clicked.connect(lambda: os.system("xdotool key XF86AudioMute"))
+        # play or pause media.
+        playBtn = QToolButton(mediaMenu)
+        playBtn.setToolTip("Play or pause media.")
+        playBtn.setIcon(FigIcon("sysbar/play.svg"))
+        playBtn.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        playBtn.setText("play")
+        playBtn.clicked.connect(lambda: os.system("xdotool key XF86AudioPlay"))
+        # previous media.
+        prevBtn = QToolButton(mediaMenu)
+        prevBtn.setToolTip("Previous media.")
+        prevBtn.setIcon(FigIcon("sysbar/prev.svg"))
+        prevBtn.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        prevBtn.setText("prev")
+        prevBtn.clicked.connect(lambda: os.system("xdotool key XF86AudioPrev"))
+        # next media.
+        nextBtn = QToolButton(mediaMenu)
+        nextBtn.setToolTip("Next media.")
+        nextBtn.setIcon(FigIcon("sysbar/next.svg"))
+        nextBtn.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        nextBtn.setText("next")
+        nextBtn.clicked.connect(lambda: os.system("xdotool key XF86AudioNext"))
+        # add actions.
+        expander = QWidget()
+        expander.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+
+        mediaLayout.addWidget(volPlusBtn)
+        mediaLayout.addWidget(volMinusBtn)
+        mediaLayout.addWidget(muteBtn)
+        mediaLayout.addWidget(playBtn)
+        mediaLayout.addWidget(prevBtn)
+        mediaLayout.addWidget(nextBtn)
+        mediaLayout.addWidget(expander)
+        # set layout.
+        mediaMenu.setLayout(mediaLayout)
+
+        return mediaMenu
 
     def packageManagerBar(self):
         toolbar = QToolBar("Package Manager Bar Visibility")
@@ -2239,7 +2470,7 @@ class FigWindow(QMainWindow):
         toolbar = QToolBar("Status Bar Visibility")
         toolbar.setContentsMargins(0, 0, 0, 0)
         toolbar.setIconSize(QSize(22,22))
-        toolbar.setStyleSheet("background: #292929; color: #fff; margin: 0px; border: 0px")
+        toolbar.setStyleSheet("background: url('/home/atharva/GUI/FigUI/FigUI/assets/icons/email/bg_texture2.png');; color: #fff; margin: 0px; border: 0px")
         toolbar.setMovable(False)
         # get git info.
         gitBtn = QPushButton(" main*")
@@ -2562,7 +2793,7 @@ class FigWindow(QMainWindow):
 class FigApp(QApplication):
     def __init__(self, argv,
                  background="logo.png",
-                 x=100, y=100, w=1050, h=850, 
+                 x=100, y=100, w=1000, h=850, 
                  theme=None, icon="logo.png", 
                  *args, **kwargs):
         # Handle high resolution displays:

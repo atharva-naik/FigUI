@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+        <script src="https://unpkg.com/jquery.terminal/js/jquery.terminal.min.js"></script>
+        <link rel="stylesheet" href="https://unpkg.com/jquery.terminal/css/jquery.terminal.min.css" />
+        <style>
+            /* Chrome, safari */
+            *::-webkit-scrollbar {
+                width: 7px;
+                height: 7px;
+            }    
+            *::-webkit-scrollbar-track {
+                background-color: rgba(235, 235, 235, 0.1);
+            }
+    
+            *::-webkit-scrollbar-thumb {
+                background-color: gray;
+            }
+            *::-webkit-scrollbar-thumb:hover {
+                background-color: orange;
+            }
+            *::-webkit-scrollbar-corner {
+                background-color: transparent;
+                /* background: rgba(235, 235, 235, 0.1); */
+            }
+            /* Firefox */
+            /* .selector {
+                scrollbar-width: none;
+            } */
+        </style>
+    </head>
+    <body>
+        <script>
+            $('body').terminal({
+                hello: function(what) {
+                    this.echo('Hello, ' + what +
+                              '. Wellcome to this terminal.');
+                }
+            }, {
+                greetings: 'My First Web Terminal'
+            });
+            </script>
+    </body>
+</html>
