@@ -24,7 +24,9 @@ class FtNS(argparse.Namespace):
         # self._BG = f'''url('{os.path.join(self._static, "bg_texture.png")}')'''
         self._BG = "url('/home/atharva/GUI/FigUI/FigUI/FigTerminal/static/bg_texture.png');"
         self._template_path = os.path.join(self._static, "terminal.html")
-        self._params = {}
+        self._params = {
+            "QWEBCHANNEL_JS" : self.url("qwebchannel.js"),
+        }
         with open(self._template_path) as f:    
             self._template = Template(f.read())
         self._rendered_path = os.path.join(self._static, "terminal_rendered.html")
@@ -41,6 +43,10 @@ class FtNS(argparse.Namespace):
         self._CDRGB = hex2rgb(self._CDHEX)
         self._SCRGB = hex2rgb(self._SCHEX)
         self._HCRGB = hex2rgb(self._HCHEX)
+
+    def url(self, path):
+        static_path = os.path.join(self._static, path)
+        return QUrl.fromLocalFile(static_path).toString()
 
     def __call__(self, prop: "str"):
         return getattr(self, prop)
