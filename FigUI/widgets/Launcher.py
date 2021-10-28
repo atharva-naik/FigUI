@@ -302,11 +302,11 @@ class SnowAnimation:
     def addSnowFlake(self, parent=None):
         snowFlake = QWidget(parent)
         snowFlake.setStyleSheet('''
-            QWidget {
-                background: transparent;
-                background-image: url('/home/atharva/GUI/FigUI/FigUI/assets/icons/animations/snowflake30x30.png');
-                background-position: center;
-            }
+        QWidget {
+            background: transparent;
+            background-image: url('/home/atharva/GUI/FigUI/FigUI/assets/icons/animations/snowflake30x30.png');
+            background-position: center;
+        }
         ''')
         snowFlake.resize(*self.size)
         snowFlake.hide()
@@ -365,11 +365,11 @@ class FigLauncher(QWidget):
         # self.scroll.setStyleSheet("background: rgba(73, 44, 94, 0.5);")
         # self.scroll.setAttribute(Qt.WA_TranslucentBackground, True)
         self.launcherWidget.setStyleSheet('''
-            QGraphicsView {
-                background-image: url('''+ f"'{self.bg_url}'" +''');
-                background-position: center;
-                border: 0px;
-            }
+        QGraphicsView {
+            background-image: url('''+ f"'{self.bg_url}'" +''');
+            background-position: center;
+            border: 0px;
+        }
         ''')
         self.scroll = QScrollArea(self)
         self.scroll.setWidgetResizable(True)
@@ -420,16 +420,18 @@ class FigLauncher(QWidget):
                 background-color: rgba(255, 255, 255, 0);
             }
             QScrollBar:vertical:hover {
-                background-color: rgba(255, 255, 255, 0.3);
+                background-color: rgba(255, 253, 184, 0.3);
             }
             QScrollBar::handle:vertical {         
                 min-height: 0px;
                 border: 0px solid red;
                 border-radius: 0px;
-                background-color: gray; /* #c70039; */
+                background-color: #484848;
+                /* background-color: gray; */
+                /* #c70039; */
             }
             QScrollBar::handle:vertical:hover {         
-                background-color: #ff5e00;
+                background-color: orange; /* #ff5e00; */
             }
             QScrollBar::add-line:vertical {       
                 height: 0px;

@@ -825,16 +825,13 @@ class FigWindow(QMainWindow):
             background-color: rgba(235, 235, 235, 0.50);
         }
         QTabBar::tab {
-            /* background: #292929; */
-            /* background: qlineargradient(x1 : 0, y1 : 0, x2 : 0, y2 : 1, stop : 0.0 #6e6e6e, stop : 0.8 #4a4a4a, stop : 1.0 #292929); */
+            border: 0px;
             background: #292929;
             color: #eee;
             padding-top: 5px;
             padding-bottom: 5px;
             padding-left: 9px;
             padding-right: 5px;
-            /* border-top-left-radius: 5px;
-            border-top-right-radius: 5px; */
             margin-right: 1px;
             margin-left: 1px;
             border: 0px;
@@ -842,20 +839,36 @@ class FigWindow(QMainWindow):
         }
         QTabBar::tab:hover {
             /* background: qlineargradient(x1 : 0, y1 : 1, x2 : 0, y2 : 0, stop : 0.0 #70121c, stop : 0.6 #b31f2f, stop : 0.8 #de2336); */
-            background: #ff5e00;
-            color: #fff;
+            /* background: #ffbb63; */
+            background: '''+ Fig.Window.CLHEX +''';
+            color: #292929;
         }
         QTabBar::tab:selected {
-            /* background: qlineargradient(x1 : 0, y1 : 0, x2 : 0, y2 : 1, stop : 0.0 #61313c, stop : 0.8 #451f2b, stop : 1.0 #331018); */
-            background: qlineargradient(x1 : 0, y1 : 0, x2 : 0, y2 : 2, stop : 0.0 #e38c59, stop : 0.99 #ff5e00); 
+            /* background: qlineargradient(x1 : 0, y1 : 0, x2 : 0, y2 : 2, stop : 0.0 #de891b, stop : 0.99 #ffbb63); */
+            background: qlineargradient(x1 : 0, y1 : 0, x2 : 0, y2 : 2, stop : 0.0 '''+Fig.Window.CDHEX+''', stop : 0.99 '''+Fig.Window.CLHEX+'''); 
             color: #fff;
             padding-top: 2px;
             padding-bottom: 2px;
             padding-left: 9px;
             padding-right: 5px;
-            /* border-top-left-radius: 6px;
-            border-top-right-radius: 6px; */
         }
+        /* background: qlineargradient(x1 : 0, y1 : 0, x2 : 0, y2 : 1, stop : 0.0 #6e6e6e, stop : 0.8 #4a4a4a, stop : 1.0 #292929); */
+        /* QTabBar::tab {
+            background: #292929;
+            color: #eee;
+            padding-top: 5px;
+            padding-bottom: 5px;
+            padding-left: 9px;
+            padding-right: 5px;
+            border-top-left-radius: 5px;
+            border-top-right-radius: 5px;
+            margin-right: 1px;
+            margin-left: 1px;
+            border: 0px;
+            font-size: 18px;
+        } */
+        /* background: qlineargradient(x1 : 0, y1 : 0, x2 : 0, y2 : 1, stop : 0.0 #61313c, stop : 0.8 #451f2b, stop : 1.0 #331018); */
+        /* background: qlineargradient(x1 : 0, y1 : 0, x2 : 0, y2 : 2, stop : 0.0 #e38c59, stop : 0.99 #ff5e00); */
         ''') # TODO: theme
         self.logger = FigLogger(path=f"logs/{datetime.datetime.now().strftime('%d_%b_%Y_%H_%M_%S')}.log")
         # wrapper widget has the top ribbon and the central widget-terminal splitter.
@@ -865,11 +878,7 @@ class FigWindow(QMainWindow):
         self.wrapperWidgetLayout.setSpacing(0)
         # vertical splitter between the central tab widget and the FigTerminal.
         self.centralTermSplitter = QSplitter(Qt.Vertical)
-        self.centralTermSplitter.setStyleSheet('''
-        QSplitter {
-            background: #292929;
-        }
-        ''')
+        self.centralTermSplitter.setStyleSheet('''QSplitter { background: #000 }''')
         # the main menu top ribbon.
         self.mainMenu = self.initMainMenu() 
         self.wrapperWidgetLayout.addWidget(self.mainMenu)
@@ -888,7 +897,7 @@ class FigWindow(QMainWindow):
         self.wrapperWidgetLayout.addWidget(self.centralTermSplitter)
         self.wrapperWidget.setLayout(self.wrapperWidgetLayout)
         self.ribbon_visible = True
-        self.hideRibbon()
+        self.toggleRibbon()
         # self.centralWidget.layout.addWidget(QPushButton("Wow"))
         # self.centralWidget.setLayout(self.centralWidget.layout)
         self.setCentralWidget(self.wrapperWidget) # making tabs as central widget
@@ -1941,7 +1950,12 @@ class FigWindow(QMainWindow):
         #         self.folderBarActions.append(action)
         return toolbar
 
-    def hideRibbon(self):
+    def showRibbon(self):
+        self.mainMenu.setFixedHeight(Fig.Window.MAXH)
+        self.hideBtn.setIcon(FigIcon("fileviewer/hide_ribbon.svg"))
+        self.ribbon_visible = True
+
+    def toggleRibbon(self):
         if self.ribbon_visible:
             self.mainMenu.setFixedHeight(Fig.Window.MINH)
             self.hideBtn.setIcon(FigIcon("fileviewer/show_ribbon.svg"))
@@ -1964,7 +1978,7 @@ class FigWindow(QMainWindow):
         mainMenu.addTab(self.sysMenu, tb+"System"+tb)
         # hide the ribbon.
         self.hideBtn = QToolButton(mainMenu)
-        self.hideBtn.clicked.connect(self.hideRibbon)
+        self.hideBtn.clicked.connect(self.toggleRibbon)
         self.hideBtn.setIcon(FigIcon("fileviewer/hide_ribbon.svg"))
         self.hideBtn.setIconSize(QSize(23,23))
         self.hideBtn.setStyleSheet('''

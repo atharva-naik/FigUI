@@ -33,11 +33,17 @@
     </head>
     <body>
         <script>
+            function updateTitle(title) {
+                new QWebChannel(qt.webChannelTransport, function(channel) {
+                    backend = channel.objects.backend;
+                    backend.sendTitle(title)
+                });
+            }
             $('body').terminal({
                 hello: function(what) {
                     this.echo('Hello, ' + what +
                               '. Wellcome to this terminal.');
-                    
+                    updateTitle("hello");
                 }
             }, {
                 greetings: 'Hello minion <img src="https://banner2.cleanpng.com/20180202/vuq/kisspng-emoji-hug-emoticon-emoji-face-png-transparent-image-5a7540b97d0935.8993872215176337215122.jpg"/>'

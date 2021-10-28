@@ -7,8 +7,9 @@ from jinja2 import Template
 from colormap import hex2rgb
 import json, datetime, pathlib
 # import psutil, webbrowser, threading
-# from PyQt5.Qt import PYQT_VERSION_STR
-from PyQt5.QtCore import QThread, QUrl, pyqtSignal, QObject, QTimer, QPoint, QRect, QSize, Qt, QT_VERSION_STR
+from PyQt5.Qt import PYQT_VERSION_STR
+from PyQt5.QtWebChannel import QWebChannel
+from PyQt5.QtCore import QThread, QUrl, pyqtSignal, pyqtSlot, QObject, QTimer, QPoint, QRect, QSize, Qt, QT_VERSION_STR
 from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEngineProfile, QWebEngineSettings
 from PyQt5.QtGui import QPainter, QIcon, QColor
 from PyQt5.QtWidgets import QApplication, QWidget, QMainWindow, QVBoxLayout, QTextEdit, QScrollArea, QLabel, QSizePolicy, QGraphicsDropShadowEffect, QTabBar, QTabWidget, QToolButton, QToolBar
@@ -43,6 +44,7 @@ class FtNS(argparse.Namespace):
         self._CDRGB = hex2rgb(self._CDHEX)
         self._SCRGB = hex2rgb(self._SCHEX)
         self._HCRGB = hex2rgb(self._HCHEX)
+        self._TAB_PREFIX = "\t"*4
 
     def url(self, path):
         static_path = os.path.join(self._static, path)
@@ -150,15 +152,48 @@ class FtNS(argparse.Namespace):
     def HCRGB(self):
         return self._HCRGB
 
-    @HCHEX.setter
+    @HCRGB.setter
     def HCRGB(self, v):
+        pass
+
+    @property
+    def TAB_PREFIX(self):
+        return self._TAB_PREFIX
+
+    @TAB_PREFIX.setter
+    def TAB_PREFIX(self, v):
         pass
 Ft = FtNS()
 
+class TermChannel(QObject):
+    def __init__(self, web_view=None):
+        super(TermChannel, self).__init__()
+        self._web_view = web_view
+        self._tab_widget = None
+
+    def setTabs(self, tab_widget: QTabWidget):
+        self._tab_widget = tab_widget
+
+    @pyqtSlot(str)
+    def sendTitle(self, title: str):
+        '''update title of QTabWidget.'''
+        if self._tab_widget:
+            i = self._tab_widget.currentIndex()
+            self._tab_widget.setTabText(i, Ft.TAB_PREFIX+title)
+
 
 class FigTermView(QWebEngineView):
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, tab_widget=None):
         super(FigTermView, self).__init__(parent)
+        self.settings().setAttribute(QWebEngineSettings.JavascriptEnabled, True)
+        self.settings().setAttribute(QWebEngineSettings.LocalContentCanAccessRemoteUrls, True)
+        self.settings().setAttribute(QWebEngineSettings.ErrorPageEnabled, True)
+        self.settings().setAttribute(QWebEngineSettings.PluginsEnabled, True)
+        self.channel = QWebChannel()
+        self.page().setWebChannel(self.channel)
+        self.backend = TermChannel(web_view=self) 
+        if tab_widget: self.backend.setTabs(tab_widget)
+        self.channel.registerObject("backend", self.backend)
         self.load(Ft.URL)
         self.setZoomFactor(1.35)
 
@@ -187,7 +222,7 @@ class FigTerminal(QMainWindow):
         centralWidget.setStyleSheet('''
         QWidget {
             color: #fff;
-            background: #292929;
+            background: #000;
         }''')
         self.setGeometry(200, 200, 1000, 600)
         self.setCentralWidget(centralWidget)
@@ -204,8 +239,8 @@ class FigTerminal(QMainWindow):
     def onCurrentTabChange(self, i):
         '''when tab is changed.'''
         if i == self.tabs.count()-1 and self.plusClickedFlag:
-            terminal = FigTermView(parent=self)
-            self.tabs.insertTab(i, terminal, "\tNew Tab")
+            terminal = FigTermView(parent=self, tab_widget=self.tabs)
+            self.tabs.insertTab(i, terminal, Ft.TAB_PREFIX+f"Terminal {i}")
             self.tabs.setCurrentIndex(i)
 
     def onCurrentTabClose(self, i):
@@ -239,7 +274,7 @@ class FigTerminal(QMainWindow):
         self.tabs.tabCloseRequested.connect(self.onCurrentTabClose) # adding action when tab close is requested
         self.tabs.setStyleSheet('''
         QTabWidget {
-            background: rgba(29, 29, 29, 0.95);
+            background: #000; /* rgba(29, 29, 29, 0.95); */
             color: #fff;
         }
         QTabWidget::pane {
@@ -268,9 +303,7 @@ class FigTerminal(QMainWindow):
             border: 0px;
             margin: 0px;
             font-size: 16px;
-            padding-top: 3px;
-            padding-bottom: 3px;
-            background: #292929;
+            background: #000;
         }
         QTabBar::tab:hover {
             background: '''+ Ft.CLHEX +''';
@@ -281,10 +314,11 @@ class FigTerminal(QMainWindow):
             font-weight: bold;
             background: qlineargradient(x1 : 0, y1 : 0, x2 : 2, y2 : 2, stop : 0.0 '''+Ft.CLHEX+''', stop : 0.4 '''+Ft.CDHEX+''');
         }''') # TODO: theme
-        terminal = FigTermView(parent=self)
+        terminal = FigTermView(parent=self, tab_widget=self.tabs)
         self.tabs.setUpdatesEnabled(True)
-        self.tabs.insertTab(0, terminal, "\tNew Tab")
+        self.tabs.insertTab(0, terminal, "\t\t\t\tHome\t\t\t\t")
         self.tabs.setCurrentIndex(0)
+        self.tabs.tabBar().setTabButton(0, QTabBar.RightSide, None) 
         self.tabs.tabBar().setExpanding(True)
         self.tabs.setTabToolTip(0, "Terminal")
         i = self.tabs.insertTab(1, QWidget(), "\t")
@@ -300,7 +334,7 @@ class FigTerminal(QMainWindow):
         }''')
         self.tabs.tabBar().setTabButton(1, QTabBar.RightSide, self.plusBtn)
         self.tabs.currentChanged.connect(self.onCurrentTabChange)
-        # termWidget = FigTermView(parent=self)
+
         return self.tabs
 
     def plusBtnClicked(self):
@@ -363,7 +397,7 @@ class FigTerminal(QMainWindow):
         self.hideBtn = QToolButton(mainMenu)
         self.hideBtn.clicked.connect(self.hideRibbon)
         self.hideBtn.setIcon(Ft.Icon("hide_ribbon.svg"))
-        self.hideBtn.setIconSize(QSize(23,23))
+        self.hideBtn.setIconSize(QSize(18,18))
         self.hideBtn.setStyleSheet('''
         QToolButton {
             border: 0px;
@@ -400,9 +434,8 @@ class FigTerminal(QMainWindow):
         QTabBar::tab {
             color: #fff;
             border: 0px;
-            margin: 0px;
-            padding: 0px;
-            font-size: 16px;
+            font-size: 15px;
+            font-weight: bold;
             background: #292929;
         }
         QTabBar::tab:hover {
@@ -410,7 +443,6 @@ class FigTerminal(QMainWindow):
             color: #292929;
         }
         QTabBar::tab:selected {
-            /* background: qlineargradient(x1 : 0, y1 : 0, x2 : 0, y2 : 2, stop : 0.0 #de891b, stop : 0.99 #ffbb63); */
             background: qlineargradient(x1 : 0, y1 : 0, x2 : 0, y2 : 2, stop : 0.0 '''+Ft.CDHEX+''', stop : 0.99 '''+Ft.CLHEX+'''); 
             font-weight: bold;
             color: #292929;
@@ -422,8 +454,6 @@ class FigTerminal(QMainWindow):
         QToolButton {
             border: 0px;
             font-size: 13px;
-            padding-left: 5px;
-            padding-right: 5px;
             background: transparent;
             color: #fff;
         }
