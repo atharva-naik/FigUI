@@ -7,7 +7,7 @@ import psutil, webbrowser, threading
 from PyQt5.Qt import PYQT_VERSION_STR
 from PyQt5.QtCore import QThread, QUrl, pyqtSignal, QObject, QTimer, QPoint, QRect, QSize, Qt, QT_VERSION_STR
 from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEngineProfile, QWebEngineSettings
-from PyQt5.QtGui import QIcon, QFont, QKeySequence, QPainter, QTransform, QCursor, QPixmap, QTextCharFormat, QSyntaxHighlighter, QFontDatabase, QTextFormat, QColor, QPainter, QDesktopServices
+from PyQt5.QtGui import QIcon, QFont, QKeySequence, QPainter, QTransform, QCursor, QPixmap, QWindow, QTextCharFormat, QSyntaxHighlighter, QFontDatabase, QTextFormat, QColor, QPainter, QDesktopServices
 from PyQt5.QtWidgets import QMenu, QShortcut, QApplication, QAction, QDialog, QPushButton, QTabWidget, QStatusBar, QToolBar, QWidget, QLineEdit, QMainWindow, QHBoxLayout, QVBoxLayout, QPlainTextEdit, QToolBar, QFrame, QSizePolicy, QTabBar, QDesktopWidget, QLabel, QToolButton, QTextEdit, QComboBox, QListWidget, QListWidgetItem, QScrollArea, QDockWidget, QGraphicsBlurEffect, QSplitter, QShortcut, QGraphicsDropShadowEffect, QGraphicsOpacityEffect
 
 try:
@@ -865,6 +865,11 @@ class FigWindow(QMainWindow):
         self.wrapperWidgetLayout.setSpacing(0)
         # vertical splitter between the central tab widget and the FigTerminal.
         self.centralTermSplitter = QSplitter(Qt.Vertical)
+        self.centralTermSplitter.setStyleSheet('''
+        QSplitter {
+            background: #292929;
+        }
+        ''')
         # the main menu top ribbon.
         self.mainMenu = self.initMainMenu() 
         self.wrapperWidgetLayout.addWidget(self.mainMenu)
@@ -963,8 +968,11 @@ class FigWindow(QMainWindow):
         self.ontopFlag = not self.ontopFlag
 
     def initFigTerminal(self):
-        term = QLabel("TERMINAL")
-        return term
+        from FigUI.FigTerminal import FigTerminal
+        self.figTermRef = FigTerminal()
+        self.figTermRef.titleBar.hide()
+        # term = QLabel("TERMINAL")
+        return self.figTermRef
 
     def initBrowserNavBar(self):
         '''create the navbar for borwser instances.'''

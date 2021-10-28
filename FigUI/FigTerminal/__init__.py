@@ -189,7 +189,7 @@ class FigTerminal(QMainWindow):
             color: #fff;
             background: #292929;
         }''')
-        self.setGeometry(0, 0, 900, 540)
+        self.setGeometry(200, 200, 1000, 600)
         self.setCentralWidget(centralWidget)
         self.hideRibbon()
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
@@ -203,15 +203,15 @@ class FigTerminal(QMainWindow):
     #     self.tabs.setTabToolTip(i, "New Tab")
     def onCurrentTabChange(self, i):
         '''when tab is changed.'''
-        if i == self.tabs.count()-1:
+        if i == self.tabs.count()-1 and self.plusClickedFlag:
             terminal = FigTermView(parent=self)
             self.tabs.insertTab(i, terminal, "\tNew Tab")
             self.tabs.setCurrentIndex(i)
 
     def onCurrentTabClose(self, i):
         '''when tab is closed'''
-        print("i=", i, "count=", 
-               self.tabs.count())
+        # print("i=", i, "count=", 
+        #        self.tabs.count())
 		# if there is only one tab, do nothing
         if self.tabs.count() <= 1: return 
         # else remove the tab
@@ -288,12 +288,9 @@ class FigTerminal(QMainWindow):
         self.tabs.tabBar().setExpanding(True)
         self.tabs.setTabToolTip(0, "Terminal")
         i = self.tabs.insertTab(1, QWidget(), "\t")
+        self.plusClickedFlag = False
         self.plusBtn = QToolButton(self)
-        self.plusBtn.clicked.connect(
-            lambda: self.tabs.setCurrentIndex(
-                self.tabs.count()-1
-            )
-        )
+        self.plusBtn.clicked.connect(self.plusBtnClicked)
         self.plusBtn.setIcon(Ft.Icon("plus.svg"))
         self.plusBtn.setIconSize(QSize(18,18))
         self.plusBtn.setStyleSheet('''
@@ -305,6 +302,11 @@ class FigTerminal(QMainWindow):
         self.tabs.currentChanged.connect(self.onCurrentTabChange)
         # termWidget = FigTermView(parent=self)
         return self.tabs
+
+    def plusBtnClicked(self):
+        self.plusClickedFlag = True
+        self.tabs.setCurrentIndex(self.tabs.count()-1)
+        self.plusClickedFlag = False
 
     def initFileMenu(self):
         fileMenu = QWidget()
