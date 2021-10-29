@@ -5,7 +5,7 @@ import vlc
 import os, sys
 from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtGui import QPalette, QColor, QIcon
-from PyQt5.QtWidgets import QMainWindow, QWidget, QFrame, QSlider, QHBoxLayout, QPushButton, QVBoxLayout, QSplitter, QAction, QFileDialog, QApplication, QStyleOptionSlider, QStyle, QLabel, QToolButton
+from PyQt5.QtWidgets import QMainWindow, QWidget, QFrame, QSlider, QHBoxLayout, QPushButton, QVBoxLayout, QSplitter, QAction, QFileDialog, QApplication, QStyleOptionSlider, QStyle, QLabel, QToolButton, QLineEdit
 try:
     from FigUI.assets.Linker import FigLinker
 except ImportError:
@@ -52,6 +52,20 @@ def fmtTime(timestamp):
     timestr = time.strftime('%H:%M:%S', time.gmtime(s))
 
     return str(timestr) # f"{timestr}:{ms}"
+
+def extractTime(timestr): 
+    '''extract time from timestring and return millis.'''
+    import time
+    splits = timestr.split(":")
+    N = len(splits)-1
+    timeInt = 0
+    for i, split_ in enumerate(splits):
+        try:
+            timeInt += (60**(N-i))*int(split_.strip())
+        except: # if any error in format then return 0.
+            return 0
+
+    return timeInt*1000
 
 class CustomSlider(QSlider):
     def __init__(self, x, parent=None):
@@ -271,12 +285,31 @@ class FigVideoPlayer(QMainWindow):
         self.backwardBtn.setIcon(self.linker.FigIcon("video/seek_left.svg"))
         self.backwardBtn.setToolTip("Seek forward.")
         ctrlLayout.addWidget(self.backwardBtn)
+        # seek prompt area.
+        self.seekPrompt = QLineEdit(self)
+        self.seekPrompt.setPlaceholderText("00:00")
+        self.seekPrompt.setAlignment(Qt.AlignCenter)
+        self.seekPrompt.setMaximumWidth(70)
+        self.seekPrompt.returnPressed.connect(self.seekTimeStamp)
+        ctrlLayout.addWidget(self.seekPrompt)
         # seek forward.
         self.forwardBtn = QToolButton(self)
         self.forwardBtn.setIcon(self.linker.FigIcon("video/seek_right.svg"))
         self.forwardBtn.setToolTip("Seek forward.")
         ctrlLayout.addWidget(self.forwardBtn)
         # self.forwardBtn.clicked.connect(self.forward)
+        # playback rate dropdown.
+        self.rateBtn = QToolButton(self)
+        self.rateBtn.setIcon(self.linker.FigIcon("video/speed.svg"))
+        self.rateBtn.setToolTip("Set playback rate.")
+        ctrlLayout.addWidget(self.rateBtn)
+        # playback rate prompt area.
+        self.speedPrompt = QLineEdit(self)
+        self.speedPrompt.setPlaceholderText("1.00x")
+        self.speedPrompt.setAlignment(Qt.AlignCenter)
+        self.speedPrompt.setMaximumWidth(60)
+        self.speedPrompt.returnPressed.connect(self.setSpeed)
+        ctrlLayout.addWidget(self.speedPrompt)
         # loop video.
         self.loopBtn = QToolButton(self)
         self.loopBtn.setIcon(self.linker.FigIcon("video/loop.svg"))
@@ -383,6 +416,23 @@ class FigVideoPlayer(QMainWindow):
     def loopVideo(self):
         pass
 
+    def setSpeed(self):
+        speed = self.speedPrompt.text()
+        speed.replace("x","")
+        try: speed = float(speed)
+        except: return # if error in format then return.
+        self.setRate(speed)
+
+    def setRate(self, rate=1):
+        self.mediaplayer.set_rate(rate)
+
+    def seekTimeStamp(self):
+        timeStr = self.seekPrompt.text()
+        timeInt = extractTime(timeStr)
+        duration = self.media.get_duration()
+        # print(timeInt, duration)
+        ratio = min(timeInt/duration, 0.99)
+        self.mediaplayer.set_position(ratio)
 
     def initPlaybackControls(self):
         layout = QVBoxLayout()
