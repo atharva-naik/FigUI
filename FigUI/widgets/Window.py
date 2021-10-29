@@ -919,6 +919,7 @@ class FigWindow(QMainWindow):
         self.debugBar.hide()
         self.bottomBar.hide()
         self.folderBar.hide()
+        self.subSysBar.hide()
         self.shortcutBar.hide()
         self.browserNavBar.hide()
         # self.showFullScreen()
@@ -958,6 +959,13 @@ class FigWindow(QMainWindow):
             self.fig_terminal.show()
             self.termBtn.setText("hide\nterminal")
         self.isterm_visible = not(self.isterm_visible)
+
+    def toggleTitleBar(self):
+        if self.istitle_visible:
+            self.titleBar.hide()
+        else:
+            self.titleBar.show()
+        self.istitle_visible = not(self.istitle_visible)
 
     def onKey(self, key):
         if key == Qt.Key_F11:
@@ -1144,6 +1152,10 @@ class FigWindow(QMainWindow):
         activityBtn.setToolTip("Check activity panel.")
         activityBtn.setIcon(FigIcon("sysbar/activity.svg"))
         activityBtn.triggered.connect(self.activity.toggle)
+        # titleToggleBtn = QAction("Show titlebar", self)
+        # titleToggleBtn.setToolTip("Toggle titlebar visibility.")
+        # titleToggleBtn.setIcon(FigIcon("titlebar.svg"))
+        # titleToggleBtn.triggered.connect(self.toggleTitleBar)
         # debugging.
         bugBtn = QAction("Debug", self)
         bugBtn.setToolTip("start debugging.")
@@ -1997,11 +2009,24 @@ class FigWindow(QMainWindow):
             border: 0px;
             background: transparent;
         }''')
+        # toggle title bar visibility.
+        self.titleToggleBtn = QToolButton(mainMenu)
+        self.titleToggleBtn.setToolTip("Check activity panel.")
+        self.titleToggleBtn.setIcon(FigIcon("titlebar.svg"))
+        self.titleToggleBtn.setIconSize(QSize(23,23))
+        self.titleToggleBtn.clicked.connect(self.toggleTitleBar)
+        self.titleToggleBtn.setStyleSheet('''
+        QToolButton {
+            border: 0px;
+            background: transparent;
+        }''')
 
+        mainMenu.addTab(QWidget(), "")
         mainMenu.addTab(QWidget(), "")
         mainMenu.addTab(QWidget(), "")
         mainMenu.tabBar().setTabButton(4, QTabBar.RightSide, self.hideBtn)
         mainMenu.tabBar().setTabButton(5, QTabBar.RightSide, self.actBtn)
+        mainMenu.tabBar().setTabButton(6, QTabBar.RightSide, self.titleToggleBtn)
 
         mainMenu.setCurrentIndex(0)
         mainMenu.setStyleSheet('''
@@ -2060,6 +2085,7 @@ class FigWindow(QMainWindow):
             color: qlineargradient(x1 : 0, y1 : 0, x2 : 0, y2 : 1, stop : 0.0 '''+Fig.Window.CDHEX+''', stop : 0.99 '''+Fig.Window.CLHEX+''');
             font-size: 14px;
         }''')
+        mainMenu.currentChanged.connect(self.showRibbon)
         glowEffect = QGraphicsDropShadowEffect()
         glowEffect.setBlurRadius(50)
         glowEffect.setOffset(30,0)
@@ -2082,7 +2108,115 @@ class FigWindow(QMainWindow):
         return wrapperWidget
 
     def initAppMenu(self):
-        return QWidget()
+        appMenu = QWidget()
+        appLayout = QHBoxLayout()
+        appLayout.setSpacing(0)
+        appLayout.setContentsMargins(0, 0, 0, 0)
+        appMenu.setStyleSheet('''
+        QToolButton {
+            border: 0px;
+            font-size: 13px;
+            padding: 5px;
+            border-radius: 15px;
+            background: transparent;
+            color: #fff;
+        }
+        QToolTip {
+            background: #292929;
+            color: #fff;
+        }
+        QToolButton:hover {
+            background: rgba(255, 223, 97, 0.5);
+        } 
+        ''')
+        # open Fig Chat.
+        chatBtn = QToolButton(appMenu)
+        chatBtn.setToolTip("Open chat.")
+        chatBtn.setIcon(FigIcon("sidebar/chat.svg"))
+        chatBtn.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        chatBtn.setText("chat\n")
+        # chatBtn.clicked.connect(self.openChat) 
+        appLayout.addWidget(chatBtn)
+        # open assistant.
+        botBtn = QToolButton(appMenu)
+        botBtn.setToolTip("Open assistant.")
+        botBtn.setIcon(FigIcon("sidebar/assistant.svg"))
+        botBtn.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        botBtn.setText("assistant\n")
+        # botBtn.clicked.connect(self.decOpac) 
+        appLayout.addWidget(botBtn)
+        # open calculator.
+        calcBtn = QToolButton(appMenu)
+        calcBtn.setToolTip("Open calculator.")
+        calcBtn.setIcon(FigIcon("sidebar/calculator.svg"))
+        calcBtn.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        calcBtn.setText("calculator\n")
+        # botBtn.clicked.connect(self.decOpac) 
+        appLayout.addWidget(calcBtn)
+        # open calendar.
+        calBtn = QToolButton(appMenu)
+        calBtn.setToolTip("Open calendar.")
+        calBtn.setIcon(FigIcon("sidebar/calendar.svg"))
+        calBtn.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        calBtn.setText("calendar\n")
+        # botBtn.clicked.connect(self.decOpac) 
+        appLayout.addWidget(calBtn)
+        # open clock.
+        clockBtn = QToolButton(appMenu)
+        clockBtn.setToolTip("Open clock.")
+        clockBtn.setIcon(FigIcon("sidebar/clock.svg"))
+        clockBtn.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        clockBtn.setText("clock\n")
+        # botBtn.clicked.connect(self.decOpac) 
+        appLayout.addWidget(clockBtn)
+        # open weather.
+        tempBtn = QToolButton(appMenu)
+        tempBtn.setToolTip("Open weather.")
+        tempBtn.setIcon(FigIcon("sidebar/weather.svg"))
+        tempBtn.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        tempBtn.setText("weather\n")
+        # botBtn.clicked.connect(self.decOpac) 
+        appLayout.addWidget(tempBtn)
+        # open news.
+        newsBtn = QToolButton(appMenu)
+        newsBtn.setToolTip("Open news.")
+        newsBtn.setIcon(FigIcon("sidebar/news.svg"))
+        newsBtn.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        newsBtn.setText("news\n")
+        # botBtn.clicked.connect(self.decOpac) 
+        appLayout.addWidget(newsBtn)
+        # open whiteboard.
+        wbBtn = QToolButton(appMenu)
+        wbBtn.setToolTip("Open whiteboard.")
+        wbBtn.setIcon(FigIcon("sidebar/whiteboard.svg"))
+        wbBtn.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        wbBtn.setText("whiteboard\n")
+        # botBtn.clicked.connect(self.decOpac) 
+        appLayout.addWidget(wbBtn)
+        # open illustrator.
+        illuBtn = QToolButton(appMenu)
+        illuBtn.setToolTip("Open whiteboard.")
+        illuBtn.setIcon(FigIcon("sidebar/illustrator.svg"))
+        illuBtn.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        illuBtn.setText("illustrator\n")
+        # botBtn.clicked.connect(self.decOpac) 
+        appLayout.addWidget(illuBtn)
+        # open kanban board.
+        kanBanBtn = QToolButton(appMenu)
+        kanBanBtn.setToolTip("Open weather.")
+        kanBanBtn.setIcon(FigIcon("sidebar/kanban.svg"))
+        kanBanBtn.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        kanBanBtn.setText("kanban\nboard")
+        # botBtn.clicked.connect(self.decOpac) 
+        appLayout.addWidget(kanBanBtn)
+        # expander.
+        expander = QWidget()
+        expander.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        appLayout.addWidget(expander)
+        # set layout.
+        appMenu.setLayout(appLayout)
+
+        return appMenu
 
     def initSysMenu(self):
         sysMenu = QWidget()
@@ -2271,6 +2405,7 @@ class FigWindow(QMainWindow):
         termBtn.clicked.connect(self.toggleTerminal) 
         self.termBtn = termBtn
         self.isterm_visible = False
+        self.istitle_visible = True
         viewLayout.addWidget(self.termBtn)
         # expander
         expander = QWidget()

@@ -551,7 +551,7 @@ class FigFileViewer(GraphicsView):
 
         self.layout.addWidget(self.navbar)
         # self.layout.addWidget(self.editbar)
-        self.layout.addWidget(self.propbar)
+        # self.layout.addWidget(self.propbar)
         
         self.layout.addWidget(self.mainMenu)
         # print("created toolbars:", time.time()-start)
@@ -1217,6 +1217,7 @@ class FigFileViewer(GraphicsView):
         # search bar
         searchBar = QLineEdit()
         searchBar.setStyleSheet("background: #fff; color: #000")
+        searchBar.setMinimumWidth(550)
         navLayout.addWidget(searchBar)
         # search button
         searchBtn = QToolButton()
@@ -1238,6 +1239,7 @@ class FigFileViewer(GraphicsView):
         regexBtn.setIcon(FigIcon("fileviewer/regex_search.svg"))
         # regexBtn.clicked.connect(self.back)
         navLayout.addWidget(regexBtn)
+        navLayout.addStretch(1)
 
         navLayout.setContentsMargins(5, 0, 5, 0)
         navbar.setLayout(navLayout) 
