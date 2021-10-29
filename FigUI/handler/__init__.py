@@ -82,7 +82,7 @@ class FigHandler:
         elif self.ext in [".png", ".jpg", ".gif", ".bmp"]:
             return FigUI.handler.Image.FigImageViewer(path=path, parent=self.parent)
         elif self.ext in [".webm", ".mp4", ".flv", ".ogv", ".wmv", ".mov"]:
-            return FigUI.handler.Video.FigVideoWidget(path=path, parent=self.parent)
+            return FigUI.handler.Video.FigVideoPlayer(parent=self.parent, path=path)
         elif self.ext in [".tgz", ".zip"]:
             return QWidget()
         else:

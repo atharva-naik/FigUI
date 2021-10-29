@@ -364,6 +364,7 @@ class FigLauncher(QWidget):
         
         # self.scroll.setStyleSheet("background: rgba(73, 44, 94, 0.5);")
         # self.scroll.setAttribute(Qt.WA_TranslucentBackground, True)
+        print(self.bg_url)
         self.launcherWidget.setStyleSheet('''
         QGraphicsView {
             background-image: url('''+ f"'{self.bg_url}'" +''');

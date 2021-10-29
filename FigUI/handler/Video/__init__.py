@@ -92,10 +92,14 @@ class CustomSlider(QSlider):
             print("can't seek, as no media player ref found.")
         self.setToolTip(str(position))
 
-class FigVideoPlayer(QMainWindow):
+# class FigVideoPlayer(QMainWindow): # uncomment to test as window
+class FigVideoPlayer(QWidget): # comment to test as window
     '''Fig Video player. A frontend for VLC, style inspired by YouTube's layout.'''
-    def __init__(self, master=None):
-        super(FigVideoPlayer, self).__init__()
+    def __init__(self, parent=None, path=None):
+        if isinstance(self, QWidget):
+            super(FigVideoPlayer, self).__init__(parent)
+        elif isinstance(self, QMainWindow):
+            super(FigVideoPlayer, self).__init__()
         self.setWindowTitle("Fig Video Player")
         self.isSideBarVisible = False
         self.linker = FigLinker(__file__, rel_path="../../../assets")
@@ -127,7 +131,14 @@ class FigVideoPlayer(QMainWindow):
         self.centralWidget.addWidget(self.collapse)
         self.centralWidget.addWidget(self.carousel)
         # set central widget.
-        self.setCentralWidget(self.centralWidget)
+        if isinstance(self, QMainWindow):
+            self.setCentralWidget(self.centralWidget)
+        elif isinstance(self, QWidget):
+            wrapper = QVBoxLayout()
+            wrapper.setSpacing(0)
+            wrapper.setContentsMargins(0, 0, 0, 0)
+            wrapper.addWidget(self.centralWidget)
+            self.setLayout(wrapper) 
         # set style of central widget.
         self.centralWidget.setStyleSheet('''
         QWidget {
@@ -149,6 +160,8 @@ class FigVideoPlayer(QMainWindow):
         QToolButton:hover {
             background: rgba(232, 177, 167, 0.3);
         }''')
+        # open with an initial file.
+        if path: self.openFile(filename=path)
 
     def toggleSideBar(self):
         if self.isSideBarVisible:
@@ -388,18 +401,21 @@ class FigVideoPlayer(QMainWindow):
         # }''')
         ctrlLayout.addWidget(self.volSlider)
         self.volSlider.valueChanged.connect(self.setVolume)
-        # open and exit actions.
-        openAct = QAction("&Open", self)
-        openAct.triggered.connect(self.openFile)
-        # exit videoplayer action.
-        exitAct = QAction("&Exit", self)
-        exitAct.triggered.connect(sys.exit)
-        # create menu bar.
-        menubar = self.menuBar()
-        fileMenu = menubar.addMenu("&File")
-        fileMenu.addAction(openAct)
-        fileMenu.addSeparator()
-        fileMenu.addAction(exitAct)
+
+        if isinstance(self, QMainWindow):
+            # open and exit actions.
+            openAct = QAction("&Open", self)
+            openAct.triggered.connect(self.openFile)
+            # exit videoplayer action.
+            exitAct = QAction("&Exit", self)
+            exitAct.triggered.connect(sys.exit)
+            # create menu bar.
+            menubar = self.menuBar()
+            fileMenu = menubar.addMenu("&File")
+            fileMenu.addAction(openAct)
+            fileMenu.addSeparator()
+            fileMenu.addAction(exitAct)
+        
         # timer for ?
         self.timer = QTimer(self)
         self.timer.setInterval(200)
