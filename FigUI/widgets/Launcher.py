@@ -409,40 +409,40 @@ class FigLauncher(QWidget):
             #     subcontrol-origin: margin;
         #     }''')
         self.scroll.setStyleSheet('''
-            QScrollArea {
-                /* background: url(''' + f"'{self.bg_url}'" + '''); */
-                background-position: center;
-                border: 0px;
-            }
-            QScrollBar:vertical {
-                border: 0px solid #999999;
-                width: 10px;    
-                margin: 0px 0px 0px 0px;
-                background-color: rgba(255, 255, 255, 0);
-            }
-            QScrollBar:vertical:hover {
-                background-color: rgba(255, 253, 184, 0.3);
-            }
-            QScrollBar::handle:vertical {         
-                min-height: 0px;
-                border: 0px solid red;
-                border-radius: 0px;
-                background-color: #484848;
-                /* background-color: gray; */
-                /* #c70039; */
-            }
-            QScrollBar::handle:vertical:hover {         
-                background-color: orange; /* #ff5e00; */
-            }
-            QScrollBar::add-line:vertical {       
-                height: 0px;
-                subcontrol-position: bottom;
-                subcontrol-origin: margin;
-            }
-            QScrollBar::sub-line:vertical {
-                height: 0 px;
-                subcontrol-position: top;
-                subcontrol-origin: margin;
+        QScrollArea {
+            /* background: url(''' + f"'{self.bg_url}'" + '''); */
+            background-position: center;
+            border: 0px;
+        }
+        QScrollBar:vertical {
+            border: 0px solid #999999;
+            width: 10px;    
+            margin: 0px 0px 0px 0px;
+            background-color: rgba(255, 255, 255, 0);
+        }
+        QScrollBar:vertical:hover {
+            background-color: rgba(255, 253, 184, 0.3);
+        }
+        QScrollBar::handle:vertical {         
+            min-height: 0px;
+            border: 0px solid red;
+            border-radius: 0px;
+            background-color: #484848;
+            /* background-color: gray; */
+            /* #c70039; */
+        }
+        QScrollBar::handle:vertical:hover {         
+            background-color: orange; /* #ff5e00; */
+        }
+        QScrollBar::add-line:vertical {       
+            height: 0px;
+            subcontrol-position: bottom;
+            subcontrol-origin: margin;
+        }
+        QScrollBar::sub-line:vertical {
+            height: 0 px;
+            subcontrol-position: top;
+            subcontrol-origin: margin;
         }''')
         # self.scroll.setStyleSheet('''background: rgba(73, 44, 94, 0.5);''')
         self.glowEffect = QGraphicsDropShadowEffect(self)

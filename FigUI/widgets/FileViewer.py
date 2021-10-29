@@ -448,55 +448,88 @@ class FigFileViewer(GraphicsView):
         self.scrollArea.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
         self.scrollArea.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.scrollArea.setStyleSheet('''
-            QScrollArea {
-                background-color: rgba(73, 44, 94, 0.5);
-            }
-            QScrollBar:vertical {
-                border: 0px solid #999999;
-                width: 8px;    
-                margin: 0px 0px 0px 0px;
-                background-color: rgba(227, 140, 89, 0.5);
-            }
-            QScrollBar::handle:vertical {         
-                min-height: 0px;
-                border: 0px solid red;
-                border-radius: 4px;
-                background-color: #e38c59; /* #c70039; */
-            }
-            QScrollBar::add-line:vertical {       
-                height: 0px;
-                subcontrol-position: bottom;
-                subcontrol-origin: margin;
-            }
-            QScrollBar::sub-line:vertical {
-                height: 0 px;
-                subcontrol-position: top;
-                subcontrol-origin: margin;
-            }
-            /* QScrollBar:vertical {
-                border: 0px solid #999999;
-                width:14px;    
-                margin: 0px 0px 0px 3px;
-                background-color: rgba(73, 44, 94, 0.5);
-            }
-            QScrollBar::handle:vertical {         
-                min-height: 0px;
-                border: 0px solid red;
-                border-radius: 5px;
-                background-color: rgb(92, 95, 141);
-            }
-            QScrollBar::add-line:vertical {       
-                height: 0px;
-                subcontrol-position: bottom;
-                subcontrol-origin: margin;
-            }
-            QScrollBar::sub-line:vertical {
-                height: 0 px;
-                subcontrol-position: top;
-                subcontrol-origin: margin;
-            } */
-            QToolTip { border: 0px }
-        ''')
+        QScrollArea {
+            background-position: center;
+            border: 0px;
+        }
+        QScrollBar:vertical {
+            border: 0px solid #999999;
+            width: 10px;    
+            margin: 0px 0px 0px 0px;
+            background-color: rgba(255, 255, 255, 0);
+        }
+        QScrollBar:vertical:hover {
+            background-color: rgba(255, 253, 184, 0.3);
+        }
+        QScrollBar::handle:vertical {         
+            min-height: 0px;
+            border: 0px solid red;
+            border-radius: 0px;
+            background-color: #484848;
+        }
+        QScrollBar::handle:vertical:hover {         
+            background-color: orange;
+        }
+        QScrollBar::add-line:vertical {       
+            height: 0px;
+            subcontrol-position: bottom;
+            subcontrol-origin: margin;
+        }
+        QScrollBar::sub-line:vertical {
+            height: 0 px;
+            subcontrol-position: top;
+            subcontrol-origin: margin;
+        }''')
+        # self.scrollArea.setStyleSheet('''
+        #     QScrollArea {
+        #         background-color: rgba(73, 44, 94, 0.5);
+        #     }
+        #     QScrollBar:vertical {
+        #         border: 0px solid #999999;
+        #         width: 8px;    
+        #         margin: 0px 0px 0px 0px;
+        #         background-color: rgba(227, 140, 89, 0.5);
+        #     }
+        #     QScrollBar::handle:vertical {         
+        #         min-height: 0px;
+        #         border: 0px solid red;
+        #         border-radius: 4px;
+        #         background-color: #e38c59; /* #c70039; */
+        #     }
+        #     QScrollBar::add-line:vertical {       
+        #         height: 0px;
+        #         subcontrol-position: bottom;
+        #         subcontrol-origin: margin;
+        #     }
+        #     QScrollBar::sub-line:vertical {
+        #         height: 0 px;
+        #         subcontrol-position: top;
+        #         subcontrol-origin: margin;
+        #     }
+        #     /* QScrollBar:vertical {
+        #         border: 0px solid #999999;
+        #         width:14px;    
+        #         margin: 0px 0px 0px 3px;
+        #         background-color: rgba(73, 44, 94, 0.5);
+        #     }
+        #     QScrollBar::handle:vertical {         
+        #         min-height: 0px;
+        #         border: 0px solid red;
+        #         border-radius: 5px;
+        #         background-color: rgb(92, 95, 141);
+        #     }
+        #     QScrollBar::add-line:vertical {       
+        #         height: 0px;
+        #         subcontrol-position: bottom;
+        #         subcontrol-origin: margin;
+        #     }
+        #     QScrollBar::sub-line:vertical {
+        #         height: 0 px;
+        #         subcontrol-position: top;
+        #         subcontrol-origin: margin;
+        #     } */
+        #     QToolTip { border: 0px }
+        # ''')
         ### replace with FlowLayout ###
         self.gridLayout = FlowLayout() # QGridLayout()
         self.gridLayout.setContentsMargins(0, 0, 0, 0)

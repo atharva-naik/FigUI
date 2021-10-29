@@ -251,6 +251,8 @@
 </textarea>
         <!-- core javascript source -->
         <script src="https://codemirror.net/lib/codemirror.js"></script>
+        <!-- keymap -->
+        <script src="https://codemirror.net/keymap/sublime.js"></script>
         <!-- addons -->
         <script src="https://codemirror.net/addon/comment/comment.js"></script>
         <script src="https://codemirror.net/addon/comment/continuecomment.js"></script>
@@ -282,7 +284,14 @@
         <script src="https://codemirror.net/mode/markdown/markdown.js"></script>
         <script src="https://codemirror.net/mode/css/css.js"></script>
         <script src="https://codemirror.net/mode/shell/shell.js"></script>
-        
+        <!-- addon edit -->
+        <script src="https://codemirror.net/addon/edit/closebrackets.js"></script>
+        <script src="https://codemirror.net/addon/edit/closetag.js"></script>
+        <script src="https://codemirror.net/addon/edit/continuelist.js"></script>
+        <script src="https://codemirror.net/addon/edit/matchbrackets.js"></script>
+        <script src="https://codemirror.net/addon/edit/matchtags.js"></script>
+        <script src="https://codemirror.net/addon/edit/trailingspace.js"></script>
+
         <script src="https://codemirror.net/addon/lint/coffeescript-lint.js"></script>
         <script src="https://codemirror.net/addon/lint/css-lint.js"></script>
         <script src="https://codemirror.net/addon/lint/html-lint.js"></script>
@@ -317,14 +326,105 @@
             .lint-error-icon {color: white; background-color: red; font-weight: bold; border-radius: 50%; padding: 0 3px; margin-right: 7px;}
        </style>
         <script>
+// The bindings defined specifically in the Sublime Text mode
+            // var bindings = {
+            //   "Shift-Tab": "indentLess",
+            //   "Shift-Ctrl-K": "deleteLine",
+            //   "Alt-Q": "wrapLines",
+            //   "Ctr  extraKeys: {
+            //     'Ctrl-/': editor.execCommand('toggleComment')
+            //   }l-T": "transposeChars",
+            //   "Alt-Left": "goSubwordLeft",
+            //   "Alt-Right": "goSubwordRight",
+            //   "Ctrl-Up": "scrollLineUp",
+            //   "Ctrl-Down": "scrollLineDown",
+            //   "Ctrl-L": "selectLine",
+            //   "Shift-Ctrl-L": "splitSelectionByLine",
+            //   "Esc": "singleSelectionTop",
+            //   "Ctrl-Enter": "insertLineAfter",
+            //   "Shift-Ctrl-Enter": "insertLineBefore",
+            //   "Ctrl-D": "selectNextOccurrence",
+            //   "Shift-Ctrl-Space": "selectScope",
+            //   "Shift-Ctrl-M": "selectBetweenBrackets",
+            //   "Ctrl-M": "goToBracket",
+            //   "Shift-Ctrl-Up": "swapLineUp",
+            //   "Shift-Ctrl-Down": "swapLineDown",
+            //   "Ctrl-/": "toggleCommentIndented",
+            //   "Ctrl-J": "joinLines",
+            //   "Shift-Ctrl-D": "duplicateLine",
+            //   "F9": "sortLines",
+            //   "Shift-F9": "reverseSortLines",
+            //   "Ctrl-F9": "sortLinesInsensitive",
+            //   "Shift-Ctrl-F9": "reverseSortLinesInsensitive",
+            //   "F2": "nextBookmark",
+            //   "Shift-F2": "prevBookmark",
+            //   "Ctrl-F2": "toggleBookmark",
+            //   "Shift-Ctrl-F2": "clearBookmarks",
+            //   "Alt-F2": "selectBookmarks",
+            //   "Backspace": "smartBackspace",
+            //   "Ctrl-K Ctrl-D": "skipAndSelectNextOccurrence",
+            //   "Ctrl-K Ctrl-K": "delLineRight",
+            //   "Ctrl-K Ctrl-U": "upcaseAtCursor",
+            //   "Ctrl-K Ctrl-L": "downcaseAtCursor",
+            //   "Ctrl-K Ctrl-Space": "setSublimeMark",
+            //   "Ctrl-K Ctrl-A": "selectToSublimeMark",
+            //   "Ctrl-K Ctrl-W": "deleteToSublimeMark",
+            //   "Ctrl-K Ctrl-X": "swapWithSublimeMark",
+            //   "Ctrl-K Ctrl-Y": "sublimeYank",
+            //   "Ctrl-K Ctrl-C": "showInCenter",
+            //   "Ctrl-K Ctrl-G": "clearBookmarks",
+            //   "Ctrl-K Ctrl-Backspace": "delLineLeft",
+            //   "Ctrl-K Ctrl-1": "foldAll",
+            //   "Ctrl-K Ctrl-0": "unfoldAll",
+            //   "Ctrl-K Ctrl-J": "unfoldAll",
+            //   "Ctrl-Alt-Up": "addCursorToPrevLine",
+            //   "Ctrl-Alt-Down": "addCursorToNextLine",
+            //   "Ctrl-F3": "findUnder",
+            //   "Shift-Ctrl-F3": "findUnderPrevious",
+            //   "Shift-Ctrl-[": "fold",
+            //   "Shift-Ctrl-]": "unfold",
+            //   "Ctrl-H": "replace",
+            // }
+
+            // // The implementation of joinLines
+            // function joinLines(cm) {
+            // var ranges = cm.listSelections(), joined = [];
+            // for (var i = 0; i < ranges.length; i++) {
+            //     var range = ranges[i], from = range.from();
+            //     var start = from.line, end = range.to().line;
+            //     while (i < ranges.length - 1 && ranges[i + 1].from().line == end)
+            //     end = ranges[++i].to().line;
+            //     joined.push({start: start, end: end, anchor: !range.empty() && from});
+            // }
+            // cm.operation(function() {
+            //     var offset = 0, ranges = [];
+            //     for (var i = 0; i < joined.length; i++) {
+            //     var obj = joined[i];
+            //     var anchor = obj.anchor && Pos(obj.anchor.line - offset, obj.anchor.ch), head;
+            //     for (var line = obj.start; line <= obj.end; line++) {
+            //         var actual = line - offset;
+            //         if (line == obj.end) head = Pos(actual, cm.getLine(actual).length + 1);
+            //         if (actual < cm.lastLine()) {
+            //         cm.replaceRange(" ", Pos(actual), Pos(actual + 1, /^\s*/.exec(cm.getLine(actual + 1))[0].length));
+            //         ++offset;
+            //         }
+            //     }
+            //     ranges.push({anchor: anchor || head, head: head});
+            //     }
+            //     cm.setSelections(ranges, 0);
+            // });
+            // }
+
             var editor = CodeMirror.fromTextArea(document.getElementById("codemirror"), {
                 value: "function myScript(){return 100;}\n",
                 lineNumbers: true,
                 electricChars: true,
                 lineSeparator: null,
-                extraKeys: {"Ctrl-Q": "toggleComment"},
                 mode: "text/{{ LANGUAGE }}",
                 indentUnit: 4,
+                keyMap: "sublime",
+                autoCloseBrackets: true,
+                matchBrackets: true,
                 styleActiveLine: true,
                 xml: true,
                 fencedCodeBlockHighlighting: true,
