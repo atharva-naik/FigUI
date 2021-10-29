@@ -5,7 +5,7 @@ import vlc
 import os, sys
 from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtGui import QPalette, QColor, QIcon
-from PyQt5.QtWidgets import QMainWindow, QWidget, QFrame, QSlider, QHBoxLayout, QPushButton, QVBoxLayout, QAction, QFileDialog, QApplication, QStyleOptionSlider, QStyle, QLabel, QToolButton
+from PyQt5.QtWidgets import QMainWindow, QWidget, QFrame, QSlider, QHBoxLayout, QPushButton, QVBoxLayout, QSplitter, QAction, QFileDialog, QApplication, QStyleOptionSlider, QStyle, QLabel, QToolButton
 try:
     from FigUI.assets.Linker import FigLinker
 except ImportError:
@@ -83,28 +83,35 @@ class FigVideoPlayer(QMainWindow):
     def __init__(self, master=None):
         super(FigVideoPlayer, self).__init__()
         self.setWindowTitle("Fig Video Player")
+        self.isSideBarVisible = False
         self.linker = FigLinker(__file__, rel_path="../../../assets")
         # create basic vlc instance.
         self.instance = vlc.Instance('-q --mouse-hide-timeout=14400000')
         # create empty vlc player.
         self.mediaplayer = self.instance.media_player_new()
         # main layout.
-        layout = QVBoxLayout() 
+        videoLayout = QVBoxLayout() 
         # layout.setContentsMargins(0, 0, 0, 0)
         # create central widget.
-        self.centralWidget = QWidget(self)
+        self.videoWidget = QWidget(self)
         # create sub widgets.
         self.videoFrame = self.initVideoFrame()
         self.posSlider = self.initPosSlider(self.mediaplayer)
         self.controls = self.initControls()
+        self.carousel = self.initCarousel()
         # build main layout.
-        layout.addWidget(self.videoFrame)
-        layout.addWidget(self.posSlider)
-        layout.addLayout(self.controls)
+        videoLayout.addWidget(self.videoFrame)
+        videoLayout.addWidget(self.posSlider)
+        videoLayout.addLayout(self.controls)
         # set layout.
-        self.centralWidget.setLayout(layout)
+        self.videoWidget.setLayout(videoLayout)
         self.isPaused = False
         self.currFile = None
+        self.centralWidget = QSplitter(Qt.Horizontal)
+        self.collapse = self.initCarouselBtn()
+        self.centralWidget.addWidget(self.videoWidget)
+        self.centralWidget.addWidget(self.collapse)
+        self.centralWidget.addWidget(self.carousel)
         # set central widget.
         self.setCentralWidget(self.centralWidget)
         # set style of central widget.
@@ -128,6 +135,103 @@ class FigVideoPlayer(QMainWindow):
         QToolButton:hover {
             background: rgba(232, 177, 167, 0.3);
         }''')
+
+    def toggleSideBar(self):
+        if self.isSideBarVisible:
+            self.carousel.hide()
+            self.collapse.collapseBtn.setIcon(self.linker.FigIcon("video/expand.svg"))
+        else:
+            self.carousel.show()
+            self.collapse.collapseBtn.setIcon(self.linker.FigIcon("video/collapse.svg"))
+        self.isSideBarVisible = not(self.isSideBarVisible)
+
+    def initTranscript(self):
+        pass
+
+    def initTextArea(self):
+        pass
+
+    def initCarouselBtn(self):
+        layout = QVBoxLayout()
+        layout.setSpacing(0)
+        layout.setContentsMargins(0,0,0,0)
+        
+        layout.addStretch(1)
+        collapseBtn = QToolButton(self)
+        collapseBtn.setIcon(self.linker.FigIcon("video/expand.svg"))
+        collapseBtn.clicked.connect(self.toggleSideBar)
+        layout.addWidget(collapseBtn)
+        collapseWidget = QWidget()
+        collapseWidget.setLayout(layout)
+        layout.addStretch(1)
+        collapseWidget.collapseBtn = collapseBtn
+        collapseWidget.setMaximumWidth(25)
+
+        return collapseWidget
+
+    def initCarouselControls(self):
+        '''create carousel controls.'''
+        layout = QHBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+        ctrls = QWidget()
+        # frames view button.
+        framesBtn = QToolButton(self)
+        framesBtn.setToolTip("View frames.")
+        framesBtn.setIcon(self.linker.FigIcon("video/frames.svg"))
+        layout.addWidget(framesBtn)
+        # chapters view button.
+        chapBtn = QToolButton(self)
+        chapBtn.setToolTip("View frames.")
+        chapBtn.setIcon(self.linker.FigIcon("video/chapters.svg"))
+        layout.addWidget(chapBtn)
+        # local files.
+        localBtn = QToolButton(self)
+        localBtn.setToolTip("View frames.")
+        localBtn.setIcon(self.linker.FigIcon("video/local.svg"))
+        layout.addWidget(localBtn)
+        # search results.
+        webSearchBtn = QToolButton(self)
+        webSearchBtn.setToolTip("View online search results.")
+        webSearchBtn.setIcon(self.linker.FigIcon("video/online_results.svg"))
+        layout.addWidget(webSearchBtn)
+        ctrls.setLayout(layout)
+
+        return ctrls
+
+    def initCarousel(self):
+        '''
+        Carousel panels:
+        1. Frames list.
+        2. Chapters list.
+        3. Video Carousel (local videos).
+        4. Search results (online search).
+        '''
+        layout = QVBoxLayout()
+        layout.setContentsMargins(0, 10, 0, 0)
+        layout.setSpacing(0)
+
+        carouselCtrls = self.initCarouselControls()
+        layout.addWidget(carouselCtrls)
+        layout.addStretch(1) 
+
+        carousel = QWidget()
+        carousel.setLayout(layout)
+        carousel.hide()
+
+        return carousel
+
+    def initMainMenu(self):
+        '''
+        1. file
+        2. edit (video editing tools)
+        3. view (zoom in, zoom out, mini player)
+        4. search (search web, search frames by image, search local)
+        5. convert (thumbnail, video format, cc, transcription, cc translation etc.)
+        6. share
+        7. properties (duration, encoding, all that jazz)
+        '''
+        pass
 
     def initVideoFrame(self):
         '''In this widget, the video will be drawn'''
@@ -162,18 +266,61 @@ class FigVideoPlayer(QMainWindow):
         self.replayBtn.setToolTip("Replay video.")
         ctrlLayout.addWidget(self.replayBtn)
         self.replayBtn.clicked.connect(self.replay)
+        # seek backward.
+        self.backwardBtn = QToolButton(self)
+        self.backwardBtn.setIcon(self.linker.FigIcon("video/seek_left.svg"))
+        self.backwardBtn.setToolTip("Seek forward.")
+        ctrlLayout.addWidget(self.backwardBtn)
+        # seek forward.
+        self.forwardBtn = QToolButton(self)
+        self.forwardBtn.setIcon(self.linker.FigIcon("video/seek_right.svg"))
+        self.forwardBtn.setToolTip("Seek forward.")
+        ctrlLayout.addWidget(self.forwardBtn)
+        # self.forwardBtn.clicked.connect(self.forward)
+        # loop video.
+        self.loopBtn = QToolButton(self)
+        self.loopBtn.setIcon(self.linker.FigIcon("video/loop.svg"))
+        self.loopBtn.setToolTip("Loop video after it ends.")
+        ctrlLayout.addWidget(self.loopBtn)
+        self.loopBtn.clicked.connect(self.loopVideo)
         # stop video.
-        self.stopbutton = QToolButton(self)
-        self.stopbutton.setIcon(self.linker.FigIcon("video/stop.svg"))
-        self.stopbutton.setToolTip("Clear playback source.")
-        ctrlLayout.addWidget(self.stopbutton)
-        self.stopbutton.clicked.connect(self.clearMedia)
+        self.stopBtn = QToolButton(self)
+        self.stopBtn.setIcon(self.linker.FigIcon("video/stop.svg"))
+        self.stopBtn.setToolTip("Clear playback source.")
+        ctrlLayout.addWidget(self.stopBtn)
+        self.stopBtn.clicked.connect(self.clearMedia)
+        # loop video.
+        self.ccBtn = QToolButton(self)
+        self.ccBtn.setIcon(self.linker.FigIcon("video/closed_captions.svg"))
+        self.ccBtn.setToolTip("Activate closed captions.")
+        ctrlLayout.addWidget(self.ccBtn)
+        # self.ccBtn.clicked.connect(self.loopVideo)
+        # transcribe video.
+        self.transcribeBtn = QToolButton(self)
+        self.transcribeBtn.setIcon(self.linker.FigIcon("video/transcribe.svg"))
+        self.transcribeBtn.setToolTip("Activate closed captions.")
+        ctrlLayout.addWidget(self.transcribeBtn)
+        # translate closed captions.
+        self.transBtn = QToolButton(self)
+        self.transBtn.setIcon(self.linker.FigIcon("video/translate.svg"))
+        self.transBtn.setToolTip("Translate closed captions.")
+        ctrlLayout.addWidget(self.transBtn)
         # open file.
         self.openBtn = QToolButton(self)
         self.openBtn.setIcon(self.linker.FigIcon("video/open.svg"))
         self.openBtn.setToolTip("Open video file.")
         self.openBtn.clicked.connect(self.onClickOpen)
         ctrlLayout.addWidget(self.openBtn)
+        # share video.
+        self.shareBtn = QToolButton(self)
+        self.shareBtn.setIcon(self.linker.FigIcon("video/share.svg"))
+        self.shareBtn.setToolTip("Share video online.")
+        ctrlLayout.addWidget(self.shareBtn)
+        # share on youtube.
+        self.ytBtn = QToolButton(self)
+        self.ytBtn.setIcon(self.linker.FigIcon("video/youtube.svg"))
+        self.ytBtn.setToolTip("Share video on youtube.")
+        ctrlLayout.addWidget(self.ytBtn)
         ctrlLayout.addStretch(1)
         # control volume.
         self.volSlider = QSlider(Qt.Horizontal, self)
@@ -181,15 +328,31 @@ class FigVideoPlayer(QMainWindow):
         self.volSlider.setValue(100)
         self.volSlider.setValue(self.mediaplayer.audio_get_volume())
         self.volSlider.setToolTip("Volume")
-        self.volSlider.setStyleSheet('''
-        QSlider::add-page:qlineargradient {
-            background: #121212;
-            border-radius: 5px;
-        }
-        QSlider::sub-page:qlineargradient {
-            background: #e85035;
-            border-radius: 6px;
-        }''')
+        # self.volSlider.setStyleSheet('''
+        # QSlider::groove:horizontal {
+        #     border: 1px solid #999999;
+        #     height: 6px;
+        # }
+
+        # QSlider::handle:horizontal {  
+        #     width: 10px; 
+        #     height: 10px; 
+        #     line-height: 20px; 
+        #     border-radius: 1px; 
+        # }
+
+        # QSlider::handle:horizontal:hover { 
+        #     background-color: gray; 
+        # }
+
+        # QSlider::add-page:qlineargradient {
+        #     background: #121212;
+        #     border-radius: 5px;
+        # }
+        # QSlider::sub-page:qlineargradient {
+        #     background: #e85035;
+        #     border-radius: 6px;
+        # }''')
         ctrlLayout.addWidget(self.volSlider)
         self.volSlider.valueChanged.connect(self.setVolume)
         # open and exit actions.
@@ -213,7 +376,19 @@ class FigVideoPlayer(QMainWindow):
 
     def replay(self):
         '''replay video by setting position to 0.'''
+        if self.isPaused:
+            self.togglePlay()
         self.setPosition(0)
+
+    def loopVideo(self):
+        pass
+
+
+    def initPlaybackControls(self):
+        layout = QVBoxLayout()
+        layout.setSpacing(0)
+        layout.setContentsMargins(0,0,0,0)
+
 
     def initPosSlider(self, mediaplayer):
         posSlider = CustomSlider(Qt.Horizontal, self)
@@ -227,7 +402,7 @@ class FigVideoPlayer(QMainWindow):
 
     def updateTimestamp(self, value):
         value = (self.mediaplayer.get_length())*(value/1000)
-        self.timelabel.setText(fmtTime(value))
+        self.timelabel.setText(f"{fmtTime(value)}/{fmtTime(self.media.get_duration())}")
 
     def onClickOpen(self):
         '''when open button is clicked.'''
