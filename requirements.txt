@@ -13,6 +13,7 @@ moviepy
 pydrive
 pymupdf
 pyttsx3
+pyxhook
 colormap
 markdown
 requests

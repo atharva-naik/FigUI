@@ -193,7 +193,7 @@ class GraphicsView(QGraphicsView):
 
 
 class FigFileIcon(QToolButton):
-    def __init__(self, path, parent=None, size=(120,120), textwidth=10):
+    def __init__(self, path, parent=None, size=(130,130), textwidth=10):
         super(FigFileIcon, self).__init__(parent)
         self._parent = parent
         self.name = pathlib.Path(path).name
@@ -210,6 +210,7 @@ class FigFileIcon(QToolButton):
             background: transparent;
             background-image: none;
             color: #fff;
+            margin: 10px;
         }
         QToolButton:hover {
             background: qlineargradient(x1 : 0, y1 : 0, x2 : 0, y2 : 2, stop : 0.0 '''+Fig.FileViewer.CDHEX+''', stop : 0.99 '''+Fig.FileViewer.CLHEX+'''); 
@@ -226,7 +227,7 @@ class FigFileIcon(QToolButton):
         self.setAttribute(Qt.WA_TranslucentBackground, True)
         self.setText(text) # truncate at 3 times the max textwidth
         self.setFixedSize(QSize(*size))
-        self.setIconSize(QSize(size[0]-60, size[1]-60))
+        self.setIconSize(QSize(60, 60))
         self._getFileProperties()
         self._setThumbnail()
         self._setPropertiesTip()
@@ -436,13 +437,15 @@ Modified: {self.props.modified_time}
     #     self._gifLength = self._gifMovie.n_frames
     #     self.thread.start()
 
-class FigFileViewer(GraphicsView):
+class FigFileViewer(QWidget):
     def __init__(self, path=str(pathlib.Path.home()), parent=None, width=4, button_size=(100,100), icon_size=(60,60)):
         super(FigFileViewer, self).__init__(parent)   
         all_files = self.listFiles(path) # get list of all files and folders.
+        self.selectedItems = []
         self.ribbon_visible = True
         self.path = path
         self._parent = parent
+        self.rubberBand = QRubberBand(QRubberBand.Rectangle, self)
         self.scrollArea = QScrollArea()
         self.scrollArea.setWidgetResizable(True)
         self.scrollArea.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
@@ -480,56 +483,6 @@ class FigFileViewer(GraphicsView):
             subcontrol-position: top;
             subcontrol-origin: margin;
         }''')
-        # self.scrollArea.setStyleSheet('''
-        #     QScrollArea {
-        #         background-color: rgba(73, 44, 94, 0.5);
-        #     }
-        #     QScrollBar:vertical {
-        #         border: 0px solid #999999;
-        #         width: 8px;    
-        #         margin: 0px 0px 0px 0px;
-        #         background-color: rgba(227, 140, 89, 0.5);
-        #     }
-        #     QScrollBar::handle:vertical {         
-        #         min-height: 0px;
-        #         border: 0px solid red;
-        #         border-radius: 4px;
-        #         background-color: #e38c59; /* #c70039; */
-        #     }
-        #     QScrollBar::add-line:vertical {       
-        #         height: 0px;
-        #         subcontrol-position: bottom;
-        #         subcontrol-origin: margin;
-        #     }
-        #     QScrollBar::sub-line:vertical {
-        #         height: 0 px;
-        #         subcontrol-position: top;
-        #         subcontrol-origin: margin;
-        #     }
-        #     /* QScrollBar:vertical {
-        #         border: 0px solid #999999;
-        #         width:14px;    
-        #         margin: 0px 0px 0px 3px;
-        #         background-color: rgba(73, 44, 94, 0.5);
-        #     }
-        #     QScrollBar::handle:vertical {         
-        #         min-height: 0px;
-        #         border: 0px solid red;
-        #         border-radius: 5px;
-        #         background-color: rgb(92, 95, 141);
-        #     }
-        #     QScrollBar::add-line:vertical {       
-        #         height: 0px;
-        #         subcontrol-position: bottom;
-        #         subcontrol-origin: margin;
-        #     }
-        #     QScrollBar::sub-line:vertical {
-        #         height: 0 px;
-        #         subcontrol-position: top;
-        #         subcontrol-origin: margin;
-        #     } */
-        #     QToolTip { border: 0px }
-        # ''')
         ### replace with FlowLayout ###
         self.gridLayout = FlowLayout() # QGridLayout()
         self.gridLayout.setContentsMargins(0, 0, 0, 0)
@@ -615,6 +568,29 @@ class FigFileViewer(GraphicsView):
         self.ribbon_visible = not(
             self.ribbon_visible
         )
+
+    def mousePressEvent(self, event):
+        self.selection=event.pos()
+        self.rubberBand.setGeometry(QRect(self.selection,QSize()))
+        self.rubberBand.show()
+
+    def mouseMoveEvent(self, event):
+        self.rubberBand.setGeometry(
+            QRect(
+                self.selection, event.pos()
+            ).normalized()
+        )
+
+    def mouseReleaseEvent(self, event):   
+        '''use this function to show the selection'''
+        rect = self.rubberBand.geometry()
+        # print("\x1b[31;1mrect:\x1b[0m", rect, dir(rect))
+        for child in self.listContents():
+            # print(child.geometry(), child.text())
+            if rect.contains(child.geometry()) and child.inherits('QToolButton'):
+                print(child.text())
+                child.select()
+            self.rubberBand.hide()
 
     def initConvertMenu(self):
         convertMenu = QWidget()
@@ -737,6 +713,10 @@ class FigFileViewer(GraphicsView):
         mainMenu.setMaximumHeight(130)
 
         return mainMenu
+
+    def listContents(self):
+        for i in range(self.gridLayout.count()):
+            yield self.gridLayout.itemAt(i).widget()
 
     def initFileMenu(self):
         fileMenu = QWidget()
@@ -1733,6 +1713,7 @@ class FigFileViewer(GraphicsView):
             self.gridLayout.addWidget(fileIcon)  
             # self.gridLayout.addWidget(fileIcon, i // self.width, i % self.width)  
             ###############################
+        self.viewer.setStyleSheet(f"background: {Fig.FileViewer.FVBG}")
         self.highlight(0)        
 
     def unhide(self, path):        
@@ -1907,3 +1888,54 @@ if __name__ == "__main__":
         # nextBtn.setIcon(FigIcon("forward.svg"))
         # nextBtn.clicked.connect(self.nextPath)
         # navLayout.addWidget(nextBtn)
+
+        # self.scrollArea.setStyleSheet('''
+        #     QScrollArea {
+        #         background-color: rgba(73, 44, 94, 0.5);
+        #     }
+        #     QScrollBar:vertical {
+        #         border: 0px solid #999999;
+        #         width: 8px;    
+        #         margin: 0px 0px 0px 0px;
+        #         background-color: rgba(227, 140, 89, 0.5);
+        #     }
+        #     QScrollBar::handle:vertical {         
+        #         min-height: 0px;
+        #         border: 0px solid red;
+        #         border-radius: 4px;
+        #         background-color: #e38c59; /* #c70039; */
+        #     }
+        #     QScrollBar::add-line:vertical {       
+        #         height: 0px;
+        #         subcontrol-position: bottom;
+        #         subcontrol-origin: margin;
+        #     }
+        #     QScrollBar::sub-line:vertical {
+        #         height: 0 px;
+        #         subcontrol-position: top;
+        #         subcontrol-origin: margin;
+        #     }
+        #     /* QScrollBar:vertical {
+        #         border: 0px solid #999999;
+        #         width:14px;    
+        #         margin: 0px 0px 0px 3px;
+        #         background-color: rgba(73, 44, 94, 0.5);
+        #     }
+        #     QScrollBar::handle:vertical {         
+        #         min-height: 0px;
+        #         border: 0px solid red;
+        #         border-radius: 5px;
+        #         background-color: rgb(92, 95, 141);
+        #     }
+        #     QScrollBar::add-line:vertical {       
+        #         height: 0px;
+        #         subcontrol-position: bottom;
+        #         subcontrol-origin: margin;
+        #     }
+        #     QScrollBar::sub-line:vertical {
+        #         height: 0 px;
+        #         subcontrol-position: top;
+        #         subcontrol-origin: margin;
+        #     } */
+        #     QToolTip { border: 0px }
+        # ''')
