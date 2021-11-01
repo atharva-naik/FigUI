@@ -2,6 +2,7 @@ import pathlib, os
 import FigUI.handler.Code
 import FigUI.handler.Image
 import FigUI.handler.Video
+import FigUI.handler.Model3D
 import FigUI.handler.Text.md
 import FigUI.handler.Text.txt
 import FigUI.handler.Code.html
@@ -83,6 +84,8 @@ class FigHandler:
             return FigUI.handler.Image.FigImageViewer(path=path, parent=self.parent)
         elif self.ext in [".webm", ".mp4", ".flv", ".ogv", ".wmv", ".mov"]:
             return FigUI.handler.Video.FigVideoPlayer(parent=self.parent, path=path)
+        elif self.ext in [".stl", ".STL"]:
+            return FigUI.handler.Model3D.FigModelViewer(parent=self.parent, path=path)
         elif self.ext in [".tgz", ".zip"]:
             return QWidget()
         else:

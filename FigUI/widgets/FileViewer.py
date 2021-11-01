@@ -134,6 +134,7 @@ class FileViewerInitWorker(QObject):
     
     def run(self, file_viewer, all_files: List[str]):
         '''for the fileviewer ui loading task.'''
+        #  print("called FileViewerInitWorker")
         for i, path in enumerate(all_files):
             fileIcon = FigFileIcon(path, parent=file_viewer)
             fileIcon.clicked.connect(file_viewer.open)
@@ -193,7 +194,7 @@ class GraphicsView(QGraphicsView):
 
 
 class FigFileIcon(QToolButton):
-    def __init__(self, path, parent=None, size=(130,130), textwidth=10):
+    def __init__(self, path, parent=None, size=(150,150), textwidth=10):
         super(FigFileIcon, self).__init__(parent)
         self._parent = parent
         self.name = pathlib.Path(path).name
@@ -219,7 +220,19 @@ class FigFileIcon(QToolButton):
             font-weight: bold;
         }        
         ''' 
-        self.selectedStyle = f"background: {Fig.FileViewer.SCHEX}; color: #292929; font-weight: bold"
+        self.selectedStyle = '''
+        QToolTip {
+            border: 0px;
+            color: #fff;
+        }
+        QToolButton { 
+            '''+f"background: {Fig.FileViewer.SCHEX};"+'''
+            background-image: none;
+            color: #292929;
+            font-weight: bold;
+            margin: 10px;
+        }    
+        ''' 
         self.setStyleSheet(self.defaultStyle)
         self.setAttribute(Qt.WA_TranslucentBackground)
         self.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
@@ -227,7 +240,7 @@ class FigFileIcon(QToolButton):
         self.setAttribute(Qt.WA_TranslucentBackground, True)
         self.setText(text) # truncate at 3 times the max textwidth
         self.setFixedSize(QSize(*size))
-        self.setIconSize(QSize(60, 60))
+        self.setIconSize(QSize(50,50))
         self._getFileProperties()
         self._setThumbnail()
         self._setPropertiesTip()
@@ -343,6 +356,9 @@ Modified: {self.props.modified_time}
             else:    
                 self.setIcon(FigIcon("launcher/fileviewer.png"))
             return
+        elif ext in ["STL", "OBJ"]:
+            self.setIcon(FigIcon(f"launcher/{ext.lower()}.png"))
+            return
         elif ext in ["png","jpg","svg"]:
             self.setIcon(QIcon(self.path))
             return
@@ -443,7 +459,7 @@ class FigFileViewer(QWidget):
         all_files = self.listFiles(path) # get list of all files and folders.
         self.selectedItems = []
         self.ribbon_visible = True
-        self.path = path
+        self.curr_path = path # initialize current path with the passed path or home.
         self._parent = parent
         self.rubberBand = QRubberBand(QRubberBand.Rectangle, self)
         self.scrollArea = QScrollArea()
@@ -497,7 +513,7 @@ class FigFileViewer(QWidget):
         background: ''' + Fig.FileViewer.FVBG + '''
         ''')
         self.history = [path]
-        self.i = 0
+        self.historyIter = 0
         self.j = 0
         import time
         start = time.time()
@@ -1058,7 +1074,7 @@ class FigFileViewer(QWidget):
         sortUpBtn = QToolButton()
         sortUpBtn.setIcon(FigIcon("fileviewer/sort_ascending.svg"))
         sortUpBtn.setIconSize(QSize(25,25))
-        sortUpBtn.clicked.connect(lambda: self.refresh(self.path, reverse=False))
+        sortUpBtn.clicked.connect(lambda: self.refresh(self.curr_path, reverse=False))
         sortUpBtn.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
         sortUpBtn.setText("A to Z")
         sortLayout.addWidget(sortUpBtn)
@@ -1066,7 +1082,7 @@ class FigFileViewer(QWidget):
         sortDownBtn = QToolButton()
         sortDownBtn.setIcon(FigIcon("fileviewer/sort_descending.svg"))
         sortDownBtn.setIconSize(QSize(25,25))
-        sortDownBtn.clicked.connect(lambda: self.refresh(self.path, reverse=True))
+        sortDownBtn.clicked.connect(lambda: self.refresh(self.curr_path, reverse=True))
         sortDownBtn.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
         sortLayout.addWidget(sortDownBtn)
         sortDownBtn.setText("Z to A")
@@ -1523,12 +1539,12 @@ class FigFileViewer(QWidget):
         # sort ascending.
         sortUpBtn = QToolButton()
         sortUpBtn.setIcon(FigIcon("fileviewer/sort_ascending.svg"))
-        sortUpBtn.clicked.connect(lambda: self.refresh(self.path, reverse=False))
+        sortUpBtn.clicked.connect(lambda: self.refresh(self.curr_path, reverse=False))
         viewLayout.addWidget(sortUpBtn)
         # sort descending.
         sortDownBtn = QToolButton()
         sortDownBtn.setIcon(FigIcon("fileviewer/sort_descending.svg"))
-        sortDownBtn.clicked.connect(lambda: self.refresh(self.path, reverse=True))
+        sortDownBtn.clicked.connect(lambda: self.refresh(self.curr_path, reverse=True))
         viewLayout.addWidget(sortDownBtn)
         # viewLayout.addWidget(QVLine())
         # recently accessed files.
@@ -1539,12 +1555,12 @@ class FigFileViewer(QWidget):
         # view hidden files.
         unhideBtn = QToolButton()
         unhideBtn.setIcon(FigIcon("fileviewer/unhide.svg"))
-        unhideBtn.clicked.connect(lambda: self.unhide(self.path))
+        unhideBtn.clicked.connect(lambda: self.unhide(self.curr_path))
         viewLayout.addWidget(unhideBtn)
 
         hideBtn = QToolButton()
         hideBtn.setIcon(FigIcon("fileviewer/hide.svg"))
-        hideBtn.clicked.connect(lambda: self.refresh(self.path))
+        hideBtn.clicked.connect(lambda: self.refresh(self.curr_path))
         viewLayout.addWidget(hideBtn)
         # viewLayout.addWidget(QVLine())
         listViewBtn = QToolButton() # toggle list view.
@@ -1582,25 +1598,6 @@ class FigFileViewer(QWidget):
         sendingBtn = self.sender()
         j = self.gridLayout.indexOf(sendingBtn)
         self.highlight(j)
-    
-    def keyPressEvent(self, e):
-        if e.key() == Qt.Key_A:
-            j = max(self.j-1,0)
-        elif e.key() == Qt.Key_D:
-            j = min(self.gridLayout.count()-1,self.j+1)
-        elif e.key() == Qt.Key_W:
-            j = max(self.j-self.width,0)
-        elif e.key() == Qt.Key_S:
-            j = min(self.gridLayout.count()-1,self.j+self.width)
-        elif e.key() == Qt.Key_Return:
-            selBtn = self.gridLayout.itemAt(self.j).widget()
-            path = selBtn.path
-            self.openPath(path)
-            return
-        else:
-            return
-        self.highlight(j)
-
     def clear(self):
         for i in reversed(range(self.gridLayout.count())): 
             self.gridLayout.itemAt(i).widget().setParent(None)
@@ -1622,31 +1619,31 @@ class FigFileViewer(QWidget):
     #         print(event.key())
     #     return super(FigFileViewer, self).eventFilter(source, event)
     def prevPath(self):
-        self.i -= 1
-        self.i = max(0, self.i)
-        path = self.history[self.i]
+        self.historyIter -= 1
+        self.historyIter = max(0, self.historyIter)
+        path = self.history[self.historyIter]
         self.refresh(path)
 
     def nextPath(self):
-        self.i += 1
-        self.i = min(len(self.history)-1, self.i)
-        path = self.history[self.i]
+        self.historyIter += 1
+        self.historyIter = min(len(self.history)-1, self.historyIter)
+        path = self.history[self.historyIter]
         self.refresh(path)
 
     def back(self):
-        path = self.path
+        path = self.curr_path
         path = pathlib.Path(path).parent
-        self.path = path
+        self.curr_path = path
         self.history.append(path)
-        self.i += 1
+        self.historyIter += 1
         self.refresh(path)
 
     def openPath(self, path):
-        self.path = path
+        self.curr_path = path
         # print(f"opened {path}") # DEBUG
         if not os.path.isfile(path):
             self.history.append(path)
-            self.i += 1
+            self.historyIter += 1
             self.refresh(path)
         else:
             # call file handler for the extension here
@@ -1667,7 +1664,7 @@ class FigFileViewer(QWidget):
         
         files = []
         try:
-            print("reverse:", reverse)
+            # print("reverse:", reverse)
             for file in os.listdir(path):
                 if not(file.startswith(".") and hide):
                     files.append(os.path.join(path, file))
@@ -1680,7 +1677,7 @@ class FigFileViewer(QWidget):
         import time
         start = time.time()
         if self._parent:
-            print("refreshing view ...")
+            # print("refreshing view ...")
             self._parent.setWindowTitle("Loading")
         self.refresh_thread = QThread()
         self.refresh_worker = FileViewerRefreshWorker()
@@ -1692,8 +1689,7 @@ class FigFileViewer(QWidget):
         # TODO: check dis.
         # self.init_worker.progress.connect(self.reportProgress)
         self.refresh_thread.start()
-        print("refreshed in:", time.time()-start)
-
+        # print("refreshed in:", time.time()-start)
     def _refresh(self, path, reverse=False):
         '''function to be executed inside the worker.'''
         self.clear()
@@ -1736,9 +1732,9 @@ class FigFileViewer(QWidget):
             return 
         if not sendingBtn.isfile:
             path = sendingBtn.path
-            self.path = path
+            self.curr_path = path
             self.history.append(path)
-            self.i += 1
+            self.historyIter += 1
             self.refresh(path)
         else:
             if self._parent: # call file handler for the extension here
@@ -1939,3 +1935,20 @@ if __name__ == "__main__":
         #     } */
         #     QToolTip { border: 0px }
         # ''')
+        # def keyPressEvent(self, e):
+    #     if e.key() == Qt.Key_A:
+    #         j = max(self.j-1,0)
+    #     elif e.key() == Qt.Key_D:
+    #         j = min(self.gridLayout.count()-1,self.j+1)
+    #     elif e.key() == Qt.Key_W:
+    #         j = max(self.j-self.width,0)
+    #     elif e.key() == Qt.Key_S:
+    #         j = min(self.gridLayout.count()-1,self.j+self.width)
+    #     elif e.key() == Qt.Key_Return:
+    #         selBtn = self.gridLayout.itemAt(self.j).widget()
+    #         path = selBtn.path
+    #         self.openPath(path)
+    #         return
+    #     else:
+    #         return
+    #     self.highlight(j)

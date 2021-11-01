@@ -1,3 +1,4 @@
+vtk
 Xlib
 parse
 PyQt5
