@@ -2218,6 +2218,11 @@ class FigWindow(QMainWindow):
 
         return appMenu
 
+    def initSmartPhoneTaskBar(self):
+        spTaskBar = QDockWidget()
+
+        return spTaskBar
+
     def initSysMenu(self):
         sysMenu = QWidget()
         sysLayout = QHBoxLayout()
@@ -2403,10 +2408,25 @@ class FigWindow(QMainWindow):
         termBtn.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
         termBtn.setText("show\nterminal")
         termBtn.clicked.connect(self.toggleTerminal) 
+        # demo gif background.
+        gifBackBtn = QToolButton(viewMenu)
+        gifBackBtn.setToolTip("Try a gif background.")
+        gifBackBtn.setIcon(FigIcon("gif_background.svg"))
+        gifBackBtn.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        gifBackBtn.setText("try gif\nbackground")
+        # activate wallpaper carousel.
+        carouselBtn = QToolButton(viewMenu)
+        carouselBtn.setToolTip("Activate wallpaper carousel.")
+        carouselBtn.setIcon(FigIcon("carousel.svg"))
+        carouselBtn.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        carouselBtn.setText("activate\ncarousel")
+        # termBtn.clicked.connect(self.toggleTerminal) 
         self.termBtn = termBtn
         self.isterm_visible = False
         self.istitle_visible = True
         viewLayout.addWidget(self.termBtn)
+        viewLayout.addWidget(gifBackBtn)
+        viewLayout.addWidget(carouselBtn)
         # expander
         expander = QWidget()
         expander.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)

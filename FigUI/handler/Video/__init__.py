@@ -110,7 +110,7 @@ class FigVideoPlayer(QWidget): # comment to test as window
         # main layout.
         videoLayout = QVBoxLayout() 
         # layout.setContentsMargins(0, 0, 0, 0)
-        # create central widget.
+        # create video widget.
         self.videoWidget = QWidget(self)
         # create sub widgets.
         self.videoFrame = self.initVideoFrame()
@@ -340,6 +340,16 @@ class FigVideoPlayer(QWidget): # comment to test as window
         self.ccBtn.setIcon(self.linker.FigIcon("video/closed_captions.svg"))
         self.ccBtn.setToolTip("Activate closed captions.")
         ctrlLayout.addWidget(self.ccBtn)
+        # play picture-in-picture.
+        self.pipBtn = QToolButton(self)
+        self.pipBtn.setIcon(self.linker.FigIcon("video/picture-in-picture.svg"))
+        self.pipBtn.setToolTip("Picture-in-picture mode (Miniplayer).")
+        ctrlLayout.addWidget(self.pipBtn)
+        # edit video.
+        self.editBtn = QToolButton(self)
+        self.editBtn.setIcon(self.linker.FigIcon("video/edit_video.svg"))
+        self.editBtn.setToolTip("Edit video.")
+        ctrlLayout.addWidget(self.editBtn)
         # self.ccBtn.clicked.connect(self.loopVideo)
         # transcribe video.
         self.transcribeBtn = QToolButton(self)
@@ -572,12 +582,12 @@ class FigVideoPlayer(QWidget): # comment to test as window
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    player = FigVideoPlayer()
-    player.setWindowFlags(Qt.WindowStaysOnTopHint)
+    player = FigVideoPlayer(path=sys.argv[1])
+    # player.setWindowFlags(Qt.WindowStaysOnTopHint)
     player.show()
     player.resize(1280, 720)
-    if sys.argv[1:]:
-        player.openFile(sys.argv[1])
+    # if sys.argv[1:]:
+        # player.openFile(sys.argv[1])
     sys.exit(app.exec_())
 # import vlc
 # import os, sys, logging, datetime, pathlib
