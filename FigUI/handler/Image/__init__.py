@@ -3,6 +3,7 @@ import os, stat
 import mimetypes
 from PIL import Image
 from jinja2 import Template
+from PIL.ExifTags import TAGS
 import os, sys, logging, datetime, pathlib
 from PyQt5.QtPrintSupport import *
 from PyQt5.QtCore import QThread, QUrl, QRegExp, QSize, Qt
@@ -115,6 +116,16 @@ class FigImageViewer(QWidget):
         self.path = path
         sinfo = getStatInfo(path)
         img = Image.open(path)
+        # extract image metadata.
+        exifdata = img.getexif()
+        metadata = []
+        for tag_id in exifdata:
+            tag = TAGS.get(tag_id, tag_id)
+            data = exifdata.get(tag_id)
+            if isinstance(data, bytes):
+                data = data.decode()
+            metadata.append((tag, data))
+
         width, height = img.size
         # print("type:", mimetypes.guess_type(self.path))
         import json
@@ -140,6 +151,7 @@ class FigImageViewer(QWidget):
             "IMAGE_HISTOGRAM" : colors,
             "JQUERY_JS" : localStaticUrl("jquery.js").toString(),
             "EDITOR_PATH" : localStaticUrl("editor_rendered.html").toString(),
+            "IMAGE_METADATA": metadata,
         }
         
         self.editor_params = {

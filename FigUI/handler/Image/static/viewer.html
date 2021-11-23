@@ -78,6 +78,15 @@
         {{ clr }}: {{ count }} %,&nbsp;&nbsp; 
     {% endfor %}
 </span>
+<br>
+<span style="font-size: 14px; font-family: Helvetica">Image Metada:
+<br>
+<ul style="list-style-type:none; overflow-wrap: break-word; word-wrap: break-word; white-space: normal !important">
+{% for tag, data in IMAGE_METADATA %}
+<li>{{ tag }} : {{ data }}</li>
+{% endfor %}
+</ul>
+</span>
 <script src="{{ JQUERY_JS }}"></script>
 <script>
     var tooltip = $( '<div id="tooltip">' ).appendTo( 'body' )[0];

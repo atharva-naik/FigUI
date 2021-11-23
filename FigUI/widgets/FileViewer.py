@@ -547,7 +547,7 @@ class FigFileViewer(QWidget):
         self.navbar = self.initNavBar()
         self.propbar = self.initPropBar()
         # self.editbar = self.initEditBar()
-        self.viewbar = self.initViewBar()
+        # self.viewbar = self.initViewBar()
         self.mainMenu = self.initMainMenu()
         # self.utilbar = self.initUtilBar()
 
@@ -1070,6 +1070,12 @@ class FigFileViewer(QWidget):
         sortLayout.setContentsMargins(0, 0, 0, 0)
         sortRibbon.setLayout(sortLayout)
 
+        sideBarRibbon = QWidget()
+        sideBarLayout = QVBoxLayout()
+        sideBarLayout.setSpacing(0)
+        sideBarLayout.setContentsMargins(0, 0, 0, 0)
+        sideBarRibbon.setLayout(sideBarLayout)
+
         # sort ascending.
         sortUpBtn = QToolButton()
         sortUpBtn.setIcon(FigIcon("fileviewer/sort_ascending.svg"))
@@ -1087,7 +1093,47 @@ class FigFileViewer(QWidget):
         sortLayout.addWidget(sortDownBtn)
         sortDownBtn.setText("Z to A")
         layoutToolBarLayout.addWidget(sortRibbon)
-
+        # sidebar to left.
+        sideLeftBtn = QToolButton()
+        sideLeftBtn.setIcon(FigIcon("fileviewer/sidebar_to_left.svg"))
+        sideLeftBtn.setIconSize(QSize(25,25))
+        # sideLeftBtn.clicked.connect(lambda: self.refresh(self.curr_path, reverse=False))
+        sideLeftBtn.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
+        sideBarLayout.addWidget(sideLeftBtn)
+        sideLeftBtn.setText("to left")
+        # sidebar to right.
+        sideRightBtn = QToolButton()
+        sideRightBtn.setIcon(FigIcon("fileviewer/sidebar_to_right.svg"))
+        sideRightBtn.setIconSize(QSize(25,25))
+        # sideRightBtn.clicked.connect(lambda: self.refresh(self.curr_path, reverse=False))
+        sideRightBtn.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
+        sideBarLayout.addWidget(sideRightBtn)
+        sideRightBtn.setText("to right")
+        layoutToolBarLayout.addWidget(sideBarRibbon)
+        # list view.
+        listViewBtn = QToolButton()
+        listViewBtn.setIcon(FigIcon("fileviewer/list_view.svg"))
+        listViewBtn.setIconSize(QSize(30,30))
+        # listViewBtn.clicked.connect(lambda: self.refresh(self.curr_path, reverse=False))
+        listViewBtn.setText("list")
+        listViewBtn.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        layoutToolBarLayout.addWidget(listViewBtn)
+        # grid view.
+        gridViewBtn = QToolButton()
+        gridViewBtn.setIcon(FigIcon("fileviewer/grid_view.svg"))
+        gridViewBtn.setIconSize(QSize(30,30))
+        # gridViewBtn.clicked.connect(lambda: self.refresh(self.curr_path, reverse=False))
+        gridViewBtn.setText("grid")
+        gridViewBtn.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        layoutToolBarLayout.addWidget(gridViewBtn)
+        # tree view.
+        treeViewBtn = QToolButton()
+        treeViewBtn.setIcon(FigIcon("fileviewer/tree_view.svg"))
+        treeViewBtn.setIconSize(QSize(30,30))
+        # treeViewBtn.clicked.connect(lambda: self.refresh(self.curr_path, reverse=False))
+        treeViewBtn.setText("tree")
+        treeViewBtn.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        layoutToolBarLayout.addWidget(treeViewBtn)
         # # recently accessed files.
         # recentBtn = QToolButton()
         # recentBtn.setIcon(FigIcon("fileviewer/recent.svg"))
@@ -1518,68 +1564,6 @@ class FigFileViewer(QWidget):
         msg.setGeometry(200, 200, 500, 50)
         _ = msg.exec_()
 
-    def initViewBar(self):
-        '''
-        Initialize view bar.
-        View bar contains:
-        1. Sort ascending
-        2. Sort descending
-        3. Recently accessed
-        4. Show hidden files (linux: . prefix)
-        5. Hide hidden files
-        6. Toggle list view
-        7. Toggle block view
-        '''
-        viewbar = QWidget()
-        viewLayout = QHBoxLayout()
-        # left spacer.
-        left_spacer = QWidget()
-        left_spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        viewLayout.addWidget(left_spacer)
-        # sort ascending.
-        sortUpBtn = QToolButton()
-        sortUpBtn.setIcon(FigIcon("fileviewer/sort_ascending.svg"))
-        sortUpBtn.clicked.connect(lambda: self.refresh(self.curr_path, reverse=False))
-        viewLayout.addWidget(sortUpBtn)
-        # sort descending.
-        sortDownBtn = QToolButton()
-        sortDownBtn.setIcon(FigIcon("fileviewer/sort_descending.svg"))
-        sortDownBtn.clicked.connect(lambda: self.refresh(self.curr_path, reverse=True))
-        viewLayout.addWidget(sortDownBtn)
-        # viewLayout.addWidget(QVLine())
-        # recently accessed files.
-        recentBtn = QToolButton()
-        recentBtn.setIcon(FigIcon("fileviewer/recent.svg"))
-        # sortUpBtn.clicked.connect(self.nextPath)
-        viewLayout.addWidget(recentBtn)
-        # view hidden files.
-        unhideBtn = QToolButton()
-        unhideBtn.setIcon(FigIcon("fileviewer/unhide.svg"))
-        unhideBtn.clicked.connect(lambda: self.unhide(self.curr_path))
-        viewLayout.addWidget(unhideBtn)
-
-        hideBtn = QToolButton()
-        hideBtn.setIcon(FigIcon("fileviewer/hide.svg"))
-        hideBtn.clicked.connect(lambda: self.refresh(self.curr_path))
-        viewLayout.addWidget(hideBtn)
-        # viewLayout.addWidget(QVLine())
-        listViewBtn = QToolButton() # toggle list view.
-        listViewBtn.setIcon(FigIcon("fileviewer/listview.svg"))
-        viewLayout.addWidget(listViewBtn)
-
-        blockViewBtn = QToolButton() # toggle block view.
-        blockViewBtn.setIcon(FigIcon("fileviewer/blockview.svg"))
-        viewLayout.addWidget(blockViewBtn)        
-        # right spacer.
-        right_spacer = QWidget()
-        right_spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
-        viewLayout.addWidget(right_spacer)
-
-        viewLayout.setContentsMargins(5, 0, 5, 0)
-        viewbar.setLayout(viewLayout)
-
-        return viewbar
-
     def initUtilBar(self):
         utilbar = QWidget()
         utilLayout = QHBoxLayout() # bookmarks, restricted view, change permissions, encrypt, zip/unzip, new folder, new file, undo/redo, cut/copy/paste, rename, open in terminal, properties.
@@ -1952,3 +1936,64 @@ if __name__ == "__main__":
     #     else:
     #         return
     #     self.highlight(j)
+    # def initViewBar(self):
+    #     '''
+    #     Initialize view bar.
+    #     View bar contains:
+    #     1. Sort ascending
+    #     2. Sort descending
+    #     3. Recently accessed
+    #     4. Show hidden files (linux: . prefix)
+    #     5. Hide hidden files
+    #     6. Toggle list view
+    #     7. Toggle block view
+    #     '''
+    #     viewbar = QWidget()
+    #     viewLayout = QHBoxLayout()
+    #     # left spacer.
+    #     left_spacer = QWidget()
+    #     left_spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+    #     viewLayout.addWidget(left_spacer)
+    #     # sort ascending.
+    #     sortUpBtn = QToolButton()
+    #     sortUpBtn.setIcon(FigIcon("fileviewer/sort_ascending.svg"))
+    #     sortUpBtn.clicked.connect(lambda: self.refresh(self.curr_path, reverse=False))
+    #     viewLayout.addWidget(sortUpBtn)
+    #     # sort descending.
+    #     sortDownBtn = QToolButton()
+    #     sortDownBtn.setIcon(FigIcon("fileviewer/sort_descending.svg"))
+    #     sortDownBtn.clicked.connect(lambda: self.refresh(self.curr_path, reverse=True))
+    #     viewLayout.addWidget(sortDownBtn)
+    #     # viewLayout.addWidget(QVLine())
+    #     # recently accessed files.
+    #     recentBtn = QToolButton()
+    #     recentBtn.setIcon(FigIcon("fileviewer/recent.svg"))
+    #     # sortUpBtn.clicked.connect(self.nextPath)
+    #     viewLayout.addWidget(recentBtn)
+    #     # view hidden files.
+    #     unhideBtn = QToolButton()
+    #     unhideBtn.setIcon(FigIcon("fileviewer/unhide.svg"))
+    #     unhideBtn.clicked.connect(lambda: self.unhide(self.curr_path))
+    #     viewLayout.addWidget(unhideBtn)
+
+    #     hideBtn = QToolButton()
+    #     hideBtn.setIcon(FigIcon("fileviewer/hide.svg"))
+    #     hideBtn.clicked.connect(lambda: self.refresh(self.curr_path))
+    #     viewLayout.addWidget(hideBtn)
+    #     # viewLayout.addWidget(QVLine())
+    #     listViewBtn = QToolButton() # toggle list view.
+    #     listViewBtn.setIcon(FigIcon("fileviewer/listview.svg"))
+    #     viewLayout.addWidget(listViewBtn)
+
+    #     blockViewBtn = QToolButton() # toggle block view.
+    #     blockViewBtn.setIcon(FigIcon("fileviewer/blockview.svg"))
+    #     viewLayout.addWidget(blockViewBtn)        
+    #     # right spacer.
+    #     right_spacer = QWidget()
+    #     right_spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+    #     viewLayout.addWidget(right_spacer)
+
+    #     viewLayout.setContentsMargins(5, 0, 5, 0)
+    #     viewbar.setLayout(viewLayout)
+
+    #     return viewbar

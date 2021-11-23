@@ -5,8 +5,10 @@ PyQt5
 scipy
 spacy
 jinja2
+langid
 pillow
 psutil
+pycld3
 qrcode
 easydev
 imageio

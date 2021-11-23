@@ -8,7 +8,7 @@ from PyQt5.Qt import PYQT_VERSION_STR
 from PyQt5.QtCore import QThread, QUrl, pyqtSignal, QObject, QTimer, QPoint, QRect, QSize, Qt, QT_VERSION_STR
 from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEngineProfile, QWebEngineSettings
 from PyQt5.QtGui import QIcon, QFont, QKeySequence, QPainter, QTransform, QCursor, QPixmap, QWindow, QTextCharFormat, QSyntaxHighlighter, QFontDatabase, QTextFormat, QColor, QPainter, QDesktopServices
-from PyQt5.QtWidgets import QMenu, QShortcut, QApplication, QAction, QDialog, QPushButton, QTabWidget, QStatusBar, QToolBar, QWidget, QLineEdit, QMainWindow, QHBoxLayout, QVBoxLayout, QPlainTextEdit, QToolBar, QFrame, QSizePolicy, QTabBar, QDesktopWidget, QLabel, QToolButton, QTextEdit, QComboBox, QListWidget, QListWidgetItem, QScrollArea, QDockWidget, QGraphicsBlurEffect, QSplitter, QShortcut, QGraphicsDropShadowEffect, QGraphicsOpacityEffect
+from PyQt5.QtWidgets import QMenu, QShortcut, QApplication, QAction, QDialog, QPushButton, QTabWidget, QStatusBar, QToolBar, QWidget, QLineEdit, QMainWindow, QHBoxLayout, QVBoxLayout, QPlainTextEdit, QToolBar, QFrame, QSizePolicy, QTabBar, QDesktopWidget, QLabel, QToolButton, QTextEdit, QComboBox, QListWidget, QListWidgetItem, QScrollArea, QDockWidget, QGraphicsBlurEffect, QSplitter, QShortcut, QGraphicsDropShadowEffect, QGraphicsOpacityEffect, QSplashScreen
 
 try:
     from FigUI.utils import *
@@ -23,6 +23,7 @@ try:
     from FigUI.subSystem.Email import FigEmailClient
     from FigUI.widgets.SearchBar import FigSearchBar
     from FigUI.subSystem.History import HistoryLogger
+    from FigUI.widgets.Taskbar import SmartPhoneTaskBar
     from FigUI.subSystem.TaskViewer import FigTaskWebView
     from FigUI.widgets.QRCodeCreator import FigQRCodeWindow
     from FigUI.widgets.ActivityPanel import FigActivityPanel
@@ -41,6 +42,7 @@ except ImportError:
     from .Launcher import FigLauncher
     from .SearchBar import FigSearchBar
     from ..handler.Code import CodeEditor
+    from .Taskbar import SmartPhoneTaskBar
     from ..subSystem.Clock import FigClock
     from ..subSystem.Shell import FigShell
     from .QRCodeCreator import FigQRCodeWindow
@@ -875,10 +877,12 @@ class FigWindow(QMainWindow):
         self.wrapperWidget = QWidget()
         self.wrapperWidgetLayout = QVBoxLayout()
         self.wrapperWidgetLayout.setContentsMargins(0,0,0,0)
+        
         self.wrapperWidgetLayout.setSpacing(0)
         # vertical splitter between the central tab widget and the FigTerminal.
         self.centralTermSplitter = QSplitter(Qt.Vertical)
         self.centralTermSplitter.setStyleSheet('''QSplitter { background: #000 }''')
+
         # the main menu top ribbon.
         self.mainMenu = self.initMainMenu() 
         self.wrapperWidgetLayout.addWidget(self.mainMenu)
@@ -895,6 +899,7 @@ class FigWindow(QMainWindow):
         self.centralTermSplitter.addWidget(self.fig_terminal)
         # add centralTermSplitter to wrapper widget.
         self.wrapperWidgetLayout.addWidget(self.centralTermSplitter)
+        # self.wrapperWidgetLayout.addWidget(self.smartPhoneTaskBar)
         self.wrapperWidget.setLayout(self.wrapperWidgetLayout)
         self.ribbon_visible = True
         self.toggleRibbon()
@@ -927,6 +932,8 @@ class FigWindow(QMainWindow):
             self.fnF11 = QShortcut(QKeySequence('Fn+F11'), self)
             self.fnF11.activated.connect(self.toggleFullScreen)
 
+        self.smartPhoneTaskBar = self.initSmartPhoneTaskBar(current_widget=self)
+
     def showFullScreen(self):
         super(FigWindow, self).showFullScreen()
         self.titleBar.hide()
@@ -943,8 +950,16 @@ class FigWindow(QMainWindow):
         # self.minimizeBtn.show()
         self.ctrlBar.hide()
 
+    def toggleTabBar(self):
+        '''toggle visibility of the tab bar.'''
+        if self.istabbar_visible:
+            self.tabs.tabBar().hide()
+        else:
+            self.tabs.tabBar().show()
+        self.istabbar_visible = not self.istabbar_visible
+
     def toggleFullScreen(self):
-        print("toggling full screen")
+        # print("toggling full screen")
         if self.isfullscreen: 
             self.showNormal()
         else: 
@@ -966,6 +981,15 @@ class FigWindow(QMainWindow):
         else:
             self.titleBar.show()
         self.istitle_visible = not(self.istitle_visible)
+
+    def toggleRibbon(self):
+        if self.ribbon_visible:
+            self.mainMenu.setFixedHeight(Fig.Window.MINH)
+            self.hideBtn.setIcon(FigIcon("fileviewer/show_ribbon.svg"))
+        else:
+            self.mainMenu.setFixedHeight(Fig.Window.MAXH)
+            self.hideBtn.setIcon(FigIcon("fileviewer/hide_ribbon.svg"))
+        self.ribbon_visible = not(self.ribbon_visible)
 
     def onKey(self, key):
         if key == Qt.Key_F11:
@@ -1967,66 +1991,118 @@ class FigWindow(QMainWindow):
         self.hideBtn.setIcon(FigIcon("fileviewer/hide_ribbon.svg"))
         self.ribbon_visible = True
 
-    def toggleRibbon(self):
-        if self.ribbon_visible:
-            self.mainMenu.setFixedHeight(Fig.Window.MINH)
-            self.hideBtn.setIcon(FigIcon("fileviewer/show_ribbon.svg"))
-        else:
-            self.mainMenu.setFixedHeight(Fig.Window.MAXH)
-            self.hideBtn.setIcon(FigIcon("fileviewer/hide_ribbon.svg"))
-        self.ribbon_visible = not(self.ribbon_visible)
+    def showDashboard(self):
+        pass
+
+    def initRemoteMenu(self):
+        return QWidget()
 
     def initMainMenu(self):
         '''create main menu for file browser.'''
         tb = "\t"*4
         mainMenu = QTabWidget()
         self.appMenu = self.initAppMenu()
-        mainMenu.addTab(self.appMenu, tb+"Apps"+tb)
+        mainMenu.addTab(self.appMenu, FigIcon("topbar/apps.svg"), "")
         self.mediaMenu = self.initMediaMenu()
-        mainMenu.addTab(self.mediaMenu, tb+"Media"+tb)
+        mainMenu.addTab(self.mediaMenu, FigIcon("topbar/media.svg"), "")
         self.viewMenu = self.initViewMenu()
-        mainMenu.addTab(self.viewMenu, tb+"View"+tb)
+        mainMenu.addTab(self.viewMenu, FigIcon("topbar/view.svg"), "")
         self.sysMenu = self.initSysMenu()
-        mainMenu.addTab(self.sysMenu, tb+"System"+tb)
+        mainMenu.addTab(self.sysMenu, FigIcon("topbar/system.svg"), "")
+        self.actMenu = self.initActMenu()
+        mainMenu.addTab(self.actMenu, tb+"Activity"+tb) # site blockers, history, remind to take a break, productivity etc.
+        self.remoteMenu = self.initRemoteMenu()
+        mainMenu.addTab(self.actMenu, FigIcon("topbar/remote.svg"), "")
         # hide the ribbon.
+        toolBtnStyle = '''
+        QToolButton {
+            border: 0px;
+            background: transparent;
+        }
+        QToolTip {
+            color: #fff;
+            background: #292929;
+        }'''
         self.hideBtn = QToolButton(mainMenu)
         self.hideBtn.clicked.connect(self.toggleRibbon)
         self.hideBtn.setIcon(FigIcon("fileviewer/hide_ribbon.svg"))
         self.hideBtn.setIconSize(QSize(23,23))
-        self.hideBtn.setStyleSheet('''
-        QToolButton {
-            border: 0px;
-            background: transparent;
-        }''')
+        self.hideBtn.setStyleSheet(toolBtnStyle)
+        # toggle file browser.
+        self.fileBtn = QToolButton(mainMenu)
+        self.fileBtn.setToolTip("Open file browser.")
+        self.fileBtn.setIcon(FigIcon("topbar/file_browser.svg"))
+        self.fileBtn.setIconSize(QSize(23,23))
+        self.fileBtn.clicked.connect(self.fileTree.toggle)
+        self.fileBtn.setStyleSheet(toolBtnStyle)
         # toggle activity panel.
         self.actBtn = QToolButton(mainMenu)
         self.actBtn.setToolTip("Check activity panel.")
         self.actBtn.setIcon(FigIcon("sysbar/activity.svg"))
         self.actBtn.setIconSize(QSize(23,23))
         self.actBtn.clicked.connect(self.activity.toggle)
-        self.actBtn.setStyleSheet('''
-        QToolButton {
-            border: 0px;
-            background: transparent;
-        }''')
+        self.actBtn.setStyleSheet(toolBtnStyle)
         # toggle title bar visibility.
         self.titleToggleBtn = QToolButton(mainMenu)
         self.titleToggleBtn.setToolTip("Check activity panel.")
-        self.titleToggleBtn.setIcon(FigIcon("titlebar.svg"))
+        self.titleToggleBtn.setIcon(FigIcon("topbar/titlebar.svg"))
         self.titleToggleBtn.setIconSize(QSize(23,23))
         self.titleToggleBtn.clicked.connect(self.toggleTitleBar)
-        self.titleToggleBtn.setStyleSheet('''
-        QToolButton {
-            border: 0px;
-            background: transparent;
-        }''')
+        self.titleToggleBtn.setStyleSheet(toolBtnStyle)
+        # toggle tab bar visibility.
+        self.tabToggleBtn = QToolButton(mainMenu)
+        self.tabToggleBtn.setToolTip("Toggle tabbar visibility.")
+        self.tabToggleBtn.setIcon(FigIcon("topbar/tabbar.svg"))
+        self.tabToggleBtn.setIconSize(QSize(23,23))
+        self.tabToggleBtn.clicked.connect(self.toggleTabBar)
+        self.tabToggleBtn.setStyleSheet(toolBtnStyle)
+        # show dashboard`.
+        self.dashBtn = QToolButton(mainMenu)
+        self.dashBtn.setToolTip("Toggle tabbar visibility.")
+        self.dashBtn.setIcon(FigIcon("topbar/dashboard.svg"))
+        self.dashBtn.setIconSize(QSize(23,23))
+        self.dashBtn.clicked.connect(self.showDashboard)
+        self.dashBtn.setStyleSheet(toolBtnStyle)
+        # enable fullscreen.
+        self.fullScreenBtn = QToolButton(mainMenu)
+        self.fullScreenBtn.setIcon(FigIcon("topbar/fullscreen.svg"))
+        self.fullScreenBtn.setIconSize(QSize(23,23))
+        self.fullScreenBtn.setToolTip("Enable full screen mode")
+        self.fullScreenBtn.clicked.connect(self.showFullScreen)
+        self.fullScreenBtn.setStyleSheet(toolBtnStyle)
+        # exit fullscreen.
+        self.exitFullScreenBtn = QToolButton(mainMenu)
+        self.exitFullScreenBtn.setIcon(FigIcon("topbar/exit_fullscreen.svg"))
+        self.exitFullScreenBtn.setIconSize(QSize(23,23))
+        self.exitFullScreenBtn.setToolTip("Disable full screen mode")
+        self.exitFullScreenBtn.clicked.connect(self.showNormal)
+        self.exitFullScreenBtn.setStyleSheet(toolBtnStyle)
+        # always stay on top.
+        self.onTopBtn = QToolButton(mainMenu)
+        self.onTopBtn.setIcon(FigIcon("topbar/ontop.svg"))
+        self.onTopBtn.setIconSize(QSize(23,23))
+        self.onTopBtn.setToolTip("Disable full screen mode")
+        self.onTopBtn.clicked.connect(self.stayOnTop)
+        self.onTopBtn.setStyleSheet(toolBtnStyle)
 
         mainMenu.addTab(QWidget(), "")
         mainMenu.addTab(QWidget(), "")
         mainMenu.addTab(QWidget(), "")
-        mainMenu.tabBar().setTabButton(4, QTabBar.RightSide, self.hideBtn)
-        mainMenu.tabBar().setTabButton(5, QTabBar.RightSide, self.actBtn)
-        mainMenu.tabBar().setTabButton(6, QTabBar.RightSide, self.titleToggleBtn)
+        mainMenu.addTab(QWidget(), "")
+        mainMenu.addTab(QWidget(), "")
+        mainMenu.addTab(QWidget(), "")
+        mainMenu.addTab(QWidget(), "")
+        mainMenu.addTab(QWidget(), "")
+        mainMenu.addTab(QWidget(), "")
+        mainMenu.tabBar().setTabButton(5, QTabBar.RightSide, self.hideBtn)
+        mainMenu.tabBar().setTabButton(6, QTabBar.RightSide, self.fileBtn)
+        mainMenu.tabBar().setTabButton(7, QTabBar.RightSide, self.actBtn)
+        mainMenu.tabBar().setTabButton(8, QTabBar.RightSide, self.titleToggleBtn)
+        mainMenu.tabBar().setTabButton(9, QTabBar.RightSide, self.tabToggleBtn)
+        mainMenu.tabBar().setTabButton(10, QTabBar.RightSide, self.dashBtn)
+        mainMenu.tabBar().setTabButton(11, QTabBar.RightSide, self.fullScreenBtn)
+        mainMenu.tabBar().setTabButton(12, QTabBar.RightSide, self.exitFullScreenBtn)
+        mainMenu.tabBar().setTabButton(13, QTabBar.RightSide, self.onTopBtn)
 
         mainMenu.setCurrentIndex(0)
         mainMenu.setStyleSheet('''
@@ -2060,11 +2136,11 @@ class FigWindow(QMainWindow):
             background: '''+ Fig.Window.CLHEX +''';
             color: #292929;
         }
-        QTabBar::tab:selected {
-            /* background: qlineargradient(x1 : 0, y1 : 0, x2 : 0, y2 : 2, stop : 0.0 #de891b, stop : 0.99 #ffbb63); */
+        /* background: qlineargradient(x1 : 0, y1 : 0, x2 : 0, y2 : 2, stop : 0.0 #de891b, stop : 0.99 #ffbb63); */
+        /* QTabBar::tab:selected {
             background: qlineargradient(x1 : 0, y1 : 0, x2 : 0, y2 : 2, stop : 0.0 '''+Fig.Window.CDHEX+''', stop : 0.99 '''+Fig.Window.CLHEX+'''); 
             color: #fff;
-        }
+        } */
         QToolTip { 
             color: #fff;
             border: 0px;
@@ -2106,6 +2182,42 @@ class FigWindow(QMainWindow):
         wrapperWidget.setLayout(wrapperLayout)
 
         return wrapperWidget
+
+    def initActMenu(self):
+        actMenu = QWidget()
+        actLayout = QHBoxLayout()
+        actLayout.setSpacing(0)
+        actLayout.setContentsMargins(0, 0, 0, 0)
+        actMenu.setStyleSheet('''
+        QToolButton {
+            border: 0px;
+            font-size: 13px;
+            padding: 5px;
+            border-radius: 15px;
+            background: transparent;
+            color: #fff;
+        }
+        QToolTip {
+            background: #292929;
+            color: #fff;
+        }
+        QToolButton:hover {
+            background: rgba(255, 223, 97, 0.5);
+        } 
+        ''')
+        # open assistant.
+        botBtn = QToolButton(actMenu)
+        botBtn.setToolTip("Open assistant.")
+        botBtn.setIcon(FigIcon("sidebar/assistant.svg"))
+        botBtn.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        botBtn.setText("assistant\n")
+        # botBtn.clicked.connect(self.decOpac) 
+        actLayout.addWidget(botBtn)
+        actLayout.addStretch(1)
+        # set layout.
+        actMenu.setLayout(actLayout)
+
+        return actMenu
 
     def initAppMenu(self):
         appMenu = QWidget()
@@ -2218,8 +2330,54 @@ class FigWindow(QMainWindow):
 
         return appMenu
 
-    def initSmartPhoneTaskBar(self):
-        spTaskBar = QDockWidget()
+    def initSmartPhoneTaskBar(self, current_widget=None):
+        # spDock = QDockWidget()
+        # spTaskLayout = QHBoxLayout()
+        # spTaskLayout.setSpacing(0)
+        # spTaskLayout.setContentsMargins(0, 0, 0, 0)
+        # spTaskBar = QWidget(parent=parent)
+        # spTaskBar.setStyleSheet('''
+        # QWidget {
+        #     background: rgba(235, 235, 235, 0.9);
+        # }
+        # QToolButton {
+        #     color: #000;
+        #     background: transparent;
+        # }''')
+        # # spTaskBar.setWindowOpacity(0.9)
+        # # task view button.
+        # btn1 = QToolButton(spTaskBar)
+        # btn1.setIcon(FigIcon("ctrlbar/task-view.svg"))
+        # btn1.clicked.connect(self.addNewTaskView)
+        # btn1.setAttribute(Qt.WA_TranslucentBackground)
+        # # home button 
+        # btn2 = QToolButton(spTaskBar)
+        # btn2.setText("home")
+        # btn2.clicked.connect(lambda: self.tabs.setCurrentIndex(0))
+        # btn2.setAttribute(Qt.WA_TranslucentBackground)
+        # # back button
+        # btn3 = QToolButton(spTaskBar)
+        # btn3.setText("back")
+        # btn3.setAttribute(Qt.WA_TranslucentBackground)
+        # # btn3.clicked.connect(self.histBack())
+        
+        # # add buttons to layout.
+        # spTaskLayout.addStretch(1)
+        # spTaskLayout.addWidget(btn3)
+        # spTaskLayout.addWidget(btn2)
+        # spTaskLayout.addWidget(btn1)
+        # spTaskLayout.addStretch(1)
+        
+        # spTaskBar.setLayout(spTaskLayout)
+        # spTaskBar.setMaximumWidth(200)
+        # spTaskBar.setMaximumHeight(30)
+        # # spDock.setWidget(spTaskBar)
+        # # spDock.setAttribute(Qt.WA_TranslucentBackground)
+        # spTaskBar.setMaximumHeight(50)
+        spTaskBar = SmartPhoneTaskBar(
+            parent=self, 
+            current_widget=current_widget
+        )
 
         return spTaskBar
 
@@ -2277,30 +2435,6 @@ class FigWindow(QMainWindow):
         brightBtn.setText("raise\n")
         brightBtn.clicked.connect(brightnessCtrl.inc_brightness)
         sysLayout.addWidget(brightBtn)
-        # stay on top.
-        onTopBtn = QToolButton(sysMenu)
-        onTopBtn.setToolTip("stay on top")
-        onTopBtn.setIcon(FigIcon("sysbar/ontop.svg"))
-        onTopBtn.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
-        onTopBtn.setText("on top\n ")
-        onTopBtn.clicked.connect(self.stayOnTop) 
-        sysLayout.addWidget(onTopBtn)
-        # enable fullscreen.
-        fullScreenBtn = QToolButton(sysMenu)
-        fullScreenBtn.setIcon(FigIcon("sysbar/fullscreen.svg"))
-        fullScreenBtn.setToolTip("Enable full screen mode")
-        fullScreenBtn.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
-        fullScreenBtn.setText("fullscreen\n ")
-        fullScreenBtn.clicked.connect(self.showFullScreen)
-        sysLayout.addWidget(fullScreenBtn)
-        # exit fullscreen.
-        exitFullScreenBtn = QToolButton(sysMenu)
-        exitFullScreenBtn.setIcon(FigIcon("sysbar/exit_fullscreen.svg"))
-        exitFullScreenBtn.setToolTip("Disable full screen mode")
-        exitFullScreenBtn.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
-        exitFullScreenBtn.setText("exit\nfullscreen")
-        exitFullScreenBtn.clicked.connect(self.showNormal)
-        sysLayout.addWidget(exitFullScreenBtn)
         # open history.
         histBtn = QToolButton(sysMenu)#("History", self)
         histBtn.setToolTip("Open History.")
@@ -2424,6 +2558,7 @@ class FigWindow(QMainWindow):
         self.termBtn = termBtn
         self.isterm_visible = False
         self.istitle_visible = True
+        self.istabbar_visible = True
         viewLayout.addWidget(self.termBtn)
         viewLayout.addWidget(gifBackBtn)
         viewLayout.addWidget(carouselBtn)
@@ -2633,6 +2768,9 @@ class FigWindow(QMainWindow):
         toolbar.addWidget(right_spacer)  
 
         return dockToolBar
+
+    def initActBar(self):
+        return QWidget()
 
     def initPackmanBar(self):
         label = QLabel()
@@ -2981,23 +3119,38 @@ class FigApp(QApplication):
             if hasattr(Qt, 'AA_UseHighDpiPixmaps'):
                 QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True)
         super(FigApp, self).__init__(argv)
+        self.splash_pixmap = QPixmap(__icon__("email/bg_texture2.png"))
+        self.splash_screen = QSplashScreen(self.splash_pixmap)
+        self.splash_screen.setStyleSheet('''
+        QSplashScreen {
+            color: #fff;
+        }''')
+        self.splash_screen.show()
+        self.splash_screen.showMessage("Loading fonts")
+        self.processEvents()
         # self.setApplicationName("Fig: any Format Is Good enough")
         # add fonts to database.
         fontIds = []
         fontFiles = ["OMORI_GAME.ttf", "OMORI_GAME2.ttf", "HomemadeApple.ttf"]
         for fontFile in fontFiles:
             fontIds.append(QFontDatabase.addApplicationFont(__font__(fontFile)))
+        self.splash_screen.showMessage("Loading window")
+        self.processEvents()
         self.screen = self.primaryScreen()
         self.window = FigWindow(*args, 
                                 screen=self.screen, background=background, 
                                 **kwargs)
-        self.window.setGeometry(x, y, w, h)
+        
+        geometry = self.screen.availableGeometry()
+        screen_w, screen_h = geometry.width(), geometry.height()
+        self.window.setGeometry(screen_w/2-w/2, screen_h/2-h/2, w, h)
         # TODO: always stay on top (from commandline).
         FigStayOnTop = True
         if FigStayOnTop:
             self.window.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
         else:
             self.window.setWindowFlags(Qt.FramelessWindowHint)
+        self.desktop = self.desktop()
         self.window.setWindowOpacity(self.window.opacLevel)
         self.window.clipboard = self.clipboard() 
         self.setWindowIcon(QIcon(icon))
@@ -3023,6 +3176,7 @@ class FigApp(QApplication):
         import time
         start = time.time()
         self.window.show()
+        self.splash_screen.finish(self.window)
         # print("window.show took:", time.time()-start)
         start = time.time()
         # self.server_thread.start()
