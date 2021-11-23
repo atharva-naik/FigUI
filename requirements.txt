@@ -30,6 +30,7 @@ matplotlib
 python-vlc
 py-wallpaper
 PyQtWebEngine
+vaderSentiment
 charset-normalizer
 # preview-generator
 # screen-brightness-control

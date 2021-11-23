@@ -356,11 +356,16 @@ class FigLauncher(QWidget):
         if parent:
             img_path = parent.background
             stem = pathlib.Path(img_path).stem
-            self.bg_url = f"/tmp/FigUI.Launcher?={stem}.png"
+            self.bg_url = f"/tmp/FigUI.Launcher?name={stem}&blur=False.png"
+            self.bg_blur_url = f"/tmp/FigUI.Launcher?name={stem}&blur=True.png"
             if not os.path.exists(self.bg_url):
                 self.bg_img = ImageAsset(img_path)
                 self.bg_img.thumbnail(1920, 1080)
-                self.bg_img.gaussBlur(5).save(self.bg_url)
+                self.bg_img.save(self.bg_url)
+            if not os.path.exists(self.bg_blur_url):
+                self.bg_img = ImageAsset(img_path)
+                self.bg_img.thumbnail(1920, 1080)
+                self.bg_img.gaussBlur(5).save(self.bg_blur_url)
         
         # self.scroll.setStyleSheet("background: rgba(73, 44, 94, 0.5);")
         # self.scroll.setAttribute(Qt.WA_TranslucentBackground, True)
@@ -643,3 +648,21 @@ class FigLauncher(QWidget):
             self._parent.tabs.setCurrentIndex(i)
 
         super(FigLauncher, self).dragEnterEvent(e)
+
+    def blur_bg(self):
+        self.launcherWidget.setStyleSheet('''
+        QGraphicsView {
+            background-image: url('''+ f"'{self.bg_blur_url}'" +''');
+            background-position: center;
+            border: 0px;
+        }
+        ''')
+
+    def unblur_bg(self):
+        self.launcherWidget.setStyleSheet('''
+        QGraphicsView {
+            background-image: url('''+ f"'{self.bg_url}'" +''');
+            background-position: center;
+            border: 0px;
+        }
+        ''')

@@ -5,7 +5,7 @@ import mimetypes, platform
 import json, datetime, pathlib
 import psutil, webbrowser, threading
 from PyQt5.Qt import PYQT_VERSION_STR
-from PyQt5.QtCore import QThread, QUrl, pyqtSignal, QObject, QTimer, QPoint, QRect, QSize, Qt, QT_VERSION_STR
+from PyQt5.QtCore import QThread, QUrl, pyqtSignal, QObject, QTimer, QPoint, QRect, QSize, Qt, QT_VERSION_STR, QEvent
 from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEngineProfile, QWebEngineSettings
 from PyQt5.QtGui import QIcon, QFont, QKeySequence, QPainter, QTransform, QCursor, QPixmap, QWindow, QTextCharFormat, QSyntaxHighlighter, QFontDatabase, QTextFormat, QColor, QPainter, QDesktopServices
 from PyQt5.QtWidgets import QMenu, QShortcut, QApplication, QAction, QDialog, QPushButton, QTabWidget, QStatusBar, QToolBar, QWidget, QLineEdit, QMainWindow, QHBoxLayout, QVBoxLayout, QPlainTextEdit, QToolBar, QFrame, QSizePolicy, QTabBar, QDesktopWidget, QLabel, QToolButton, QTextEdit, QComboBox, QListWidget, QListWidgetItem, QScrollArea, QDockWidget, QGraphicsBlurEffect, QSplitter, QShortcut, QGraphicsDropShadowEffect, QGraphicsOpacityEffect, QSplashScreen
@@ -975,6 +975,10 @@ class FigWindow(QMainWindow):
             self.termBtn.setText("hide\nterminal")
         self.isterm_visible = not(self.isterm_visible)
 
+    def resizeEvent(self, event):
+        self.smartPhoneTaskBar.rePos()
+        return super(FigWindow, self).resizeEvent(event)
+
     def toggleTitleBar(self):
         if self.istitle_visible:
             self.titleBar.hide()
@@ -1662,7 +1666,8 @@ class FigWindow(QMainWindow):
         self.langBtn.setIcon(self.tabs.tabIcon(i))
         filename = pathlib.Path(self.tabs.tabText(i).split("...")[0].strip()
         ).__str__().strip()
-        
+        try: self.smartPhoneTaskBar.history.append(i)
+        except AttributeError: pass
         self.langBtn.setIconSize(QSize(16,16))
         #  print("\x1b[34;1m"+filename+"\x1b[0m")
         MimeType, _ = mimetypes.guess_type(filename)
@@ -3156,6 +3161,15 @@ class FigApp(QApplication):
         self.setWindowIcon(QIcon(icon))
         self.window.qtBtn.clicked.connect(self.aboutQt)
         self.setup_cursor()
+
+    def notify(self, obj, event):
+        if event.type() == QEvent.WindowDeactivate:
+            if isinstance(obj, FigWindow):
+                self.window.fig_launcher.blur_bg()
+        if event.type() == QEvent.WindowActivate:
+            if isinstance(obj, FigWindow):
+                self.window.fig_launcher.unblur_bg()
+        return super().notify(obj, event)
 
     def announce(self):
         print("\x1b[33;1m")

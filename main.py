@@ -10,4 +10,5 @@ if __name__ == "__main__":
     app = FigUI.widgets.Window.FigApp(argv=sys.argv,
                                       # x=200, y=200, w=1920, h=1080, 
                                       background='/home/atharva/GUI/background.jpg')
+    app.window.smartPhoneTaskBar.rePos()
     app.run()
