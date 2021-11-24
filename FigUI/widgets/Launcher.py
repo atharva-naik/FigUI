@@ -338,6 +338,7 @@ class SnowAnimation:
 class FigLauncher(QWidget):
     def __init__(self, parent=None, width=8, button_size=(100,100), icon_size=(70,70)):
         super(FigLauncher, self).__init__()
+        self.is_blurred = False
         launcher_layout = FlowLayout()
         # layout.setContentsMargins(2, 2, 2, 2)
         self.layout = QVBoxLayout()
@@ -358,6 +359,8 @@ class FigLauncher(QWidget):
             stem = pathlib.Path(img_path).stem
             self.bg_url = f"/tmp/FigUI.Launcher?name={stem}&blur=False.png"
             self.bg_blur_url = f"/tmp/FigUI.Launcher?name={stem}&blur=True.png"
+            parent.bg_url = self.bg_url
+            parent.bg_blur_url = self.bg_blur_url
             if not os.path.exists(self.bg_url):
                 self.bg_img = ImageAsset(img_path)
                 self.bg_img.thumbnail(1920, 1080)
@@ -650,6 +653,7 @@ class FigLauncher(QWidget):
         super(FigLauncher, self).dragEnterEvent(e)
 
     def blur_bg(self):
+        if self.is_blurred: return
         self.launcherWidget.setStyleSheet('''
         QGraphicsView {
             background-image: url('''+ f"'{self.bg_blur_url}'" +''');
@@ -657,8 +661,10 @@ class FigLauncher(QWidget):
             border: 0px;
         }
         ''')
+        self.is_blurred = True
 
     def unblur_bg(self):
+        if not self.is_blurred: return
         self.launcherWidget.setStyleSheet('''
         QGraphicsView {
             background-image: url('''+ f"'{self.bg_url}'" +''');
@@ -666,3 +672,4 @@ class FigLauncher(QWidget):
             border: 0px;
         }
         ''')
+        self.is_blurred = False

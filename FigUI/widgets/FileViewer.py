@@ -9,7 +9,7 @@ import argparse, mimetypes, platform, textwrap, subprocess
 from PyQt5.QtPrintSupport import *
 from PyQt5.QtCore import QThread, QUrl, QDir, QSize, Qt, QEvent, pyqtSlot, pyqtSignal, QObject, QRect, QPoint
 from PyQt5.QtGui import QIcon, QKeySequence, QTransform, QFont, QFontDatabase, QMovie, QPixmap, QColor
-from PyQt5.QtWidgets import QAction, QWidget, QTabWidget, QToolBar, QTabBar, QLabel, QVBoxLayout, QHBoxLayout, QToolButton, QGraphicsView, QScrollArea, QLineEdit, QFrame, QSizePolicy, QMessageBox, QTreeView, QRubberBand,  QFileSystemModel, QGraphicsDropShadowEffect
+from PyQt5.QtWidgets import QAction, QWidget, QTabWidget, QToolBar, QTabBar, QLabel, QSplitter, QVBoxLayout, QHBoxLayout, QToolButton, QPushButton, QGraphicsView, QScrollArea, QLineEdit, QFrame, QSizePolicy, QMessageBox, QTreeView, QRubberBand,  QFileSystemModel, QGraphicsDropShadowEffect
 
 try:
     from utils import *
@@ -126,6 +126,22 @@ def sizeof_fmt(num, suffix="B"):
         num /= 1024.0
     
     return f"{num:.1f}Y{suffix}"
+
+
+class QFolderNavBtn(QPushButton):
+    def __init__(self, text, till_now, parent=None):
+        super(QFolderNavBtn, self).__init__(parent)
+        self.setText(text)
+        self._till_now = till_now
+        self._display_text = text
+
+    def callback(self):
+        print(f"QFolderNavBtn(text={self._display_text}, till_now={self._till_now}) clicked")
+        self.fileViewer.openPath(self._till_now)
+
+    def connectLauncher(self, fileViewer):
+        self.fileViewer = fileViewer
+        self.clicked.connect(self.callback)
 
 
 class FileViewerInitWorker(QObject):
@@ -462,11 +478,7 @@ class FigFileViewer(QWidget):
         self.curr_path = path # initialize current path with the passed path or home.
         self._parent = parent
         self.rubberBand = QRubberBand(QRubberBand.Rectangle, self)
-        self.scrollArea = QScrollArea()
-        self.scrollArea.setWidgetResizable(True)
-        self.scrollArea.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
-        self.scrollArea.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        self.scrollArea.setStyleSheet('''
+        scrollAreaStyle = '''
         QScrollArea {
             background-position: center;
             border: 0px;
@@ -498,7 +510,12 @@ class FigFileViewer(QWidget):
             height: 0 px;
             subcontrol-position: top;
             subcontrol-origin: margin;
-        }''')
+        }'''
+        self.scrollArea = QScrollArea()
+        self.scrollArea.setWidgetResizable(True)
+        self.scrollArea.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
+        self.scrollArea.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.scrollArea.setStyleSheet(scrollAreaStyle)
         ### replace with FlowLayout ###
         self.gridLayout = FlowLayout() # QGridLayout()
         self.gridLayout.setContentsMargins(0, 0, 0, 0)
@@ -508,18 +525,22 @@ class FigFileViewer(QWidget):
         self.layout.setContentsMargins(0, 0, 0, 0)
         self.layout.setSpacing(0)
 
+        try: 
+            Fig.FileViewer._FVBG = f"url('{parent.bg_blur_url}');"
+            print("found background file")
+        except AttributeError:
+            print("defaulting to backup texture")
+        
+        self.bgStyle = "url('/home/atharva/GUI/FigUI/FigUI/assets/icons/email/bg_texture2.png');"
         self.viewer = QWidget()
         self.viewer.setStyleSheet('''
-        background: ''' + Fig.FileViewer.FVBG + '''
+        background: ''' + Fig.FileViewer._FVBG + '''
         ''')
         self.history = [path]
         self.historyIter = 0
         self.j = 0
         import time
         start = time.time()
-
-        self.bgStyle = "url('/home/atharva/GUI/FigUI/FigUI/assets/icons/email/bg_texture2.png');"
-
         self.init_thread = QThread()
         self.init_worker = FileViewerInitWorker()
         self.init_worker.moveToThread(self.init_thread)
@@ -543,6 +564,17 @@ class FigFileViewer(QWidget):
         # self.layout.addWidget(self.welcomeLabel, alignment=Qt.AlignCenter)
         self.scrollArea.setWidget(self.viewer)
 
+        self.sideBar = self.initSideBar()
+        sideBarAndViewer = QSplitter(Qt.Horizontal)
+        sideBarAndViewer.addWidget(self.sideBar)
+        sideBarAndViewer.addWidget(self.scrollArea)
+        overallScrollArea = QScrollArea()
+        overallScrollArea.setWidgetResizable(True)
+        overallScrollArea.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        overallScrollArea.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        overallScrollArea.setStyleSheet(scrollAreaStyle)
+        overallScrollArea.setWidget(sideBarAndViewer)
+
         start = time.time()
         self.navbar = self.initNavBar()
         self.propbar = self.initPropBar()
@@ -551,17 +583,20 @@ class FigFileViewer(QWidget):
         self.mainMenu = self.initMainMenu()
         # self.utilbar = self.initUtilBar()
 
-        self.layout.addWidget(self.navbar)
         # self.layout.addWidget(self.editbar)
         # self.layout.addWidget(self.propbar)
-        
+        self.folderBar = self.initFolderNavBar() 
+        self.folderBar.path = str(pathlib.Path.home())
+        self.layout.addWidget(self.folderBar)
         self.layout.addWidget(self.mainMenu)
+        self.layout.addWidget(self.navbar)
         # print("created toolbars:", time.time()-start)
         # self.layout.addWidget(self.viewbar)
         # self.layout.addWidget(self.utilbar)
 
         start = time.time()
-        self.layout.addWidget(self.scrollArea)
+        # self.layout.addWidget(self.scrollArea)
+        self.layout.addWidget(overallScrollArea)
         self.setLayout(self.layout)
         self.width = width
         # selBtn = self.gridLayout.itemAt(0).widget()
@@ -569,11 +604,78 @@ class FigFileViewer(QWidget):
         # self.highlight(0)
         # link folder nav bar buttons.
         self.hideRibbon()
-        if self._parent:
-            self._parent.backNavBtn.clicked.connect(self.prevPath)
-            self._parent.nextNavBtn.clicked.connect(self.nextPath)
+        self.backNavBtn.clicked.connect(self.prevPath)
+        self.nextNavBtn.clicked.connect(self.nextPath)
         # print("created toolbars:", time.time()-start)
         # self.setLayout(self.gridLayout)
+    def initSideBarBtn(self, name: str):
+        home = str(pathlib.Path.home())
+        tb = "    "
+        btn = QToolButton(self)
+        btn.setToolTip(f"open {name}.")
+        btn.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
+        btn.setText(tb+name.title()+tb)
+        btn.setIcon(FigIcon(f"sysbar/{name}.svg"))
+        btn.setStyleSheet('''
+        QToolButton {
+            color: #fff;
+            border: 0px;
+            background: transparent;
+        }
+        QToolButton::hover{
+            background: qlineargradient(x1 : 0, y1 : 0, x2 : 0, y2 : 2, stop : 0.0 '''+Fig.FileViewer.CDHEX+''', stop : 0.99 '''+Fig.FileViewer.CLHEX+'''); 
+        }
+        QToolTip { 
+            color: #fff;
+            border: 0px;
+        }''')
+        if name == "trash":
+            path = os.path.join(home, ".local/share/Trash/files")
+        elif name == "home": path = home
+        else: path = os.path.join(home, name.title())
+        btn.clicked.connect(lambda: self.refresh(path=path))
+
+        return btn
+    
+    def initSideBar(self):
+        sideBar = QWidget()
+        layout = QVBoxLayout()
+        layout.setSpacing(0)
+        layout.setContentsMargins(0, 0, 0, 0)
+        # # recents.
+        # recentBtn = QToolButton("Recent", self)
+        # recentBtn.setToolTip("recently modified/opened files.")
+        # recentBtn.setIcon(FigIcon("sysbar/recent.svg"))
+        # home.
+        homeBtn = self.initSideBarBtn(name="home")
+        layout.addWidget(homeBtn)
+        # desktop.
+        desktopBtn = self.initSideBarBtn(name="desktop")
+        layout.addWidget(desktopBtn)
+        # documents.
+        documentBtn = self.initSideBarBtn(name="documents")
+        layout.addWidget(documentBtn)
+        # downloads.
+        downloadsBtn = self.initSideBarBtn(name="downloads")
+        layout.addWidget(downloadsBtn)
+        # music.
+        musicBtn = self.initSideBarBtn(name="music")
+        layout.addWidget(musicBtn)
+        # videos.
+        videosBtn = self.initSideBarBtn(name="videos")
+        layout.addWidget(videosBtn)
+        # pictures.
+        picturesBtn = self.initSideBarBtn(name="pictures")
+        layout.addWidget(picturesBtn)
+        # trash.
+        trashBtn = self.initSideBarBtn(name="trash")
+        layout.addWidget(trashBtn)
+        layout.addStretch(1)
+
+        sideBar.setLayout(layout)
+
+        return sideBar
+
     def hideRibbon(self):
         if self.ribbon_visible:
             self.mainMenu.setFixedHeight(25)
@@ -1656,6 +1758,74 @@ class FigFileViewer(QWidget):
         except PermissionError:
             return files
 
+    def updateFolderBar(self, path, viewer=None):
+        folderBtnStyle = '''
+        QPushButton:hover{
+                background: qlineargradient(x1 : 0, y1 : 0, x2 : 0, y2 : 1, stop : 0.0 #292929, stop : 0.2 #4a4a4a, stop : 1.0 #6e6e6e);
+        }
+
+        QPushButton {
+                border: 1px solid;
+                border-radius: 2px;
+                background: qlineargradient(x1 : 0, y1 : 0, x2 : 0, y2 : 1, stop : 0.0 #6e6e6e, stop : 0.8 #4a4a4a, stop : 1.0 #292929);
+                margin-left: 2px;
+                margin-right: 4px;
+                padding-top: 4px;
+                padding-bottom: 4px;
+                padding-left: 5px;
+                padding-right: 5px;
+                font-size: 16px;
+        }
+        '''
+        selFolderBtnStyle = '''
+        QPushButton:hover{
+                background: qlineargradient(x1 : 0, y1 : 0, x2 : 0, y2 : 1, stop : 0.0 #292929, stop : 0.2 #4a4a4a, stop : 1.0 #6e6e6e);
+        }
+
+        QPushButton {
+                border: 1px solid;
+                border-radius: 2px;
+                background: qlineargradient(x1 : 0, y1 : 0, x2 : 0, y2 : 1, stop : 0.0 #6e6e6e, stop : 0.8 #4a4a4a, stop : 1.0 #292929);
+                margin-left: 2px;
+                margin-right: 2px;
+                padding-top: 4px;
+                padding-bottom: 4px;
+                padding-left: 5px;
+                padding-right: 5px;
+                font-weight: bold; 
+                color: #ff9100;
+                font-size: 16px;
+        }
+        '''
+        if self.folderBar.path.startswith(str(path)): 
+            # selectedBtn = self.sender()
+            # print(selectedBtn)
+            # selectedBtn.setStyleSheet(selFolderBtnStyle)
+            return
+
+        for action in self.folderBarActions:
+            self.folderBar.removeAction(action)
+        self.folderBarActions = []
+        path = str(path)
+        
+        folders = path.split('/')
+        till_now = "/" # running variable for subpath till now.
+        for i,folder in enumerate(folders):
+            if folder != "":
+                till_now = os.path.join(till_now, folder)
+                btn = QFolderNavBtn(folder, till_now)
+                # event handler for click will be attached to open the subpath till now.
+                if viewer:
+                    btn.connectLauncher(viewer)
+                # color the active button differently
+                if i == len(folders)-1:
+                    btn.setStyleSheet(selFolderBtnStyle)
+                else:
+                    btn.setStyleSheet(folderBtnStyle)
+                action = self.folderBar.addWidget(btn)
+                self.folderBarActions.append(action)
+        self.folderBar.path = str(path)
+
     def refresh(self, path, reverse=False):
         '''launch worker to refresh file layout..'''
         import time
@@ -1681,8 +1851,8 @@ class FigFileViewer(QWidget):
             i = self._parent.tabs.currentIndex()
             name = pathlib.Path(path).name
             parent = pathlib.Path(path).parent.name
+            self.updateFolderBar(path, viewer=self)
             self._parent.tabs.setTabText(i, f"{name} .../{parent}")
-            self._parent.updateFolderBar(path, viewer=self)
             self._parent.log("launcher/fileviewer.png", str(path))
         all_files = self.listFiles(path, reverse=reverse) # get list of all files and folders.
         
@@ -1693,8 +1863,65 @@ class FigFileViewer(QWidget):
             self.gridLayout.addWidget(fileIcon)  
             # self.gridLayout.addWidget(fileIcon, i // self.width, i % self.width)  
             ###############################
-        self.viewer.setStyleSheet(f"background: {Fig.FileViewer.FVBG}")
+        self.viewer.setStyleSheet(f"background: {Fig.FileViewer._FVBG}")
         self.highlight(0)        
+
+    def initFolderNavBar(self):
+        backBtnStyle = '''
+        QPushButton:hover{
+            background: qlineargradient(x1 : 0, y1 : 0, x2 : 1, y2 : 0, stop : 0.0 #292929, stop : 0.2 #4a4a4a, stop : 1.0 #6e6e6d);
+        }
+
+        QPushButton {
+            border: 1px solid;
+            border-radius: 2px;
+            background: qlineargradient(x1 : 0, y1 : 0, x2 : 1, y2 : 0, stop : 0.0 #6e6e6d, stop : 0.8 #4a4a4a, stop : 1.0 #292929);
+            margin-left: 1px;
+            margin-right: 1px;
+            padding-top: 2px;
+            padding-bottom: 2px;
+        }
+        '''
+        nextBtnStyle = '''
+        QPushButton:hover{
+            background: qlineargradient(x1 : 0, y1 : 0, x2 : 1, y2 : 0, stop : 0.0 #6e6e6d, stop : 0.8 #4a4a4a, stop : 1.0 #292929);
+        }
+
+        QPushButton {
+            border: 1px solid;
+            border-radius: 2px;
+            background: qlineargradient(x1 : 0, y1 : 0, x2 : 1, y2 : 0, stop : 0.0 #292929, stop : 0.2 #4a4a4a, stop : 1.0 #6e6e6d);
+            margin-left: 1px;
+            margin-right: 1px;
+            padding-top: 2px;
+            padding-bottom: 2px;
+        }
+        '''
+        toolbar = QToolBar("Folder Navigation Bar Visibility")
+        toolbar.setStyleSheet("border: 0px")
+        toolbar.setStyleSheet("color: #fff; background: #292929; border: 0px; padding: 2px;")
+        toolbar.setIconSize(QSize(22,22))
+        toolbar.setMovable(False)
+
+        backBtn = QPushButton()
+        backBtn.setToolTip("go back in folders")
+        backBtn.setStyleSheet(backBtnStyle)
+        backBtn.setIcon(FigIcon("back.svg"))
+        self.backNavBtn = backBtn
+
+        nextBtn = QPushButton()
+        nextBtn.setToolTip("go forward in folders")
+        nextBtn.setStyleSheet(nextBtnStyle)
+        nextBtn.setIcon(FigIcon("forward.svg"))
+        self.nextNavBtn = nextBtn
+
+        toolbar.addWidget(backBtn)
+        toolbar.addWidget(nextBtn)
+        toolbar.addSeparator()
+        # add actions.
+        self.folderBarActions = []
+
+        return toolbar
 
     def unhide(self, path):        
         self.clear()

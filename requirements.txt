@@ -31,6 +31,7 @@ python-vlc
 py-wallpaper
 PyQtWebEngine
 vaderSentiment
+python-libmagic
 charset-normalizer
 # preview-generator
 # screen-brightness-control

@@ -11,8 +11,8 @@ from PyQt5.Qt import PYQT_VERSION_STR
 from PyQt5.QtWebChannel import QWebChannel
 from PyQt5.QtCore import QThread, QUrl, pyqtSignal, pyqtSlot, QObject, QTimer, QPoint, QRect, QSize, Qt, QT_VERSION_STR
 from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEngineProfile, QWebEngineSettings
-from PyQt5.QtGui import QPainter, QIcon, QColor
-from PyQt5.QtWidgets import QApplication, QWidget, QMainWindow, QVBoxLayout, QTextEdit, QScrollArea, QLabel, QSizePolicy, QGraphicsDropShadowEffect, QTabBar, QTabWidget, QToolButton, QToolBar
+from PyQt5.QtGui import QPainter, QIcon, QColor, QPalette
+from PyQt5.QtWidgets import QApplication, QWidget, QMainWindow, QStyle, QVBoxLayout, QTextEdit, QScrollArea, QLabel, QSizePolicy, QGraphicsDropShadowEffect, QTabBar, QTabWidget, QToolButton, QToolBar, QStylePainter, QStyleOptionTab
 
 
 class FtNS(argparse.Namespace):
@@ -23,7 +23,8 @@ class FtNS(argparse.Namespace):
         )
         self._static = os.path.join(self._dir, "static")
         # self._BG = f'''url('{os.path.join(self._static, "bg_texture.png")}')'''
-        self._BG = "url('/home/atharva/GUI/FigUI/FigUI/FigTerminal/static/bg_texture.png');"
+        self._BG = "#222434;" 
+        # self._BG = "url('/home/atharva/GUI/FigUI/FigUI/FigTerminal/static/bg_texture.png');"
         self._template_path = os.path.join(self._static, "terminal.html")
         self._params = {
             "QWEBCHANNEL_JS" : self.url("qwebchannel.js"),
@@ -34,8 +35,8 @@ class FtNS(argparse.Namespace):
         with open(self._rendered_path, "w") as f:
             f.write(self._template.render(**self._params))
         self._URL = QUrl.fromLocalFile(self._rendered_path)
-        self._MINH = 25
-        self._MAXH = 100
+        self._MINH = 60
+        self._MAXH = 25
         self._CLHEX = "#0fe7ff" # "#a4ab1a" # "#fc6b03" # "#89ff69" 
         self._CDHEX = "#f792e8" # "#8c834f" # "#8f3b17" # "#207869"
         self._SCHEX = "#0fe7ff" # "#a4ab1a" # "#fc6b03" # "#89ff69"
@@ -182,6 +183,35 @@ class TermChannel(QObject):
             self._tab_widget.setTabText(i, Ft.TAB_PREFIX+title)
 
 
+class FigTermTabBar(QTabBar):
+    def tabSizeHint(self, index):
+        s = QTabBar.tabSizeHint(self, index)
+        s.transpose()
+        return s
+
+    def paintEvent(self, event):
+        painter = QStylePainter(self)
+        opt = QStyleOptionTab()
+
+        for i in range(self.count()):
+            self.initStyleOption(opt, i)
+            painter.drawControl(QStyle.CE_TabBarTabShape, opt)
+            painter.save()
+
+            s = opt.rect.size()
+            s.transpose()
+            r = QRect(QPoint(), s)
+            r.moveCenter(opt.rect.center())
+            opt.rect = r
+
+            c = self.tabRect(i).center()
+            painter.translate(c)
+            painter.rotate(90)
+            painter.translate(-c)
+            painter.drawControl(QStyle.CE_TabBarTabLabel, opt)
+            painter.restore()
+
+
 class FigTermView(QWebEngineView):
     def __init__(self, parent=None, tab_widget=None):
         super(FigTermView, self).__init__(parent)
@@ -270,12 +300,18 @@ class FigTerminal(QMainWindow):
         self.i = -1
         self.tabs = QTabWidget() 
         # self.tabs.tabBarDoubleClicked.connect(self.addNewTab)
+        self.tabs.setTabBar(FigTermTabBar(self.tabs))
+        self.tabs.setTabPosition(QTabWidget.West)
         self.tabs.setTabsClosable(True) 	
         self.tabs.tabCloseRequested.connect(self.onCurrentTabClose) # adding action when tab close is requested
+        # self.tabs.palette.setColor(QPalette.Base, QColor(255, 184, 92))
         self.tabs.setStyleSheet('''
         QTabWidget {
             background: #000; /* rgba(29, 29, 29, 0.95); */
             color: #fff;
+        }
+        QTabBar::base {
+            color: #ffb85c;
         }
         QTabWidget::pane {
             border: 0px;
@@ -386,13 +422,13 @@ class FigTerminal(QMainWindow):
         tb = "\t"*4
         mainMenu = QTabWidget()
         self.fileMenu = self.initFileMenu()
-        mainMenu.addTab(self.fileMenu, tb+"File"+tb)
+        mainMenu.addTab(self.fileMenu, tb+"FILE"+tb)
         self.editMenu = self.initFileMenu()
-        mainMenu.addTab(self.editMenu, tb+"Edit"+tb)
+        mainMenu.addTab(self.editMenu, tb+"EDIT"+tb)
         self.viewMenu = self.initFileMenu()
-        mainMenu.addTab(self.viewMenu, tb+"View"+tb)
+        mainMenu.addTab(self.viewMenu, tb+"VIEW"+tb)
         self.searchMenu = self.initFileMenu()
-        mainMenu.addTab(self.searchMenu, tb+"Search"+tb)
+        mainMenu.addTab(self.searchMenu, tb+"SEARCH"+tb)
         # hide the ribbon.
         self.hideBtn = QToolButton(mainMenu)
         self.hideBtn.clicked.connect(self.hideRibbon)
@@ -406,7 +442,7 @@ class FigTerminal(QMainWindow):
 
         mainMenu.addTab(QWidget(), "")
         mainMenu.tabBar().setTabButton(4, QTabBar.RightSide, self.hideBtn)
-
+        mainMenu.setDocumentMode(True)
         mainMenu.setCurrentIndex(0)
         glowEffect = QGraphicsDropShadowEffect()
         glowEffect.setBlurRadius(50)
@@ -434,11 +470,10 @@ class FigTerminal(QMainWindow):
         QTabBar::tab {
             color: #fff;
             border: 0px;
-            font-size: 15px;
-            font-weight: bold;
-            background: #292929;
+            font-size: 16px;
+            background: '''+Ft.BG+'''
         }
-        QTabBar::tab:hover {
+        /* QTabBar::tab:hover {
             background: '''+ Ft.CLHEX +''';
             color: #292929;
         }
@@ -446,7 +481,7 @@ class FigTerminal(QMainWindow):
             background: qlineargradient(x1 : 0, y1 : 0, x2 : 0, y2 : 2, stop : 0.0 '''+Ft.CDHEX+''', stop : 0.99 '''+Ft.CLHEX+'''); 
             font-weight: bold;
             color: #292929;
-        }
+        } */
         QToolTip { 
             color: #fff;
             border: 0px;

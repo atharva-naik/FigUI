@@ -1,4 +1,6 @@
-import pathlib, os
+import os
+import pathlib
+import subprocess
 import FigUI.handler.Code
 import FigUI.handler.Image
 import FigUI.handler.Video
@@ -89,7 +91,17 @@ class FigHandler:
         elif self.ext in [".tgz", ".zip"]:
             return QWidget()
         else:
-            return FigUI.handler.Text.txt.FigTextEditor(path=path, parent=self.parent) 
+            try: 
+                import magic
+                magic = magic.Magic()
+                mimetype = magic.from_file(path)
+                print("mimetype:", mimetype)
+                if mimetype == "text/plain":
+                    return FigUI.handler.Text.txt.FigTextEditor(path=path, parent=self.parent) 
+            # catch any possible exception.
+            except: 
+                pass
+            subprocess.call(["xdg-open", path, "&"])
             # return QLabel("no handler found")
         # elif self.ext == ".svg":
         #     self.handler = FigUI.handler.Image.svg.SvgHandler(self.path)

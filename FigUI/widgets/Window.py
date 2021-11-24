@@ -9,63 +9,7 @@ from PyQt5.QtCore import QThread, QUrl, pyqtSignal, QObject, QTimer, QPoint, QRe
 from PyQt5.QtWebEngineWidgets import QWebEngineView, QWebEngineProfile, QWebEngineSettings
 from PyQt5.QtGui import QIcon, QFont, QKeySequence, QPainter, QTransform, QCursor, QPixmap, QWindow, QTextCharFormat, QSyntaxHighlighter, QFontDatabase, QTextFormat, QColor, QPainter, QDesktopServices
 from PyQt5.QtWidgets import QMenu, QShortcut, QApplication, QAction, QDialog, QPushButton, QTabWidget, QStatusBar, QToolBar, QWidget, QLineEdit, QMainWindow, QHBoxLayout, QVBoxLayout, QPlainTextEdit, QToolBar, QFrame, QSizePolicy, QTabBar, QDesktopWidget, QLabel, QToolButton, QTextEdit, QComboBox, QListWidget, QListWidgetItem, QScrollArea, QDockWidget, QGraphicsBlurEffect, QSplitter, QShortcut, QGraphicsDropShadowEffect, QGraphicsOpacityEffect, QSplashScreen
-
-try:
-    from FigUI.utils import *
-    from Theme import FigTheme
-    from Tab import FigTabWidget
-    from Launcher import FigLauncher
-    from FigUI.handler import FigHandler
-    from FigUI.handler.Code import CodeEditor
-    from FigUI.subSystem.Clock import FigClock
-    from FigUI.subSystem.Shell import FigShell
-    from FigUI.subSystem.ChatBot import FigChatBot
-    from FigUI.subSystem.Email import FigEmailClient
-    from FigUI.widgets.SearchBar import FigSearchBar
-    from FigUI.subSystem.History import HistoryLogger
-    from FigUI.widgets.Taskbar import SmartPhoneTaskBar
-    from FigUI.subSystem.TaskViewer import FigTaskWebView
-    from FigUI.widgets.QRCodeCreator import FigQRCodeWindow
-    from FigUI.widgets.ActivityPanel import FigActivityPanel
-    from FigUI.handler.Code.QtColorPicker import ColorPicker
-    from FileViewer import FigFileViewer, FigTreeFileExplorer
-    from FigUI.subSystem.System.Network import NetworkHandler
-    from FigUI.subSystem.Math.Calculator import FigCalculator
-    from FigUI.subSystem.System.Power import FigPowerController
-    from FigUI.subSystem.System.Display import BrightnessController
-#     from utils import *
-except ImportError:
-    from ..utils import *
-    from .Theme import FigTheme
-    from .Tab import FigTabWidget
-    from ..handler import FigHandler
-    from .Launcher import FigLauncher
-    from .SearchBar import FigSearchBar
-    from ..handler.Code import CodeEditor
-    from .Taskbar import SmartPhoneTaskBar
-    from ..subSystem.Clock import FigClock
-    from ..subSystem.Shell import FigShell
-    from .QRCodeCreator import FigQRCodeWindow
-    from ..subSystem.ChatBot import FigChatBot
-    from .ActivityPanel import FigActivityPanel
-    from ..subSystem.Email import FigEmailClient
-    from ..subSystem.History import HistoryLogger
-    from ..subSystem.TaskViewer import FigTaskWebView
-    from ..handler.Code.QtColorPicker import ColorPicker
-    from ..subSystem.System.Network import NetworkHandler
-    from ..subSystem.Math.Calculator import FigCalculator
-    from ..subSystem.System.Power import FigPowerController
-    from .FileViewer import FigFileViewer, FigTreeFileExplorer
-    from ..subSystem.System.Display import BrightnessController
-#     from .utils import *
-def openQRCodeWindow(url=None, clipboard=None):
-    qrCodeWindow = FigQRCodeWindow(url, clipboard)
-    qrCodeWindow.show()
-
-def openCalculator():
-    calculator = FigCalculator()
-    calculator.show()
-
+# utility functions
 def FigIcon(name, w=None, h=None):
     __current_dir__ = os.path.dirname(os.path.realpath(__file__))
     __icons__ = os.path.join(__current_dir__, "../assets/icons")
@@ -100,6 +44,48 @@ def __asset__(name):
     path = os.path.join(__assets__, name)
 
     return path
+
+try:
+    from FigUI.utils import *
+    # from Theme import FigTheme
+    # from Tab import FigTabWidget
+    from FigUI.widgets.SearchBar import FigSearchBar
+    from FigUI.subSystem.History import HistoryLogger
+    from FigUI.widgets.Taskbar import SmartPhoneTaskBar
+    from FigUI.subSystem.TaskViewer import FigTaskWebView
+    from FigUI.widgets.QRCodeCreator import FigQRCodeWindow
+    from FigUI.widgets.ActivityPanel import FigActivityPanel
+    from FigUI.handler.Code.QtColorPicker import ColorPicker
+    from FileViewer import FigFileViewer, FigTreeFileExplorer
+    from FigUI.subSystem.System.Network import NetworkHandler
+    from FigUI.subSystem.Math.Calculator import FigCalculator
+    from FigUI.subSystem.System.Power import FigPowerController
+    from FigUI.subSystem.System.Display import BrightnessController
+#     from utils import *
+except ImportError:
+    from ..utils import *
+    # from .Theme import FigTheme
+    # from .Tab import FigTabWidget
+    from .SearchBar import FigSearchBar
+    from .Taskbar import SmartPhoneTaskBar
+    from .QRCodeCreator import FigQRCodeWindow
+    from .ActivityPanel import FigActivityPanel
+    from ..subSystem.History import HistoryLogger
+    from ..subSystem.TaskViewer import FigTaskWebView
+    from ..handler.Code.QtColorPicker import ColorPicker
+    from ..subSystem.System.Network import NetworkHandler
+    from ..subSystem.Math.Calculator import FigCalculator
+    from ..subSystem.System.Power import FigPowerController
+    from .FileViewer import FigFileViewer, FigTreeFileExplorer
+    from ..subSystem.System.Display import BrightnessController
+#     from .utils import *
+def openQRCodeWindow(url=None, clipboard=None):
+    qrCodeWindow = FigQRCodeWindow(url, clipboard)
+    qrCodeWindow.show()
+
+def openCalculator():
+    calculator = FigCalculator()
+    calculator.show()
 
 # platform name
 PLATFORM = platform.system()
@@ -907,8 +893,14 @@ class FigWindow(QMainWindow):
         # self.centralWidget.setLayout(self.centralWidget.layout)
         self.setCentralWidget(self.wrapperWidget) # making tabs as central widget
         self.statusBar = QStatusBar() # creating a status bar
+        
+        try: from FigUI.handler import FigHandler
+        except ImportError: from ..handler import FigHandler
         self.handler = FigHandler(self)
+        
         self.fig_history = HistoryLogger()
+        try: from Launcher import FigLauncher
+        except: from .Launcher import FigLauncher
         self.fig_launcher = FigLauncher(self)
         # self.newTabBtn.clicked.connect(self.addNewTab)
         self.tabs.addTab(self.fig_launcher, FigIcon("launcher.png"), "\tLauncher")
@@ -1007,9 +999,10 @@ class FigWindow(QMainWindow):
     def stayOnTop(self):
         '''change flags to make the window stay on top.'''
         if self.ontopFlag:
-            self.setWindowFlags(self.windowFlags() & ~Qt.WindowStaysOnTopHint)
+            self.setWindowFlags(self.windowFlags() | ~Qt.WindowStaysOnTopHint)
         else:
-            self.setWindowFlags(self.windowFlags() & Qt.WindowStaysOnTopHint)
+            self.setWindowFlags(Qt.WindowStaysOnTopHint | Qt.X11BypassWindowManagerHint )
+            # self.setWindowFlags(self.windowFlags() | Qt.WindowStaysOnTopHint)
         self.ontopFlag = not self.ontopFlag
 
     def initFigTerminal(self):
@@ -1512,10 +1505,10 @@ class FigWindow(QMainWindow):
     #     self.threads.append(thread)
     def addNewTerm(self, path=None):
         '''Add new terminal widget'''
-        if path:
-            terminal = FigShell(parent=self, cmd=f"cd '{path}'; bash")
-        else:
-            terminal = FigShell(parent=self)
+        try: from FigUI.subSystem.Shell import FigShell
+        except ImportError: from ..subSystem.Shell import FigShell
+        if path: terminal = FigShell(parent=self, cmd=f"cd '{path}'; bash")
+        else: terminal = FigShell(parent=self)
         # self.terminals = []
         # main_window = QMainWindow()
         # main_window.setCentralWidget(terminal)
@@ -1532,6 +1525,8 @@ class FigWindow(QMainWindow):
         # self.save_screenshot(terminal)
     def addNewClock(self):
         '''Add new clock window'''
+        try: from FigUI.subSystem.Clock import FigClock
+        except ImportError: from ..subSystem.Clock import FigClock
         clockApp = FigClock()
         i = self.tabs.addTab(clockApp, FigIcon("sidebar/clock.png"), "\tClock")
         self.tabs.setCurrentIndex(i)
@@ -1549,6 +1544,8 @@ class FigWindow(QMainWindow):
         # self.save_screenshot(taskView)
     def addNewBotTab(self):
         '''Add new chat bot tab'''
+        try: from FigUI.subSystem.ChatBot import FigChatBot
+        except ImportError: from ..subSystem.ChatBot import FigChatBot
         chatBotApp = FigChatBot()
         i = self.tabs.addTab(chatBotApp, FigIcon("sidebar/assistant.png"), "\tClock")
         self.tabs.setCurrentIndex(i)
@@ -1608,6 +1605,8 @@ class FigWindow(QMainWindow):
         # self.save_screenshot(fileViewer)
 
     def addNewMailClient(self):
+        try: from FigUI.subSystem.Email import FigEmailClient
+        except ImportError: from ..subSystem.Email import FigEmailClient
         mailClient = FigEmailClient(self)
         i = self.tabs.addTab(mailClient, FigIcon("sidebar/email.png"), f"\t{mailClient.imap_url}")
         self.tabs.setCurrentIndex(i)
@@ -1643,12 +1642,14 @@ class FigWindow(QMainWindow):
         '''when tab is changed.'''
         currentWidget = self.tabs.currentWidget()
         # print(type(currentWidget))
-        if isinstance(currentWidget, FigFileViewer):
-            self.folderBar.show()
-            self.shortcutBar.show()
-        else:
-            self.folderBar.hide()
-            self.shortcutBar.hide()
+        try: from FigUI.handler.Code import CodeEditor
+        except ImportError: from ..handler.Code import CodeEditor
+        # if isinstance(currentWidget, FigFileViewer):
+        #     self.folderBar.show()
+        #     self.shortcutBar.show()
+        # else:
+        #     self.folderBar.hide()
+        #     self.shortcutBar.hide()
         if isinstance(currentWidget, (CodeEditor)):
             self.bottomBar.show()
             self.debugBar.show()
@@ -3164,11 +3165,11 @@ class FigApp(QApplication):
 
     def notify(self, obj, event):
         if event.type() == QEvent.WindowDeactivate:
-            if isinstance(obj, FigWindow):
-                self.window.fig_launcher.blur_bg()
+            # if isinstance(obj, FigWindow):
+            self.window.fig_launcher.blur_bg()
         if event.type() == QEvent.WindowActivate:
-            if isinstance(obj, FigWindow):
-                self.window.fig_launcher.unblur_bg()
+            # if isinstance(obj, FigWindow):
+            self.window.fig_launcher.unblur_bg()
         return super().notify(obj, event)
 
     def announce(self):
