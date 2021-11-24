@@ -101,7 +101,7 @@ class FigHandler:
             # catch any possible exception.
             except: 
                 pass
-            subprocess.call(["xdg-open", path, "&"])
+            subprocess.call(["xdg-open", path])
             # return QLabel("no handler found")
         # elif self.ext == ".svg":
         #     self.handler = FigUI.handler.Image.svg.SvgHandler(self.path)

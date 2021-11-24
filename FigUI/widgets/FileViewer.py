@@ -473,6 +473,8 @@ class FigFileViewer(QWidget):
     def __init__(self, path=str(pathlib.Path.home()), parent=None, width=4, button_size=(100,100), icon_size=(60,60)):
         super(FigFileViewer, self).__init__(parent)   
         all_files = self.listFiles(path) # get list of all files and folders.
+        self.folderBar = self.initFolderNavBar() 
+        self.folderBar.path = str(pathlib.Path.home())
         self.selectedItems = []
         self.ribbon_visible = True
         self.curr_path = path # initialize current path with the passed path or home.
@@ -565,15 +567,15 @@ class FigFileViewer(QWidget):
         self.scrollArea.setWidget(self.viewer)
 
         self.sideBar = self.initSideBar()
-        sideBarAndViewer = QSplitter(Qt.Horizontal)
-        sideBarAndViewer.addWidget(self.sideBar)
-        sideBarAndViewer.addWidget(self.scrollArea)
+        self.overallViewer = QSplitter(Qt.Horizontal)
+        self.overallViewer.addWidget(self.sideBar)
+        self.overallViewer.addWidget(self.scrollArea)
         overallScrollArea = QScrollArea()
         overallScrollArea.setWidgetResizable(True)
         overallScrollArea.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         overallScrollArea.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         overallScrollArea.setStyleSheet(scrollAreaStyle)
-        overallScrollArea.setWidget(sideBarAndViewer)
+        overallScrollArea.setWidget(self.overallViewer)
 
         start = time.time()
         self.navbar = self.initNavBar()
@@ -585,8 +587,6 @@ class FigFileViewer(QWidget):
 
         # self.layout.addWidget(self.editbar)
         # self.layout.addWidget(self.propbar)
-        self.folderBar = self.initFolderNavBar() 
-        self.folderBar.path = str(pathlib.Path.home())
         self.layout.addWidget(self.folderBar)
         self.layout.addWidget(self.mainMenu)
         self.layout.addWidget(self.navbar)
@@ -606,6 +606,8 @@ class FigFileViewer(QWidget):
         self.hideRibbon()
         self.backNavBtn.clicked.connect(self.prevPath)
         self.nextNavBtn.clicked.connect(self.nextPath)
+        self.folderBar.hide()
+        self.sideBar.hide()
         # print("created toolbars:", time.time()-start)
         # self.setLayout(self.gridLayout)
     def initSideBarBtn(self, name: str):
@@ -1177,6 +1179,18 @@ class FigFileViewer(QWidget):
         sideBarLayout.setSpacing(0)
         sideBarLayout.setContentsMargins(0, 0, 0, 0)
         sideBarRibbon.setLayout(sideBarLayout)
+        
+        sideBarVisiblityRibbon = QWidget()
+        sideBarVisiblityLayout = QVBoxLayout()
+        sideBarVisiblityLayout.setSpacing(0)
+        sideBarVisiblityLayout.setContentsMargins(0, 0, 0, 0)
+        sideBarVisiblityRibbon.setLayout(sideBarVisiblityLayout)
+
+        folderBarVisiblityRibbon = QWidget()
+        folderBarVisiblityLayout = QVBoxLayout()
+        folderBarVisiblityLayout.setSpacing(0)
+        folderBarVisiblityLayout.setContentsMargins(0, 0, 0, 0)
+        folderBarVisiblityRibbon.setLayout(folderBarVisiblityLayout)
 
         # sort ascending.
         sortUpBtn = QToolButton()
@@ -1199,19 +1213,56 @@ class FigFileViewer(QWidget):
         sideLeftBtn = QToolButton()
         sideLeftBtn.setIcon(FigIcon("fileviewer/sidebar_to_left.svg"))
         sideLeftBtn.setIconSize(QSize(25,25))
-        # sideLeftBtn.clicked.connect(lambda: self.refresh(self.curr_path, reverse=False))
         sideLeftBtn.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
         sideBarLayout.addWidget(sideLeftBtn)
         sideLeftBtn.setText("to left")
+        sideLeftBtn.clicked.connect(self.sideBarToLeft)
         # sidebar to right.
         sideRightBtn = QToolButton()
         sideRightBtn.setIcon(FigIcon("fileviewer/sidebar_to_right.svg"))
         sideRightBtn.setIconSize(QSize(25,25))
-        # sideRightBtn.clicked.connect(lambda: self.refresh(self.curr_path, reverse=False))
+        sideRightBtn.clicked.connect(self.sideBarToRight)
         sideRightBtn.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
         sideBarLayout.addWidget(sideRightBtn)
         sideRightBtn.setText("to right")
         layoutToolBarLayout.addWidget(sideBarRibbon)
+        
+        # show sidebar.
+        sideBarShowBtn = QToolButton()
+        sideBarShowBtn.setIcon(FigIcon("fileviewer/sidebar_to_left.svg"))
+        sideBarShowBtn.setIconSize(QSize(25,25))
+        sideBarShowBtn.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
+        sideBarVisiblityLayout.addWidget(sideBarShowBtn)
+        sideBarShowBtn.setText("show")
+        sideBarShowBtn.clicked.connect(self.sideBar.show)
+        # hide sidebar.
+        sideBarHideBtn = QToolButton()
+        sideBarHideBtn.setIcon(FigIcon("fileviewer/hide_sidebar.svg"))
+        sideBarHideBtn.setIconSize(QSize(25,25))
+        sideBarHideBtn.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
+        sideBarVisiblityLayout.addWidget(sideBarHideBtn)
+        sideBarHideBtn.setText("hide")
+        sideBarHideBtn.clicked.connect(self.sideBar.hide)
+        layoutToolBarLayout.addWidget(sideBarVisiblityRibbon)
+
+        # show folderbar.
+        folderBarShowBtn = QToolButton()
+        folderBarShowBtn.setIcon(FigIcon("fileviewer/show_folderbar.svg"))
+        folderBarShowBtn.setIconSize(QSize(25,25))
+        folderBarShowBtn.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
+        folderBarVisiblityLayout.addWidget(folderBarShowBtn)
+        folderBarShowBtn.setText("show")
+        folderBarShowBtn.clicked.connect(self.folderBar.show)
+        # hide folderbar.
+        folderBarHideBtn = QToolButton()
+        folderBarHideBtn.setIcon(FigIcon("fileviewer/hide_folderbar.svg"))
+        folderBarHideBtn.setIconSize(QSize(25,25))
+        folderBarHideBtn.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
+        folderBarVisiblityLayout.addWidget(folderBarHideBtn)
+        folderBarHideBtn.setText("hide")
+        folderBarHideBtn.clicked.connect(self.folderBar.hide)
+        layoutToolBarLayout.addWidget(folderBarVisiblityRibbon)
+
         # list view.
         listViewBtn = QToolButton()
         listViewBtn.setIcon(FigIcon("fileviewer/list_view.svg"))
@@ -1957,6 +2008,21 @@ class FigFileViewer(QWidget):
                 i = self._parent.tabs.addTab(handlerWidget, FigIcon(thumbnail), f"\t{name} {parent}")
                 self._parent.tabs.setCurrentIndex(i)
 
+    def sideBarToLeft(self):
+        self.scrollArea.hide()
+        self.sideBar.hide()
+        self.overallViewer.addWidget(self.sideBar)
+        self.overallViewer.addWidget(self.scrollArea)
+        self.scrollArea.show()
+        self.sideBar.show()
+
+    def sideBarToRight(self):
+        self.scrollArea.hide()
+        self.sideBar.hide()
+        self.overallViewer.addWidget(self.scrollArea)
+        self.overallViewer.addWidget(self.sideBar)
+        self.scrollArea.show()
+        self.sideBar.show()
 
 class FigTreeFileExplorer(QWidget):
     def __init__(self, root_path="/home/atharva", parent=None):
