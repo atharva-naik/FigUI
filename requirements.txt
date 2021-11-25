@@ -2,6 +2,7 @@ vtk
 Xlib
 parse
 PyQt5
+pyxdg
 scipy
 spacy
 jinja2

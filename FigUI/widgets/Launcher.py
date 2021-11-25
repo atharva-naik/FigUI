@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 import random
+import textwrap
 import os, glob, pathlib
 from PIL import Image, ImageQt
 from typing import Union, List, Tuple
@@ -30,13 +31,25 @@ def FigIcon(name, w=None, h=None):
     return QIcon(path)
 
 
-class FigWorker(QObject):
+class AppLoadWorker(QObject):
     finished = pyqtSignal()
     progress = pyqtSignal(int)
+    def __init__(self, app_ls):
+        super(AppLoadWorker, self).__init__()
+        self.app_iter = app_ls
+        self.current_app = None
 
-    def run(self, obj, func, **kwargs):
-        getattr(obj, func)(**kwargs)
-        self.finished.emit()
+    def run(self):
+        i = 0
+        while True:
+            i += 1
+            try:
+                # print("AppLoadWorker:", i)
+                self.current_app = next(self.app_iter) 
+                self.progress.emit(i)
+            except StopIteration:
+                self.finished.emit()
+                return
 
 
 class FigLauncherNavBtn(QToolButton):
@@ -83,21 +96,24 @@ class FigLauncherNavBtn(QToolButton):
 
 class FigAppButton(QToolButton):
     def __init__(self, 
-                 path: str,
+                 app,
                  parent=None, 
                  size=(100,100), 
                  icon_size=(60,60)):
         super(FigAppButton, self).__init__(parent)
-        self.path = path
-        self.desktop = parse_desktop(path)
-        self.setText(self.desktop.name)
+        self.app = app
+        self.setText("\n".join(textwrap.wrap(app.Name, 8)))
+        self.setIcon(QIcon(app.Icon))
         self.setFixedSize(QSize(*size))
         self.setIconSize(QSize(*icon_size))
         self.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
-        self.clicked.connect(self.open)
-
-    def open(self):
-        os.system(f"gtk-launch {self.path}")
+        self.clicked.connect(app.Exec)
+        self.setStyleSheet('''
+        QToolButton {
+            border: 0px;
+            color: #fff;
+            background: transparent;
+        }''')
 
     def enterEvent(self, event):
         shadowEffect = QGraphicsDropShadowEffect(self)
@@ -416,7 +432,6 @@ class FigLauncher(QWidget):
         self.layout = QVBoxLayout()
         self.layout.setContentsMargins(0, 0, 0, 0)
         self.launcherWidget = QGraphicsView(self)
-        self.appWidget = self.initApps()
         # 5A8034
         # self.launcherWidget.setAttribute(Qt.WA_TranslucentBackground, True)
         self.gifBtn = None
@@ -634,8 +649,6 @@ class FigLauncher(QWidget):
         self.wrapperLayout.setContentsMargins(0, 0, 0, 0)
         # add all the widget pages to the wrapper and hide them except for the active widget.
         self.wrapperLayout.addWidget(self.launcherWidget)
-        self.wrapperLayout.addWidget(self.appWidget)
-        self.appWidget.hide()
         self.activeWidget = self.launcherWidget
         # create wrapper widget.
         self.wrapperWidget.setLayout(self.wrapperLayout)
@@ -784,18 +797,55 @@ class FigLauncher(QWidget):
         super(FigLauncher, self).dragEnterEvent(e)
 
     def initApps(self):
+        try: 
+            import FigUI.api.Ubuntu as Ubuntu
+        except ImportError: 
+            import api.Ubuntu as Ubuntu
+        self.appLayout = FlowLayout()
+        self.appIterator = Ubuntu.App.Ls()
         appWidget = QWidget()
-        appLayout = FlowLayout()
-        for path in os.listdir(APPLICATIONS_ROOT):
-            path = os.path.join(APPLICATIONS_ROOT, path)
-            appBtn = FigAppButton(path=path, parent=appWidget)
-            appLayout.addWidget(appBtn)
+        appWidget.setStyleSheet('''
+        QWidget {
+            background-image: url('''+ f"'{self.bg_url}'" +''');
+            background-position: center;
+            border: 0px;
+        }''')
+        appWidget.setLayout(self.appLayout)
+        import time
+        s = time.time()
+        # create thread and worker for loading apps.
+        self.appLoadThread = QThread()
+        self.appLoadWorker = AppLoadWorker(self.appIterator)
+        # move the worker to the created thread.
+        self.appLoadWorker.moveToThread(self.appLoadThread)
+        # function to be executed when thread is started.
+        self.appLoadThread.started.connect(self.appLoadWorker.run)
+        # when finished delete everything
+        self.appLoadWorker.finished.connect(self.appLoadThread.quit)
+        self.appLoadWorker.finished.connect(self.appLoadWorker.deleteLater)
+        self.appLoadThread.finished.connect(self.appLoadThread.deleteLater)
+        # start thread
+        self.appLoadWorker.progress.connect(self.appProgress)
+        self.appLoadThread.start()
+        print(f"\x1b[34;1mlaunched app loading thread in {time.time()-s}\x1b[0m")
 
         return appWidget
 
-    def setApps(self):
+    def appProgress(self, i):
+        # print("appProgress:", i)
+        appBtn = FigAppButton(
+            app=self.appLoadWorker.current_app, 
+            parent=self.appWidget
+        )
+        self.appLayout.addWidget(appBtn)
+
+    def setApps(self):    
         self.activeWidget.hide()
-        self.appWidget.show()
+        try:
+            self.appWidget.show()
+        except AttributeError:
+            self.appWidget = self.initApps()
+            self.wrapperLayout.addWidget(self.appWidget)
         self.activeWidget = self.appWidget
 
     def setLauncher(self):
@@ -805,22 +855,30 @@ class FigLauncher(QWidget):
 
     def blur_bg(self):
         if self.is_blurred: return
-        self.launcherWidget.setStyleSheet('''
+        self.activeWidget.setStyleSheet('''
         QGraphicsView {
             background-image: url('''+ f"'{self.bg_blur_url}'" +''');
             background-position: center;
             border: 0px;
         }
-        ''')
+        QWidget {
+            background-image: url('''+ f"'{self.bg_blur_url}'" +''');
+            background-position: center;
+            border: 0px;
+        }''')
         self.is_blurred = True
 
     def unblur_bg(self):
         if not self.is_blurred: return
-        self.launcherWidget.setStyleSheet('''
+        self.activeWidget.setStyleSheet('''
         QGraphicsView {
             background-image: url('''+ f"'{self.bg_url}'" +''');
             background-position: center;
             border: 0px;
         }
-        ''')
+        QWidget {
+            background-image: url('''+ f"'{self.bg_url}'" +''');
+            background-position: center;
+            border: 0px;
+        }''')
         self.is_blurred = False
