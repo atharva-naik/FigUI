@@ -39,6 +39,77 @@ class FigWorker(QObject):
         self.finished.emit()
 
 
+class FigLauncherNavBtn(QToolButton):
+    def __init__(self, parent, icon: str="", callback=None):
+        super(FigLauncherNavBtn, self).__init__(parent=parent)
+        navBtnStyle = '''
+        QToolButton {
+            border: 0px;
+            color: #000;
+            border-radius: 15px; 
+        }
+        QToolButton:hover {
+            background: rgba(255, 228, 156, 0.9);
+        }'''
+        self.setIcon(FigIcon(icon))
+        self.setIconSize(QSize(30,30))
+        self.setStyleSheet(navBtnStyle)
+        self.callback_ref = callback
+        self.clicked.connect(self.callback)
+        self.icon_path = icon
+        stem, ext = os.path.splitext(icon)
+        self.icon_active_path = stem+"_active"+ext
+
+    def activate(self):
+        self.setIcon(FigIcon(self.icon_active_path))
+        self.setIconSize(QSize(30,30))
+
+    def deactivate(self):
+        self.setIcon(FigIcon(self.icon_path))
+        self.setIconSize(QSize(30,30))
+
+    def __str__(self):
+        return f"\x1b[32;1m{self.icon_path}\x1b[0m"
+
+    def callback(self): 
+        parent = self.parent()
+        # print(f"\x1b[33;1mparent={parent.objectName()}\x1b[0m")
+        parent.active_nav_btn.deactivate()
+        if self.callback_ref is not None:
+            self.callback_ref()
+        parent.active_nav_btn = self
+        self.activate()
+
+
+class FigAppButton(QToolButton):
+    def __init__(self, 
+                 path: str,
+                 parent=None, 
+                 size=(100,100), 
+                 icon_size=(60,60)):
+        super(FigAppButton, self).__init__(parent)
+        self.path = path
+        self.desktop = parse_desktop(path)
+        self.setText(self.desktop.name)
+        self.setFixedSize(QSize(*size))
+        self.setIconSize(QSize(*icon_size))
+        self.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        self.clicked.connect(self.open)
+
+    def open(self):
+        os.system(f"gtk-launch {self.path}")
+
+    def enterEvent(self, event):
+        shadowEffect = QGraphicsDropShadowEffect(self)
+        shadowEffect.setOffset(0, 0)
+        shadowEffect.setColor(QColor(255, 213, 0))
+        shadowEffect.setBlurRadius(50)
+        self.setGraphicsEffect(shadowEffect)
+
+    def leaveEvent(self, event):
+        self.setGraphicsEffect(None)
+
+
 class FigToolButton(QToolButton):
     def __init__(self, 
                  parent=None, 
@@ -338,12 +409,14 @@ class SnowAnimation:
 class FigLauncher(QWidget):
     def __init__(self, parent=None, width=8, button_size=(100,100), icon_size=(70,70)):
         super(FigLauncher, self).__init__()
+        self.setObjectName("FigLauncher")
         self.is_blurred = False
         launcher_layout = FlowLayout()
         # layout.setContentsMargins(2, 2, 2, 2)
         self.layout = QVBoxLayout()
         self.layout.setContentsMargins(0, 0, 0, 0)
         self.launcherWidget = QGraphicsView(self)
+        self.appWidget = self.initApps()
         # 5A8034
         # self.launcherWidget.setAttribute(Qt.WA_TranslucentBackground, True)
         self.gifBtn = None
@@ -542,7 +615,6 @@ class FigLauncher(QWidget):
             launcherButton.clicked.connect(self._clickHandler)
         
         self.launcherWidget.setLayout(launcher_layout)
-        self.scroll.setWidget(self.launcherWidget) # comment
         
         self.welcomeLabel = QPushButton("Welcome to FIG, launch an app!")
         figLogo = FigIcon("logo.png")
@@ -552,10 +624,27 @@ class FigLauncher(QWidget):
         self.welcomeLabel.setIconSize(QSize(100,100))
         #self.welcomeLabel.setMaximumWidth(900)
         self.welcomeLabel.setFont(QFont('OMORI_GAME2', 40))
-
         # self.layout.addWidget(self.welcomeLabel, alignment=Qt.AlignCenter)
         # self.layout.addWidget(self.launcherWidget) 
-        self.layout.addWidget(self.scroll) # comment
+        
+        # create scroll area
+        self.wrapperWidget = QWidget()
+        self.wrapperLayout = QVBoxLayout()
+        self.wrapperLayout.setSpacing(0)
+        self.wrapperLayout.setContentsMargins(0, 0, 0, 0)
+        # add all the widget pages to the wrapper and hide them except for the active widget.
+        self.wrapperLayout.addWidget(self.launcherWidget)
+        self.wrapperLayout.addWidget(self.appWidget)
+        self.appWidget.hide()
+        self.activeWidget = self.launcherWidget
+        # create wrapper widget.
+        self.wrapperWidget.setLayout(self.wrapperLayout)
+
+        self.scroll.setWidget(self.wrapperWidget)
+        # create layout with navbar and scroll area
+        self.navBar = self.initNavBar()
+        self.layout.addWidget(self.navBar)
+        self.layout.addWidget(self.scroll)
         self.setLayout(self.layout)
         self.setAcceptDrops(True)
         self.animations = []
@@ -564,6 +653,48 @@ class FigLauncher(QWidget):
             self.showingWeatherAnimation = False
             print("\x1b[31mconnected FigLauncher.showWeather\x1b[0m")
             self._parent.weatherBtn.clicked.connect(self.showWeather)
+
+    def initNavBar(self):
+        navBar = QWidget()
+        navBar.setObjectName("NavBar")
+        navBar.setStyleSheet('''
+        QWidget {
+            background: #292929;
+        }''')
+        navLayout = QHBoxLayout()
+        navLayout.setSpacing(0)
+        navLayout.setContentsMargins(0, 0, 0, 0)
+        navLayout.addStretch(1)
+        # launcher button.
+        launcherBtn = FigLauncherNavBtn(
+            self, icon="launcher_nav/launcher.svg",
+            callback=self.setLauncher
+        )
+        navLayout.addWidget(launcherBtn)
+        launcherBtn.activate()
+        navBar.active_nav_btn = launcherBtn
+        # applications button.
+        appBtn = FigLauncherNavBtn(
+            self, icon="launcher_nav/apps.svg",
+            callback=self.setApps
+        )
+        navLayout.addWidget(appBtn)
+        # files button.
+        filesBtn = FigLauncherNavBtn(self, icon="launcher_nav/files.svg")
+        navLayout.addWidget(filesBtn)
+        # videos button.
+        videosBtn = FigLauncherNavBtn(self, icon="launcher_nav/videos.svg")
+        navLayout.addWidget(videosBtn)
+        # music button.
+        musicBtn = FigLauncherNavBtn(self, icon="launcher_nav/music.svg")
+        navLayout.addWidget(musicBtn)
+        # pictures button.
+        picturesBtn = FigLauncherNavBtn(self, icon="launcher_nav/pictures.svg")
+        navLayout.addWidget(picturesBtn)
+        navBar.setLayout(navLayout)
+        navLayout.addStretch(1)
+
+        return navBar
 
     def showWeather(self):
         if self.showingWeatherAnimation:
@@ -651,6 +782,26 @@ class FigLauncher(QWidget):
             self._parent.tabs.setCurrentIndex(i)
 
         super(FigLauncher, self).dragEnterEvent(e)
+
+    def initApps(self):
+        appWidget = QWidget()
+        appLayout = FlowLayout()
+        for path in os.listdir(APPLICATIONS_ROOT):
+            path = os.path.join(APPLICATIONS_ROOT, path)
+            appBtn = FigAppButton(path=path, parent=appWidget)
+            appLayout.addWidget(appBtn)
+
+        return appWidget
+
+    def setApps(self):
+        self.activeWidget.hide()
+        self.appWidget.show()
+        self.activeWidget = self.appWidget
+
+    def setLauncher(self):
+        self.activeWidget.hide()
+        self.launcherWidget.show()
+        self.activeWidget = self.launcherWidget
 
     def blur_bg(self):
         if self.is_blurred: return

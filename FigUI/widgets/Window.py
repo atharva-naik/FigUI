@@ -906,6 +906,11 @@ class FigWindow(QMainWindow):
         self.tabs.addTab(self.fig_launcher, FigIcon("launcher.png"), "\tLauncher")
         transBtn = QToolButton(self.tabs)
         transBtn.setAttribute(Qt.WA_TranslucentBackground)
+        transBtn.setStyleSheet('''
+        QToolButton {
+            border: 0px;
+            background: transparent;
+        }''')
         self.tabs.tabBar().setTabButton(0, QTabBar.RightSide, transBtn) 
         # make launcher tab unclosable.
         # self.setLayout(self.layout)

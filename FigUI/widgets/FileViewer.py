@@ -603,7 +603,7 @@ class FigFileViewer(QWidget):
         # selBtn.setStyleSheet("background: color(0, 0, 255, 50)")
         # self.highlight(0)
         # link folder nav bar buttons.
-        self.hideRibbon()
+        self.toggleRibbon()
         self.backNavBtn.clicked.connect(self.prevPath)
         self.nextNavBtn.clicked.connect(self.nextPath)
         self.folderBar.hide()
@@ -678,7 +678,7 @@ class FigFileViewer(QWidget):
 
         return sideBar
 
-    def hideRibbon(self):
+    def toggleRibbon(self):
         if self.ribbon_visible:
             self.mainMenu.setFixedHeight(25)
             self.hideBtn.setIcon(FigIcon("fileviewer/show_ribbon.svg"))
@@ -688,6 +688,11 @@ class FigFileViewer(QWidget):
         self.ribbon_visible = not(
             self.ribbon_visible
         )
+
+    def showRibbon(self):
+        self.mainMenu.setMaximumHeight(120)
+        self.hideBtn.setIcon(FigIcon("fileviewer/hide_ribbon.svg"))
+        self.ribbon_visible = True
 
     def mousePressEvent(self, event):
         self.selection=event.pos()
@@ -742,9 +747,10 @@ class FigFileViewer(QWidget):
         mainMenu.addTab(self.shareMenu, tb+"Share"+tb)
         self.moreMenu = self.initMoreMenu()
         mainMenu.addTab(self.moreMenu, tb+"More"+tb)
+        mainMenu.currentChanged.connect(self.showRibbon)
         # hide the ribbon.
         self.hideBtn = QToolButton(mainMenu)
-        self.hideBtn.clicked.connect(self.hideRibbon)
+        self.hideBtn.clicked.connect(self.toggleRibbon)
         self.hideBtn.setIcon(FigIcon("fileviewer/hide_ribbon.svg"))
         self.hideBtn.setIconSize(QSize(23,23))
         self.hideBtn.setStyleSheet('''
@@ -1287,6 +1293,15 @@ class FigFileViewer(QWidget):
         treeViewBtn.setText("tree")
         treeViewBtn.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
         layoutToolBarLayout.addWidget(treeViewBtn)
+        # google drive view.
+        driveViewBtn = QToolButton()
+        driveViewBtn.setIcon(FigIcon("fileviewer/drive.svg"))
+        driveViewBtn.setIconSize(QSize(30,30))
+        # treeViewBtn.clicked.connect(lambda: self.refresh(self.curr_path, reverse=False))
+        driveViewBtn.setText("drive")
+        driveViewBtn.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        layoutToolBarLayout.addWidget(driveViewBtn)
+
         # # recently accessed files.
         # recentBtn = QToolButton()
         # recentBtn.setIcon(FigIcon("fileviewer/recent.svg"))
