@@ -8,16 +8,18 @@ import os, re, sys, glob, pathlib, datetime
 import argparse, mimetypes, platform, textwrap, subprocess
 from PyQt5.QtPrintSupport import *
 from PyQt5.QtCore import QThread, QUrl, QDir, QSize, Qt, QEvent, pyqtSlot, pyqtSignal, QObject, QRect, QPoint
-from PyQt5.QtGui import QIcon, QKeySequence, QTransform, QFont, QFontDatabase, QMovie, QPixmap, QColor
-from PyQt5.QtWidgets import QAction, QWidget, QTabWidget, QToolBar, QTabBar, QLabel, QSplitter, QVBoxLayout, QHBoxLayout, QToolButton, QPushButton, QGraphicsView, QScrollArea, QLineEdit, QFrame, QSizePolicy, QMessageBox, QTreeView, QRubberBand,  QFileSystemModel, QGraphicsDropShadowEffect
+from PyQt5.QtGui import QIcon, QKeySequence, QTransform, QFont, QFontDatabase, QMovie, QPixmap, QColor, QPainter
+from PyQt5.QtWidgets import QAction, QWidget, QTabWidget, QToolBar, QTabBar, QLabel, QSplitter, QVBoxLayout, QHBoxLayout, QToolButton, QPushButton, QGraphicsView, QGraphicsEffect, QScrollArea, QLineEdit, QFrame, QSizePolicy, QMessageBox, QTreeView, QRubberBand,  QFileSystemModel, QGraphicsDropShadowEffect, QTextEdit
 
 try:
     from utils import *
     from api.File import FigFile
+    from api.Image import FigImage
     from widgets.FlowLayout import FlowLayout
 except ImportError:
     from FigUI.utils import *
     from FigUI.api.File import FigFile
+    from FigUI.api.Image import FigImage
     from FigUI.widgets.FlowLayout import FlowLayout
 
 
@@ -155,7 +157,7 @@ class FileViewerInitWorker(QObject):
         for i, path in enumerate(all_files):
             figFile = FigFile(path) 
             fileIcon = FigFileIcon(figFile, parent=file_viewer)
-            fileIcon.clicked.connect(file_viewer.open)
+            fileIcon.icon.clicked.connect(file_viewer.open)
             ### replace with FlowLayout ###
             file_viewer.gridLayout.addWidget(fileIcon)
             # self.gridLayout.addWidget(fileIcon, i // width, i % width) 
@@ -238,15 +240,38 @@ class GraphicsView(QGraphicsView):
         QGraphicsView.mouseReleaseEvent(self, event)
 
 
-class FigFileIcon(QToolButton):
+class FigFileHoverAnimation(QGraphicsEffect):
+    def __init__(self, ):
+        super(FigFileHoverAnimation, self).__init__()
+
+
+class FigFileIcon(QWidget):
     def __init__(self, file: FigFile, parent=None, size=(150,150), textwidth=10):
         super(FigFileIcon, self).__init__(parent)
         self.file = file
+        self.iconSize = size
         self._parent = parent
+        # file name label.
+        self.label = self.initLabel(self.file.name)
+        self.label.setReadOnly(True)
+        # tool button.
+        self.icon = QToolButton(self)
+
         self.defaultStyle = '''
         QToolTip {
             border: 0px;
             color: #fff;
+            background: #000;
+        }
+        QTextEdit {
+            color: #fff;
+            border: 0px;
+            background: #000;
+        }
+        QTextEdit:hover {
+            color: #292929;
+            font-weight: bold;
+            background: qlineargradient(x1 : 0, y1 : 0, x2 : 0, y2 : 2, stop : 0.0 '''+Fig.FileViewer.CDHEX+''', stop : 0.99 '''+Fig.FileViewer.CLHEX+''');
         }
         QToolButton { 
             border: 0px; 
@@ -255,12 +280,7 @@ class FigFileIcon(QToolButton):
             color: #fff;
             margin: 10px;
         }
-        QToolButton:hover {
-            background: qlineargradient(x1 : 0, y1 : 0, x2 : 0, y2 : 2, stop : 0.0 '''+Fig.FileViewer.CDHEX+''', stop : 0.99 '''+Fig.FileViewer.CLHEX+'''); 
-            /* #e38c59; */ /* #009b9e; */
-            color: #292929;
-            font-weight: bold;
-        }        
+        /* #e38c59; */ /* #009b9e; */
         ''' 
         self.selectedStyle = '''
         QToolTip {
@@ -268,43 +288,123 @@ class FigFileIcon(QToolButton):
             color: #fff;
         }
         QToolButton { 
+            border: 0px; 
+            /* background: '''+Fig.FileViewer.SCHEX+'''; */
+            background: transparent;
+            background-image: none;
+            color: #fff;
+            margin: 10px;
+        }
+        /* QToolButton { 
             '''+f"background: {Fig.FileViewer.SCHEX};"+'''
             background-image: none;
             color: #292929;
             font-weight: bold;
             margin: 10px;
-        }    
+        } */   
+        QTextEdit {
+            border: 0px;
+            color: #292929;
+            font-weight: bold;
+            background-image: none;
+            background-color: green;
+        }'''
+        '''
+        QTextEdit {
+            border: 0px;
+            color: #292929;
+            font-weight: bold;
+            background-color: '''+Fig.FileViewer.CLHEX+''';
+            /* qlineargradient(x1 : 0, y1 : 0, x2 : 0, y2 : 2, stop : 0.0 '''+Fig.FileViewer.CDHEX+''', stop : 0.99 '''+Fig.FileViewer.CLHEX+'''); */
+        }
         ''' 
+        self.figImage = FigImage(__icon__(self.file.thumbnail))
         self.setStyleSheet(self.defaultStyle)
-        self.setAttribute(Qt.WA_TranslucentBackground)
-        self.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
-        text = "\n".join(textwrap.wrap(self.file.name[:textwidth*3], width=textwidth))
-        self.setAttribute(Qt.WA_TranslucentBackground, True)
-        self.setText(text) # truncate at 3 times the max textwidth
-        self.setFixedSize(QSize(*size))
-        self.setIconSize(QSize(50,50))
+        self.icon.setAttribute(Qt.WA_TranslucentBackground)
+        # text = "\n".join(textwrap.wrap(self.file.name[:textwidth*3], width=textwidth))
+        # self.label.setWordWrap(True)
+        # truncate at 3 times the max textwidth
+        # self.label.setFixedWidth(70)
+        # self.icon.setFixedSize(QSize(70,70))
+        self.icon.setIconSize(QSize(50,50))
+        self.icon.setFixedWidth(size[0])
+        # create layout.
+        self.layout = QVBoxLayout()
+        self.layout.addWidget(self.icon, Qt.AlignCenter)
+        self.layout.addWidget(self.label, Qt.AlignCenter)
+        self.setLayout(self.layout)
         self._setThumbnail()
         self._setPropertiesTip()
+        self.setFixedSize(QSize(*size))
+        # self.label.setTextColor(QColor(255,255,255))
+    # def format(self, text, k=7):
+    #     List = []
+    #     for i in range(1+len(text)//k):
+    #         List.append(text[k*i:k*(i+1)])
+        
+    #     return "\n".join(List)
+    def initEffect(self):
+        shadowEffect = QGraphicsDropShadowEffect(self)
+        shadowEffect.setOffset(0, 0)
+        shadowEffect.setColor(QColor(*Fig.FileViewer.SCRGB))
+        shadowEffect.setBlurRadius(100)
+        
+        return shadowEffect
+
+    def initLabel(self, text: str, trans: bool=True):
+        label = QTextEdit()
+        label.setAttribute(Qt.WA_TranslucentBackground)
+        if not trans:
+            label.setHtml(f"<span style='background: {Fig.FileViewer.SCHEX};'>{text}</span>")
+        else:
+            label.setText(text)
+        label.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        label.setFixedWidth(self.iconSize[0])
+        label.setAlignment(Qt.AlignCenter)
+
+        return label
 
     def unselect(self):
         self.setStyleSheet(self.defaultStyle)
+        self.label.setParent(None)
+        self.label = self.initLabel(self.file.name)
+        self.layout.addWidget(self.label)
+        self.setGraphicsEffect(None)
+        self._setThumbnail()
+
+    def highlightIcon(self):
+        tinted = self.figImage.tint(color=Fig.FileViewer.SCHEX)
+        self.icon.setIcon(tinted.QIcon())
 
     def select(self):
         self.setStyleSheet(self.selectedStyle)
+        self.label.setParent(None)
+        self.label = self.initLabel(self.file.name, trans=False)
+        self.layout.addWidget(self.label)
+        shadowEffect = self.initEffect()
+        self.setGraphicsEffect(shadowEffect)
+        # to make sure the object isn't garbage collected!
+        self.shadowEffect = shadowEffect
+        self.highlightIcon()
 
     def _setPropertiesTip(self):
         self.setToolTip(str(self.file))
 
     def _setThumbnail(self):
-        self.setIcon(FigIcon(self.file.thumbnail))
+        self.icon.setIcon(FigIcon(self.file.thumbnail))
+
+    def enterEvent(self, event):
+        shadowEffect = self.initEffect()
+        self.setGraphicsEffect(shadowEffect)
+        self.shadowEffect = shadowEffect
+
+    def leaveEvent(self, event):
+        self.setGraphicsEffect(None)
 # class FigFileIcon(QToolButton):
-#     def __init__(self, path, parent=None, size=(150,150), textwidth=10):
+#     def __init__(self, file: FigFile, parent=None, size=(150,150), textwidth=10):
 #         super(FigFileIcon, self).__init__(parent)
+#         self.file = file
 #         self._parent = parent
-#         self.name = pathlib.Path(path).name
-#         self.path = path
-#         self.isfile = os.path.isfile(path)
-#         self.stem = pathlib.Path(path).stem
 #         self.defaultStyle = '''
 #         QToolTip {
 #             border: 0px;
@@ -316,13 +416,22 @@ class FigFileIcon(QToolButton):
 #             background-image: none;
 #             color: #fff;
 #             margin: 10px;
+#             border-radius: '''+f"{size[0]//2-10}"+''';
 #         }
 #         QToolButton:hover {
-#             background: qlineargradient(x1 : 0, y1 : 0, x2 : 0, y2 : 2, stop : 0.0 '''+Fig.FileViewer.CDHEX+''', stop : 0.99 '''+Fig.FileViewer.CLHEX+'''); 
-#             /* #e38c59; */ /* #009b9e; */
+#             background: qradialgradient(
+#                 cx: 0.7, cy: 0.7, radius: 0.5, 
+#                 stop: 0 '''+Fig.FileViewer.CDHEX+''', 
+#                 stop : 0.2 '''+Fig.FileViewer.CLHEX+''', 
+#                 stop : 0.4 '''+Fig.FileViewer.CDHEX+''', 
+#                 stop : 0.6 '''+Fig.FileViewer.CLHEX+''', 
+#                 stop : 0.8 '''+Fig.FileViewer.CDHEX+''', 
+#                 stop: 1 '''+Fig.FileViewer.CLHEX+'''); 
+#             /* background: qlineargradient(x1 : 0, y1 : 0, x2 : 0, y2 : 2, stop : 0.0 '''+Fig.FileViewer.CDHEX+''', stop : 0.99 '''+Fig.FileViewer.CLHEX+'''); */
 #             color: #292929;
 #             font-weight: bold;
-#         }        
+#         } 
+#         /* #e38c59; */ /* #009b9e; */
 #         ''' 
 #         self.selectedStyle = '''
 #         QToolTip {
@@ -340,12 +449,11 @@ class FigFileIcon(QToolButton):
 #         self.setStyleSheet(self.defaultStyle)
 #         self.setAttribute(Qt.WA_TranslucentBackground)
 #         self.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
-#         text = "\n".join(textwrap.wrap(self.name[:textwidth*3], width=textwidth))
+#         text = "\n".join(textwrap.wrap(self.file.name[:textwidth*3], width=textwidth))
 #         self.setAttribute(Qt.WA_TranslucentBackground, True)
 #         self.setText(text) # truncate at 3 times the max textwidth
 #         self.setFixedSize(QSize(*size))
 #         self.setIconSize(QSize(50,50))
-#         self._getFileProperties()
 #         self._setThumbnail()
 #         self._setPropertiesTip()
 
@@ -355,208 +463,21 @@ class FigFileIcon(QToolButton):
 #     def select(self):
 #         self.setStyleSheet(self.selectedStyle)
 
-#     def _getMimeType(self):
-#         mimeType,_ = mimetypes.guess_type(self.path) 
-#         if not self.isfile:
-#             return "Folder"
-#         elif mimeType:
-#             return mimeType
-#         else:
-#             if PLATFORM == "Linux":
-#                 cmd = f"file --mime-type {self.path}"
-#                 op = subprocess.getoutput(cmd)
-#                 return op.split()[-1]
-#             else:
-#                 return "Unknown"
-
-#     def _getFileProperties(self):
-#         try:
-#             stat = os.stat(self.path)
-#         except (PermissionError, FileNotFoundError) as e: 
-#             self.props = argparse.Namespace()
-#             self.props.access_time = datetime.datetime.now().strftime("%b,%b %d %Y %H:%M:%S")
-#             self.props.modified_time = datetime.datetime.now().strftime("%b,%b %d %Y %H:%M:%S")
-#             self.props.size = "0B"
-#             return 
-#         self.props = argparse.Namespace()
-#         if PLATFORM == "Linux":
-#             self.props.access_time = datetime.datetime.fromtimestamp(stat.st_atime).strftime("%b,%b %d %Y %H:%M:%S")
-#             self.props.modified_time = datetime.datetime.fromtimestamp(stat.st_mtime).strftime("%b,%b %d %Y %H:%M:%S")
-#             self.props.size = sizeof_fmt(stat.st_size)
-#         elif PLATFORM == "Windows":
-#             pass
-#         elif PLATFORM == "Darwin":
-#             pass
-#         else:
-#             pass
-
 #     def _setPropertiesTip(self):
-#         properties = f'''
-# Name: {self.name}
-# Type: {self._getMimeType()}
-# Size: {self.props.size}
-
-# Location: {self.path}
-
-# Accessed: {self.props.access_time} 
-# Modified: {self.props.modified_time}
-# '''
-#         self.setToolTip(properties)
+#         self.setToolTip(str(self.file))
 
 #     def _setThumbnail(self):
-#         _,ext = os.path.splitext(self.name)
-#         # print(self.name, self.stem, ext, os.path.isfile(self.path))
-#         ext = ext[1:]
-#         if self.name == ".git":
-#             self.setIcon(FigIcon("launcher/git.png"))
-#             return
-#         elif self.name == "pom.xml":
-#             self.setIcon(FigIcon("launcher/pom.png"))
-#             return
-#         elif self.name.lower() == "todo":
-#             self.setIcon(FigIcon("launcher/todo.png"))
-#             return
-#         elif not self.isfile:            
-#             # phrase contained case.
-#             for phrase in ThumbPhrases:
-#                 if phrase in self.name.lower():
-#                     self.setIcon(FigIcon(f"launcher/{phrase}.png")); return 
-            
-#             if self.name in ThumbMap:
-#                 filename = ThumbMap[self.name]
-#                 self.setIcon(FigIcon(f"launcher/{filename}"))
-#             # elif self.name == ".sbt":
-#             #     self.setIcon(FigIcon("launcher/scala.png"))
-#             elif self.name.startswith(".git"):
-#                 self.setIcon(FigIcon("launcher/git.png"))
+#         self.setIcon(FigIcon(self.file.thumbnail))
 
-#             elif "julia" in self.name.lower():
-#                 self.setIcon(FigIcon("launcher/jl.png"))
-#             elif "netbeans" in self.name.lower():
-#                 self.setIcon(FigIcon("launcher/netbeans.svg"))
-#             elif "vscode" in self.name.lower():
-#                 self.setIcon(FigIcon("launcher/notvscode.png"))
+#     def enterEvent(self, event):
+#         shadowEffect = QGraphicsDropShadowEffect(self)
+#         shadowEffect.setOffset(0, 0)
+#         shadowEffect.setColor(QColor(*Fig.FileViewer.SCRGB))
+#         shadowEffect.setBlurRadius(100)
+#         self.setGraphicsEffect(shadowEffect)
 
-#             elif self.stem == ".gconf":
-#                 self.setIcon(FigIcon("launcher/gnome.png"))
-#             elif self.stem == ".fontconfig":
-#                 self.setIcon(FigIcon("launcher/ttf.svg"))
-#             elif "anaconda" in self.name.lower() or self.name.startswith(".conda"):
-#                 self.setIcon(FigIcon("launcher/anaconda3.png"))
-
-#             elif "jupyter" in self.name.lower() or "ipython" in self.name.lower() or "ipynb" in self.name.lower():
-#                 self.setIcon(FigIcon("launcher/ipynb.png"))
-
-#             elif "tor" in re.split("_| |-", self.name.lower()) or self.name == ".tor":
-#                 self.setIcon(FigIcon("launcher/tor.png"))
-#             elif self.name == ".linuxbrew" or self.name == "Homebrew":
-#                 self.setIcon(FigIcon("launcher/brew.png"))
-#             # elif self.name == "cuda":
-#             #     self.setIcon(FigIcon("launcher/cu.png"))
-#             elif self.name in [".gnupg"]:
-#                 self.setIcon(FigIcon("launcher/gnu.png"))
-#             elif self.path in STDLinuxFolders:
-#                 self.setIcon(FigIcon(f"dir/{self.name}.png"))
-#             else:    
-#                 self.setIcon(FigIcon("launcher/fileviewer.png"))
-#             return
-#         elif ext in ["STL", "OBJ"]:
-#             self.setIcon(FigIcon(f"launcher/{ext.lower()}.png"))
-#             return
-#         elif ext in ["png","jpg","svg"]:
-#             self.setIcon(QIcon(self.path))
-#             return
-#         # elif ext in ["webm", "mp4", "flv", "ogv", "wmv", "mov"]:
-#         #     import moviepy.editor
-#         #     with tempfile.NamedTemporaryFile() as temp:
-#         #         os.rename(temp.name, temp.name+'.jpg')
-#         #         clip = moviepy.editor.VideoFileClip(self.path)
-#         #         clip.save_frame(temp.name+'.jpg',t=1.0)
-#         #         self.setIcon(QIcon(temp.name+'.jpg'))
-#         #         os.rename(temp.name+'.jpg', temp.name)
-#         #     return
-#         # elif self.stem in ["README", "requirements"]:
-#         #     self.setIcon(FigIcon(f"launcher/{self.stem}.png"))
-#         #     return
-#         elif self.name == ".profile":
-#             self.setIcon(FigIcon("launcher/bashrc.png"))
-#             return  
-#         elif self.stem.lower() == "license":
-#             self.setIcon(FigIcon("launcher/license.png"))
-#             return              
-#         # REMOVE #
-#         elif self.stem.startswith(".bash"):
-#             self.setIcon(FigIcon("launcher/bashrc.png"))
-#             return  
-#         elif self.stem.startswith("zsh"):
-#             self.setIcon(FigIcon("launcher/bashrc.png"))
-#             return  
-#         elif self.stem.startswith(".conda"):
-#             self.setIcon(FigIcon("launcher/anaconda3.png"))
-#             return
-#         elif self.stem.startswith("nvidia-"):
-#             self.setIcon(FigIcon("launcher/cu.png"))
-#             return
-#         elif self.name.startswith(".nvidia"):
-#             self.setIcon(FigIcon("launcher/cu.png"))
-#             return
-#         # REMOVE #
-#         elif self.name.startswith(".") and "cookie" in self.name:
-#             self.setIcon(FigIcon("launcher/cookie.png"))
-#             return
-
-#         elif self.stem in StemMap:
-#             filename = StemMap[self.stem]
-#             self.setIcon(FigIcon(f"launcher/{filename}"))
-#             return    
-
-#         elif self.stem.endswith("_history"):
-#             self.setIcon(FigIcon("launcher/history.png"))
-#             return
-   
-#         # txt/bin classification.
-#         elif ext == "":
-#             if subprocess.getoutput(f"file --mime-encoding {self.path}").endswith("binary"):
-#                 self.setIcon(FigIcon("launcher/bin.png"))    
-#             else:
-#                 self.setIcon(FigIcon("launcher/txt.png"))
-#             return
-
-#         for prefix in PrefixMap:
-#             if self.stem.startswith(prefix):
-#                 filename = PrefixMap[prefix]
-#                 self.setIcon(FigIcon(f"launcher/{filename}")) 
-#                 return
-#         # check for .ext kind of files.
-#         if os.path.exists(__icon__(f"launcher/{ext}.png")): # check if png file for the ext
-#             self.setIcon(FigIcon(f"launcher/{ext}.png"))
-#         else:
-#             if os.path.exists(__icon__(f"launcher/{ext}.svg")): 
-#                 self.setIcon(FigIcon(f"launcher/{ext}.svg")) # check if svg file exists for the ext
-#             else: 
-#                 # print(self.name)
-#                 self.setIcon(FigIcon(f"launcher/txt.png")) # if ext is not recognized set it to txt
-    
-    # def _animateMovie(self):
-    #     import time
-    #     while True:
-    #         self._gifMovie.seek(self._gifIndex)
-    #         pixmap = QPixmap.fromImage(ImageQt.ImageQt(self._gifMovie))
-    #         self.setIcon(QIcon(pixmap))
-    #         self.setIconSize(QSize(*self.size))
-    #         time.sleep(self.rate/1000)
-    #         self._gifIndex += 1
-    #         self._gifIndex %= self._gifLength
-    # def setMovie(self, path, rate=100, size=(60,60)):
-    #     import threading
-    #     self.size = size
-    #     self.rate = rate
-    #     self.thread = threading.Thread(target=self._animateMovie)
-    #     self._gifIndex = 0
-    #     self._gifMovie = Image.open(path)
-    #     self._gifLength = self._gifMovie.n_frames
-    #     self.thread.start()
-
+#     def leaveEvent(self, event):
+#         self.setGraphicsEffect(None)
 class FigFileViewer(QWidget):
     def __init__(self, path=str(pathlib.Path.home()), parent=None, width=4, button_size=(100,100), icon_size=(60,60)):
         super(FigFileViewer, self).__init__(parent)   
@@ -568,6 +489,7 @@ class FigFileViewer(QWidget):
         self.curr_path = path # initialize current path with the passed path or home.
         self._parent = parent
         self.rubberBand = QRubberBand(QRubberBand.Rectangle, self)
+        self.fileFilter = None
         scrollAreaStyle = '''
         QScrollArea {
             background-position: center;
@@ -1836,7 +1758,7 @@ class FigFileViewer(QWidget):
 
     def highlightOnClick(self):
         sendingBtn = self.sender()
-        j = self.gridLayout.indexOf(sendingBtn)
+        j = self.gridLayout.indexOf(sendingBtn.parent())
         self.highlight(j)
     def clear(self):
         for i in reversed(range(self.gridLayout.count())): 
@@ -2013,7 +1935,7 @@ class FigFileViewer(QWidget):
     def reportProgress(self, i):
         global GLOBAL_FILE_LIST
         fileIcon = FigFileIcon(GLOBAL_FILE_LIST[i], parent=self)
-        fileIcon.clicked.connect(self.open)
+        fileIcon.icon.clicked.connect(self.open)
         self.gridLayout.addWidget(fileIcon)
 
     def _refresh(self, path, reverse=False):
@@ -2030,7 +1952,7 @@ class FigFileViewer(QWidget):
         
         for i,path in enumerate(all_files):
             fileIcon = FigFileIcon(path, parent=self)
-            fileIcon.clicked.connect(self.open)
+            fileIcon.icon.clicked.connect(self.open)
             ### replace with FlowLayout ###
             self.gridLayout.addWidget(fileIcon)  
             # self.gridLayout.addWidget(fileIcon, i // self.width, i % self.width)  
@@ -2100,7 +2022,7 @@ class FigFileViewer(QWidget):
         all_files = self.listFiles(path, hide=False) # get list of all files and folders.
         for i,path in enumerate(all_files):
             fileIcon = FigFileIcon(path, parent=self)
-            fileIcon.clicked.connect(self.open)
+            fileIcon.icon.clicked.connect(self.open)
             ### replace with FlowLayout ###
             # self.gridLayout.addWidget(fileIcon, i // self.width, i % self.width)  
             self.gridLayout.addWidget(fileIcon)
@@ -2109,7 +2031,7 @@ class FigFileViewer(QWidget):
 
     def open(self):
         sendingBtn = self.sender()
-        j = self.gridLayout.indexOf(sendingBtn)
+        j = self.gridLayout.indexOf(sendingBtn.parent())
         if j != self.j:
             self.highlight(j)
             return 
@@ -2411,3 +2333,263 @@ if __name__ == "__main__":
     #     viewbar.setLayout(viewLayout)
 
     #     return viewbar
+
+# class FigFileIcon(QToolButton):
+#     def __init__(self, path, parent=None, size=(150,150), textwidth=10):
+#         super(FigFileIcon, self).__init__(parent)
+#         self._parent = parent
+#         self.name = pathlib.Path(path).name
+#         self.path = path
+#         self.isfile = os.path.isfile(path)
+#         self.stem = pathlib.Path(path).stem
+#         self.defaultStyle = '''
+#         QToolTip {
+#             border: 0px;
+#             color: #fff;
+#         }
+#         QToolButton { 
+#             border: 0px; 
+#             background: transparent;
+#             background-image: none;
+#             color: #fff;
+#             margin: 10px;
+#         }
+#         QToolButton:hover {
+#             background: qlineargradient(x1 : 0, y1 : 0, x2 : 0, y2 : 2, stop : 0.0 '''+Fig.FileViewer.CDHEX+''', stop : 0.99 '''+Fig.FileViewer.CLHEX+'''); 
+#             /* #e38c59; */ /* #009b9e; */
+#             color: #292929;
+#             font-weight: bold;
+#         }        
+#         ''' 
+#         self.selectedStyle = '''
+#         QToolTip {
+#             border: 0px;
+#             color: #fff;
+#         }
+#         QToolButton { 
+#             '''+f"background: {Fig.FileViewer.SCHEX};"+'''
+#             background-image: none;
+#             color: #292929;
+#             font-weight: bold;
+#             margin: 10px;
+#         }    
+#         ''' 
+#         self.setStyleSheet(self.defaultStyle)
+#         self.setAttribute(Qt.WA_TranslucentBackground)
+#         self.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+#         text = "\n".join(textwrap.wrap(self.name[:textwidth*3], width=textwidth))
+#         self.setAttribute(Qt.WA_TranslucentBackground, True)
+#         self.setText(text) # truncate at 3 times the max textwidth
+#         self.setFixedSize(QSize(*size))
+#         self.setIconSize(QSize(50,50))
+#         self._getFileProperties()
+#         self._setThumbnail()
+#         self._setPropertiesTip()
+
+#     def unselect(self):
+#         self.setStyleSheet(self.defaultStyle)
+
+#     def select(self):
+#         self.setStyleSheet(self.selectedStyle)
+
+#     def _getMimeType(self):
+#         mimeType,_ = mimetypes.guess_type(self.path) 
+#         if not self.isfile:
+#             return "Folder"
+#         elif mimeType:
+#             return mimeType
+#         else:
+#             if PLATFORM == "Linux":
+#                 cmd = f"file --mime-type {self.path}"
+#                 op = subprocess.getoutput(cmd)
+#                 return op.split()[-1]
+#             else:
+#                 return "Unknown"
+
+#     def _getFileProperties(self):
+#         try:
+#             stat = os.stat(self.path)
+#         except (PermissionError, FileNotFoundError) as e: 
+#             self.props = argparse.Namespace()
+#             self.props.access_time = datetime.datetime.now().strftime("%b,%b %d %Y %H:%M:%S")
+#             self.props.modified_time = datetime.datetime.now().strftime("%b,%b %d %Y %H:%M:%S")
+#             self.props.size = "0B"
+#             return 
+#         self.props = argparse.Namespace()
+#         if PLATFORM == "Linux":
+#             self.props.access_time = datetime.datetime.fromtimestamp(stat.st_atime).strftime("%b,%b %d %Y %H:%M:%S")
+#             self.props.modified_time = datetime.datetime.fromtimestamp(stat.st_mtime).strftime("%b,%b %d %Y %H:%M:%S")
+#             self.props.size = sizeof_fmt(stat.st_size)
+#         elif PLATFORM == "Windows":
+#             pass
+#         elif PLATFORM == "Darwin":
+#             pass
+#         else:
+#             pass
+
+#     def _setPropertiesTip(self):
+#         properties = f'''
+# Name: {self.name}
+# Type: {self._getMimeType()}
+# Size: {self.props.size}
+
+# Location: {self.path}
+
+# Accessed: {self.props.access_time} 
+# Modified: {self.props.modified_time}
+# '''
+#         self.setToolTip(properties)
+
+#     def _setThumbnail(self):
+#         _,ext = os.path.splitext(self.name)
+#         # print(self.name, self.stem, ext, os.path.isfile(self.path))
+#         ext = ext[1:]
+#         if self.name == ".git":
+#             self.setIcon(FigIcon("launcher/git.png"))
+#             return
+#         elif self.name == "pom.xml":
+#             self.setIcon(FigIcon("launcher/pom.png"))
+#             return
+#         elif self.name.lower() == "todo":
+#             self.setIcon(FigIcon("launcher/todo.png"))
+#             return
+#         elif not self.isfile:            
+#             # phrase contained case.
+#             for phrase in ThumbPhrases:
+#                 if phrase in self.name.lower():
+#                     self.setIcon(FigIcon(f"launcher/{phrase}.png")); return 
+            
+#             if self.name in ThumbMap:
+#                 filename = ThumbMap[self.name]
+#                 self.setIcon(FigIcon(f"launcher/{filename}"))
+#             # elif self.name == ".sbt":
+#             #     self.setIcon(FigIcon("launcher/scala.png"))
+#             elif self.name.startswith(".git"):
+#                 self.setIcon(FigIcon("launcher/git.png"))
+
+#             elif "julia" in self.name.lower():
+#                 self.setIcon(FigIcon("launcher/jl.png"))
+#             elif "netbeans" in self.name.lower():
+#                 self.setIcon(FigIcon("launcher/netbeans.svg"))
+#             elif "vscode" in self.name.lower():
+#                 self.setIcon(FigIcon("launcher/notvscode.png"))
+
+#             elif self.stem == ".gconf":
+#                 self.setIcon(FigIcon("launcher/gnome.png"))
+#             elif self.stem == ".fontconfig":
+#                 self.setIcon(FigIcon("launcher/ttf.svg"))
+#             elif "anaconda" in self.name.lower() or self.name.startswith(".conda"):
+#                 self.setIcon(FigIcon("launcher/anaconda3.png"))
+
+#             elif "jupyter" in self.name.lower() or "ipython" in self.name.lower() or "ipynb" in self.name.lower():
+#                 self.setIcon(FigIcon("launcher/ipynb.png"))
+
+#             elif "tor" in re.split("_| |-", self.name.lower()) or self.name == ".tor":
+#                 self.setIcon(FigIcon("launcher/tor.png"))
+#             elif self.name == ".linuxbrew" or self.name == "Homebrew":
+#                 self.setIcon(FigIcon("launcher/brew.png"))
+#             # elif self.name == "cuda":
+#             #     self.setIcon(FigIcon("launcher/cu.png"))
+#             elif self.name in [".gnupg"]:
+#                 self.setIcon(FigIcon("launcher/gnu.png"))
+#             elif self.path in STDLinuxFolders:
+#                 self.setIcon(FigIcon(f"dir/{self.name}.png"))
+#             else:    
+#                 self.setIcon(FigIcon("launcher/fileviewer.png"))
+#             return
+#         elif ext in ["STL", "OBJ"]:
+#             self.setIcon(FigIcon(f"launcher/{ext.lower()}.png"))
+#             return
+#         elif ext in ["png","jpg","svg"]:
+#             self.setIcon(QIcon(self.path))
+#             return
+#         # elif ext in ["webm", "mp4", "flv", "ogv", "wmv", "mov"]:
+#         #     import moviepy.editor
+#         #     with tempfile.NamedTemporaryFile() as temp:
+#         #         os.rename(temp.name, temp.name+'.jpg')
+#         #         clip = moviepy.editor.VideoFileClip(self.path)
+#         #         clip.save_frame(temp.name+'.jpg',t=1.0)
+#         #         self.setIcon(QIcon(temp.name+'.jpg'))
+#         #         os.rename(temp.name+'.jpg', temp.name)
+#         #     return
+#         # elif self.stem in ["README", "requirements"]:
+#         #     self.setIcon(FigIcon(f"launcher/{self.stem}.png"))
+#         #     return
+#         elif self.name == ".profile":
+#             self.setIcon(FigIcon("launcher/bashrc.png"))
+#             return  
+#         elif self.stem.lower() == "license":
+#             self.setIcon(FigIcon("launcher/license.png"))
+#             return              
+#         # REMOVE #
+#         elif self.stem.startswith(".bash"):
+#             self.setIcon(FigIcon("launcher/bashrc.png"))
+#             return  
+#         elif self.stem.startswith("zsh"):
+#             self.setIcon(FigIcon("launcher/bashrc.png"))
+#             return  
+#         elif self.stem.startswith(".conda"):
+#             self.setIcon(FigIcon("launcher/anaconda3.png"))
+#             return
+#         elif self.stem.startswith("nvidia-"):
+#             self.setIcon(FigIcon("launcher/cu.png"))
+#             return
+#         elif self.name.startswith(".nvidia"):
+#             self.setIcon(FigIcon("launcher/cu.png"))
+#             return
+#         # REMOVE #
+#         elif self.name.startswith(".") and "cookie" in self.name:
+#             self.setIcon(FigIcon("launcher/cookie.png"))
+#             return
+
+#         elif self.stem in StemMap:
+#             filename = StemMap[self.stem]
+#             self.setIcon(FigIcon(f"launcher/{filename}"))
+#             return    
+
+#         elif self.stem.endswith("_history"):
+#             self.setIcon(FigIcon("launcher/history.png"))
+#             return
+   
+#         # txt/bin classification.
+#         elif ext == "":
+#             if subprocess.getoutput(f"file --mime-encoding {self.path}").endswith("binary"):
+#                 self.setIcon(FigIcon("launcher/bin.png"))    
+#             else:
+#                 self.setIcon(FigIcon("launcher/txt.png"))
+#             return
+
+#         for prefix in PrefixMap:
+#             if self.stem.startswith(prefix):
+#                 filename = PrefixMap[prefix]
+#                 self.setIcon(FigIcon(f"launcher/{filename}")) 
+#                 return
+#         # check for .ext kind of files.
+#         if os.path.exists(__icon__(f"launcher/{ext}.png")): # check if png file for the ext
+#             self.setIcon(FigIcon(f"launcher/{ext}.png"))
+#         else:
+#             if os.path.exists(__icon__(f"launcher/{ext}.svg")): 
+#                 self.setIcon(FigIcon(f"launcher/{ext}.svg")) # check if svg file exists for the ext
+#             else: 
+#                 # print(self.name)
+#                 self.setIcon(FigIcon(f"launcher/txt.png")) # if ext is not recognized set it to txt
+    
+    # def _animateMovie(self):
+    #     import time
+    #     while True:
+    #         self._gifMovie.seek(self._gifIndex)
+    #         pixmap = QPixmap.fromImage(ImageQt.ImageQt(self._gifMovie))
+    #         self.setIcon(QIcon(pixmap))
+    #         self.setIconSize(QSize(*self.size))
+    #         time.sleep(self.rate/1000)
+    #         self._gifIndex += 1
+    #         self._gifIndex %= self._gifLength
+    # def setMovie(self, path, rate=100, size=(60,60)):
+    #     import threading
+    #     self.size = size
+    #     self.rate = rate
+    #     self.thread = threading.Thread(target=self._animateMovie)
+    #     self._gifIndex = 0
+    #     self._gifMovie = Image.open(path)
+    #     self._gifLength = self._gifMovie.n_frames
+    #     self.thread.start()

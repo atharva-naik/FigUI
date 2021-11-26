@@ -29,7 +29,7 @@ def FigIcon(name, w=None, h=None):
     path = os.path.join(__icons__, name)
 
     return QIcon(path)
-
+APPS_LIST = []
 
 class AppLoadWorker(QObject):
     finished = pyqtSignal()
@@ -37,16 +37,18 @@ class AppLoadWorker(QObject):
     def __init__(self, app_ls):
         super(AppLoadWorker, self).__init__()
         self.app_iter = app_ls
-        self.current_app = None
+        # self.current_app = None
 
     def run(self):
         i = 0
+        global APPS_LIST
         while True:
-            i += 1
             try:
                 # print("AppLoadWorker:", i)
-                self.current_app = next(self.app_iter) 
+                APPS_LIST.append(next(self.app_iter))
+                # self.current_app = next(self.app_iter) 
                 self.progress.emit(i)
+                i += 1
             except StopIteration:
                 self.finished.emit()
                 return
@@ -834,7 +836,7 @@ class FigLauncher(QWidget):
     def appProgress(self, i):
         # print("appProgress:", i)
         appBtn = FigAppButton(
-            app=self.appLoadWorker.current_app, 
+            app=APPS_LIST[i], 
             parent=self.appWidget
         )
         self.appLayout.addWidget(appBtn)

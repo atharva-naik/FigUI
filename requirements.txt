@@ -18,6 +18,7 @@ pydrive
 pymupdf
 pyttsx3
 pyxhook
+cairosvg
 colormap
 markdown
 requests
