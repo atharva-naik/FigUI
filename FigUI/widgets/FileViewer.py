@@ -722,8 +722,8 @@ class FigFileViewer(QWidget):
         # print("\x1b[31;1mrect:\x1b[0m", rect, dir(rect))
         for child in self.listContents():
             # print(child.geometry(), child.text())
-            if rect.contains(child.geometry()) and child.inherits('QToolButton'):
-                print(child.text())
+            if rect.contains(child.geometry()) and child.inherits('FigFileIcon'):
+                print(child.icon.text())
                 child.select()
             self.rubberBand.hide()
 
