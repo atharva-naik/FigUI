@@ -78,6 +78,11 @@ except ImportError:
     from ..subSystem.System.Power import FigPowerController
     from .FileViewer import FigFileViewer, FigTreeFileExplorer
     from ..subSystem.System.Display import BrightnessController
+
+try: 
+    from FigUI.handler.Code import CodeEditor
+except ImportError: 
+    from ..handler.Code import CodeEditor
 #     from .utils import *
 def openQRCodeWindow(url=None, clipboard=None):
     qrCodeWindow = FigQRCodeWindow(url, clipboard)
@@ -1647,20 +1652,21 @@ class FigWindow(QMainWindow):
         '''when tab is changed.'''
         currentWidget = self.tabs.currentWidget()
         # print(type(currentWidget))
-        try: from FigUI.handler.Code import CodeEditor
-        except ImportError: from ..handler.Code import CodeEditor
+        # REMOVE
         # if isinstance(currentWidget, FigFileViewer):
         #     self.folderBar.show()
         #     self.shortcutBar.show()
         # else:
         #     self.folderBar.hide()
         #     self.shortcutBar.hide()
+        
         if isinstance(currentWidget, (CodeEditor)):
             self.bottomBar.show()
             self.debugBar.show()
         else:
             self.bottomBar.hide()
             self.debugBar.hide()
+        
         try:
             qurl = self.tabs.currentWidget().url() # get the curl
 		    # self.update_urlbar(qurl, self.tabs.currentWidget()) # update the url 
@@ -1676,6 +1682,7 @@ class FigWindow(QMainWindow):
         except AttributeError: pass
         self.langBtn.setIconSize(QSize(16,16))
         #  print("\x1b[34;1m"+filename+"\x1b[0m")
+        
         MimeType, _ = mimetypes.guess_type(filename)
         if MimeType:
             self.indentBtn.setText("Spaces: 4")

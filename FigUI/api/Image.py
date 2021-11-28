@@ -1,8 +1,10 @@
 # blurring images.
+import urllib
 import tempfile
 from pathlib import Path
 from typing import Union, List 
 from PyQt5.QtGui import QIcon, QPixmap
+from urllib.error import URLError
 from PIL import Image, ImageFilter, ImageQt, ImageOps, UnidentifiedImageError
 
 
@@ -11,24 +13,31 @@ class FigImage:
         self.path = path
         if path:
             try:
-                self._image = Image.open(self.path)
+                self._image = Image.open(self.path).convert("RGBA")
             except UnidentifiedImageError:
                 import cairosvg
-                cairosvg.svg2png(
-                    bytestring=open(path).read(), 
-                    write_to='/tmp/LOlWhateiwa.png'
-                )
-                self._image = Image.open('/tmp/LOlWhateiwa.png')
+                try:
+                    cairosvg.svg2png(
+                        bytestring=open(path).read(), 
+                        write_to='/tmp/LOlWhateiwa.png'
+                    )
+                    self._image = Image.open('/tmp/LOlWhateiwa.png')
+                except URLError:
+                    self._image = Image.open('/home/atharva/GUI/FigUI/FigUI/assets/icons/fileviewer/thumb.png') 
 
     def __call__(self):
         return self._image
 
     def tint(self, color="#fff"):
         self._image.load()
-        r, g, b, a = self._image.split()
-        gray = ImageOps.grayscale(self._image)
-        result = ImageOps.colorize(gray, (0,0,0,0), color)
-        result.putalpha(a)
+        try:
+            r, g, b, a = self._image.split()
+            gray = ImageOps.grayscale(self._image)
+            result = ImageOps.colorize(gray, (0,0,0,0), color)
+            result.putalpha(a)
+        except ValueError:
+            # when image is gray scale.
+            result = self._image
 
         return FigImage.fromPIL(result)
 

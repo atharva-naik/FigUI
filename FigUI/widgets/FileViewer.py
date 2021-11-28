@@ -13,12 +13,12 @@ from PyQt5.QtWidgets import QAction, QWidget, QTabWidget, QToolBar, QTabBar, QLa
 
 try:
     from utils import *
-    from api.File import FigFile
+    from api.File import FigFile, listdir
     from api.Image import FigImage
     from widgets.FlowLayout import FlowLayout
 except ImportError:
     from FigUI.utils import *
-    from FigUI.api.File import FigFile
+    from FigUI.api.File import FigFile, listdir
     from FigUI.api.Image import FigImage
     from FigUI.widgets.FlowLayout import FlowLayout
 
@@ -157,7 +157,7 @@ class FileViewerInitWorker(QObject):
         for i, path in enumerate(all_files):
             figFile = FigFile(path) 
             fileIcon = FigFileIcon(figFile, parent=file_viewer)
-            fileIcon.icon.clicked.connect(file_viewer.open)
+            fileIcon.clicked.connect(file_viewer.open)
             ### replace with FlowLayout ###
             file_viewer.gridLayout.addWidget(fileIcon)
             # self.gridLayout.addWidget(fileIcon, i // width, i % width) 
@@ -186,26 +186,31 @@ class FileViewerRefreshWorker(QObject):
     finished = pyqtSignal()
     progress = pyqtSignal(int)
     
-    def __init__(self, iterator):
+    def __init__(self, iterator, is_iter=True):
         super(FileViewerRefreshWorker, self).__init__()
         self.file_iter = iterator
+        # print(self.file_iter)
         self.file_info = None
+        self.is_iter = is_iter
+        self.i = 0
 
     def run(self):
         '''for the fileviewer ui refresh task.'''
         import time
         global GLOBAL_FILE_LIST
-        i = 0
         while True:
             try:
-                path = next(self.file_iter).path
+                if self.is_iter:
+                    path = next(self.file_iter).path
+                else:
+                    path = self.file_iter[self.i]
                 file = FigFile(path)
                 GLOBAL_FILE_LIST.append(file)
                 # print(f"FileViewerRefreshWorker:", path)
-                self.progress.emit(i)
-                i += 1
+                self.progress.emit(self.i)
+                self.i += 1
                 # time.sleep(1)
-            except StopIteration:
+            except (StopIteration, IndexError) as e:
                 self.finished.emit()
                 return
 
@@ -245,33 +250,178 @@ class FigFileHoverAnimation(QGraphicsEffect):
         super(FigFileHoverAnimation, self).__init__()
 
 
-class FigFileIcon(QWidget):
+# class FigFileIcon(QWidget):
+#     def __init__(self, file: FigFile, parent=None, size=(150,150), textwidth=10):
+#         super(FigFileIcon, self).__init__(parent)
+#         self.file = file
+#         self.path = self.file.path
+#         self.iconSize = size
+#         self._parent = parent
+#         # file name label.
+#         self.label = self.initLabel(self.file.name)
+#         self.label.setReadOnly(True)
+#         # tool button.
+#         self.icon = QToolButton(self)
+
+#         self.defaultStyle = '''
+#         QToolTip {
+#             border: 0px;
+#             color: #fff;
+#             background: #000;
+#         }
+#         QTextEdit {
+#             color: #fff;
+#             border: 0px;
+#             background: #000;
+#         }
+#         QTextEdit:hover {
+#             color: #292929;
+#             font-weight: bold;
+#             background: qlineargradient(x1 : 0, y1 : 0, x2 : 0, y2 : 2, stop : 0.0 '''+Fig.FileViewer.CDHEX+''', stop : 0.99 '''+Fig.FileViewer.CLHEX+''');
+#         }
+#         QToolButton { 
+#             border: 0px; 
+#             background: transparent;
+#             background-image: none;
+#             color: #fff;
+#             margin: 10px;
+#         }
+#         /* #e38c59; */ /* #009b9e; */
+#         ''' 
+#         self.selectedStyle = '''
+#         QToolTip {
+#             border: 0px;
+#             color: #fff;
+#         }
+#         QToolButton { 
+#             border: 0px; 
+#             /* background: '''+Fig.FileViewer.SCHEX+'''; */
+#             background: transparent;
+#             background-image: none;
+#             color: #fff;
+#             margin: 10px;
+#         }
+#         /* QToolButton { 
+#             '''+f"background: {Fig.FileViewer.SCHEX};"+'''
+#             background-image: none;
+#             color: #292929;
+#             font-weight: bold;
+#             margin: 10px;
+#         } */   
+#         QTextEdit {
+#             border: 0px;
+#             color: #292929;
+#             font-weight: bold;
+#             background-image: none;
+#             background-color: green;
+#         }'''
+#         '''
+#         QTextEdit {
+#             border: 0px;
+#             color: #292929;
+#             font-weight: bold;
+#             background-color: '''+Fig.FileViewer.CLHEX+''';
+#             /* qlineargradient(x1 : 0, y1 : 0, x2 : 0, y2 : 2, stop : 0.0 '''+Fig.FileViewer.CDHEX+''', stop : 0.99 '''+Fig.FileViewer.CLHEX+'''); */
+#         }
+#         ''' 
+#         self.figImage = FigImage(__icon__(self.file.thumbnail))
+#         self.setStyleSheet(self.defaultStyle)
+#         self.icon.setAttribute(Qt.WA_TranslucentBackground)
+#         # text = "\n".join(textwrap.wrap(self.file.name[:textwidth*3], width=textwidth))
+#         # self.label.setWordWrap(True)
+#         # truncate at 3 times the max textwidth
+#         # self.label.setFixedWidth(70)
+#         # self.icon.setFixedSize(QSize(70,70))
+#         self.icon.setIconSize(QSize(50,50))
+#         self.icon.setFixedWidth(size[0])
+#         # create layout.
+#         self.layout = QVBoxLayout()
+#         self.layout.addWidget(self.icon, Qt.AlignCenter)
+#         self.layout.addWidget(self.label, Qt.AlignCenter)
+#         self.setLayout(self.layout)
+#         self._setThumbnail()
+#         self._setPropertiesTip()
+#         self.setFixedSize(QSize(*size))
+#         # self.label.setTextColor(QColor(255,255,255))
+#     # def format(self, text, k=7):
+#     #     List = []
+#     #     for i in range(1+len(text)//k):
+#     #         List.append(text[k*i:k*(i+1)])
+        
+#     #     return "\n".join(List)
+#     def initEffect(self):
+#         shadowEffect = QGraphicsDropShadowEffect(self)
+#         shadowEffect.setOffset(0, 0)
+#         shadowEffect.setColor(QColor(*Fig.FileViewer.SCRGB))
+#         shadowEffect.setBlurRadius(100)
+        
+#         return shadowEffect
+
+#     def initLabel(self, text: str, trans: bool=True):
+#         label = QTextEdit()
+#         label.setAttribute(Qt.WA_TranslucentBackground)
+#         if not trans:
+#             label.setHtml(f"<span style='background: {Fig.FileViewer.SCHEX};'>{text}</span>")
+#         else:
+#             label.setText(text)
+#         label.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+#         label.setFixedWidth(self.iconSize[0])
+#         label.setAlignment(Qt.AlignCenter)
+
+#         return label
+
+#     def unselect(self):
+#         self.setStyleSheet(self.defaultStyle)
+#         self.label.setParent(None)
+#         self.label = self.initLabel(self.file.name)
+#         self.layout.addWidget(self.label)
+#         self.setGraphicsEffect(None)
+#         self._setThumbnail()
+
+#     def highlightIcon(self):
+#         tinted = self.figImage.tint(color=Fig.FileViewer.SCHEX)
+#         self.icon.setIcon(tinted.QIcon())
+
+#     def select(self):
+#         self.setStyleSheet(self.selectedStyle)
+#         self.label.setParent(None)
+#         self.label = self.initLabel(self.file.name, trans=False)
+#         self.layout.addWidget(self.label)
+#         shadowEffect = self.initEffect()
+#         self.setGraphicsEffect(shadowEffect)
+#         # to make sure the object isn't garbage collected!
+#         self.shadowEffect = shadowEffect
+#         self.highlightIcon()
+
+#     def _setPropertiesTip(self):
+#         self.setToolTip(str(self.file))
+
+#     def _setThumbnail(self):
+#         self.icon.setIcon(FigIcon(self.file.thumbnail))
+
+#     def enterEvent(self, event):
+#         shadowEffect = self.initEffect()
+#         self.setGraphicsEffect(shadowEffect)
+#         self.shadowEffect = shadowEffect
+
+#     def leaveEvent(self, event):
+#         self.setGraphicsEffect(None)
+
+class FigFileIcon(QToolButton):
     def __init__(self, file: FigFile, parent=None, size=(150,150), textwidth=10):
         super(FigFileIcon, self).__init__(parent)
         self.file = file
-        self.iconSize = size
         self._parent = parent
-        # file name label.
-        self.label = self.initLabel(self.file.name)
-        self.label.setReadOnly(True)
-        # tool button.
-        self.icon = QToolButton(self)
-
+        thumbnail_path = __icon__(self.file.thumbnail)
+        if os.path.exists(thumbnail_path):
+            self.figImage = FigImage(thumbnail_path)
+        else:
+            # cases when the file is an image file.
+            self.figImage = FigImage(self.file.thumbnail)
         self.defaultStyle = '''
         QToolTip {
             border: 0px;
             color: #fff;
-            background: #000;
-        }
-        QTextEdit {
-            color: #fff;
-            border: 0px;
-            background: #000;
-        }
-        QTextEdit:hover {
-            color: #292929;
-            font-weight: bold;
-            background: qlineargradient(x1 : 0, y1 : 0, x2 : 0, y2 : 2, stop : 0.0 '''+Fig.FileViewer.CDHEX+''', stop : 0.99 '''+Fig.FileViewer.CLHEX+''');
         }
         QToolButton { 
             border: 0px; 
@@ -279,6 +429,21 @@ class FigFileIcon(QWidget):
             background-image: none;
             color: #fff;
             margin: 10px;
+        }
+        '''
+        '''
+        QToolButton:hover {
+            background: qradialgradient(
+                cx: 0.7, cy: 0.7, radius: 0.5, 
+                stop: 0 '''+Fig.FileViewer.CDHEX+''', 
+                stop : 0.2 '''+Fig.FileViewer.CLHEX+''', 
+                stop : 0.4 '''+Fig.FileViewer.CDHEX+''', 
+                stop : 0.6 '''+Fig.FileViewer.CLHEX+''', 
+                stop : 0.8 '''+Fig.FileViewer.CDHEX+''', 
+                stop: 1 '''+Fig.FileViewer.CLHEX+'''); 
+            /* background: qlineargradient(x1 : 0, y1 : 0, x2 : 0, y2 : 2, stop : 0.0 '''+Fig.FileViewer.CDHEX+''', stop : 0.99 '''+Fig.FileViewer.CLHEX+'''); */
+            color: #292929;
+            font-weight: bold;
         }
         /* #e38c59; */ /* #009b9e; */
         ''' 
@@ -288,61 +453,37 @@ class FigFileIcon(QWidget):
             color: #fff;
         }
         QToolButton { 
-            border: 0px; 
-            /* background: '''+Fig.FileViewer.SCHEX+'''; */
-            background: transparent;
-            background-image: none;
-            color: #fff;
+            border: 0px;
+            color: #292929;
+            font-weight: bold;
             margin: 10px;
-        }
-        /* QToolButton { 
+            background: transparent;
+        } 
+        '''
+        '''
+        QToolButton { 
             '''+f"background: {Fig.FileViewer.SCHEX};"+'''
             background-image: none;
             color: #292929;
             font-weight: bold;
             margin: 10px;
-        } */   
-        QTextEdit {
-            border: 0px;
-            color: #292929;
-            font-weight: bold;
-            background-image: none;
-            background-color: green;
-        }'''
-        '''
-        QTextEdit {
-            border: 0px;
-            color: #292929;
-            font-weight: bold;
-            background-color: '''+Fig.FileViewer.CLHEX+''';
-            /* qlineargradient(x1 : 0, y1 : 0, x2 : 0, y2 : 2, stop : 0.0 '''+Fig.FileViewer.CDHEX+''', stop : 0.99 '''+Fig.FileViewer.CLHEX+'''); */
-        }
+        }    
         ''' 
-        self.figImage = FigImage(__icon__(self.file.thumbnail))
         self.setStyleSheet(self.defaultStyle)
-        self.icon.setAttribute(Qt.WA_TranslucentBackground)
-        # text = "\n".join(textwrap.wrap(self.file.name[:textwidth*3], width=textwidth))
-        # self.label.setWordWrap(True)
-        # truncate at 3 times the max textwidth
-        # self.label.setFixedWidth(70)
-        # self.icon.setFixedSize(QSize(70,70))
-        self.icon.setIconSize(QSize(50,50))
-        self.icon.setFixedWidth(size[0])
-        # create layout.
-        self.layout = QVBoxLayout()
-        self.layout.addWidget(self.icon, Qt.AlignCenter)
-        self.layout.addWidget(self.label, Qt.AlignCenter)
-        self.setLayout(self.layout)
+        self.setAttribute(Qt.WA_TranslucentBackground)
+        self.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        text = "\n".join(textwrap.wrap(self.file.name[:textwidth*3], width=textwidth))
+        self.setAttribute(Qt.WA_TranslucentBackground, True)
+        self.setText(text) # truncate at 3 times the max textwidth
+        self.setFixedSize(QSize(*size))
+        self.setIconSize(QSize(50,50))
         self._setThumbnail()
         self._setPropertiesTip()
-        self.setFixedSize(QSize(*size))
-        # self.label.setTextColor(QColor(255,255,255))
-    # def format(self, text, k=7):
-    #     List = []
-    #     for i in range(1+len(text)//k):
-    #         List.append(text[k*i:k*(i+1)])
-        
-    #     return "\n".join(List)
+
+    def highlightIcon(self):
+        tinted = self.figImage.tint(color=Fig.FileViewer.SCHEX)
+        self.setIcon(tinted.QIcon())
+
     def initEffect(self):
         shadowEffect = QGraphicsDropShadowEffect(self)
         shadowEffect.setOffset(0, 0)
@@ -351,39 +492,16 @@ class FigFileIcon(QWidget):
         
         return shadowEffect
 
-    def initLabel(self, text: str, trans: bool=True):
-        label = QTextEdit()
-        label.setAttribute(Qt.WA_TranslucentBackground)
-        if not trans:
-            label.setHtml(f"<span style='background: {Fig.FileViewer.SCHEX};'>{text}</span>")
-        else:
-            label.setText(text)
-        label.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-        label.setFixedWidth(self.iconSize[0])
-        label.setAlignment(Qt.AlignCenter)
-
-        return label
-
     def unselect(self):
         self.setStyleSheet(self.defaultStyle)
-        self.label.setParent(None)
-        self.label = self.initLabel(self.file.name)
-        self.layout.addWidget(self.label)
         self.setGraphicsEffect(None)
         self._setThumbnail()
 
-    def highlightIcon(self):
-        tinted = self.figImage.tint(color=Fig.FileViewer.SCHEX)
-        self.icon.setIcon(tinted.QIcon())
-
     def select(self):
         self.setStyleSheet(self.selectedStyle)
-        self.label.setParent(None)
-        self.label = self.initLabel(self.file.name, trans=False)
-        self.layout.addWidget(self.label)
         shadowEffect = self.initEffect()
         self.setGraphicsEffect(shadowEffect)
-        # to make sure the object isn't garbage collected!
+        # # to make sure the object isn't garbage collected!
         self.shadowEffect = shadowEffect
         self.highlightIcon()
 
@@ -391,103 +509,29 @@ class FigFileIcon(QWidget):
         self.setToolTip(str(self.file))
 
     def _setThumbnail(self):
-        self.icon.setIcon(FigIcon(self.file.thumbnail))
+        self.setIcon(FigIcon(self.file.thumbnail))
 
     def enterEvent(self, event):
-        shadowEffect = self.initEffect()
+        shadowEffect = QGraphicsDropShadowEffect(self)
+        shadowEffect.setOffset(0, 0)
+        shadowEffect.setColor(QColor(*Fig.FileViewer.SCRGB))
+        shadowEffect.setBlurRadius(100)
         self.setGraphicsEffect(shadowEffect)
-        self.shadowEffect = shadowEffect
 
     def leaveEvent(self, event):
         self.setGraphicsEffect(None)
-# class FigFileIcon(QToolButton):
-#     def __init__(self, file: FigFile, parent=None, size=(150,150), textwidth=10):
-#         super(FigFileIcon, self).__init__(parent)
-#         self.file = file
-#         self._parent = parent
-#         self.defaultStyle = '''
-#         QToolTip {
-#             border: 0px;
-#             color: #fff;
-#         }
-#         QToolButton { 
-#             border: 0px; 
-#             background: transparent;
-#             background-image: none;
-#             color: #fff;
-#             margin: 10px;
-#             border-radius: '''+f"{size[0]//2-10}"+''';
-#         }
-#         QToolButton:hover {
-#             background: qradialgradient(
-#                 cx: 0.7, cy: 0.7, radius: 0.5, 
-#                 stop: 0 '''+Fig.FileViewer.CDHEX+''', 
-#                 stop : 0.2 '''+Fig.FileViewer.CLHEX+''', 
-#                 stop : 0.4 '''+Fig.FileViewer.CDHEX+''', 
-#                 stop : 0.6 '''+Fig.FileViewer.CLHEX+''', 
-#                 stop : 0.8 '''+Fig.FileViewer.CDHEX+''', 
-#                 stop: 1 '''+Fig.FileViewer.CLHEX+'''); 
-#             /* background: qlineargradient(x1 : 0, y1 : 0, x2 : 0, y2 : 2, stop : 0.0 '''+Fig.FileViewer.CDHEX+''', stop : 0.99 '''+Fig.FileViewer.CLHEX+'''); */
-#             color: #292929;
-#             font-weight: bold;
-#         } 
-#         /* #e38c59; */ /* #009b9e; */
-#         ''' 
-#         self.selectedStyle = '''
-#         QToolTip {
-#             border: 0px;
-#             color: #fff;
-#         }
-#         QToolButton { 
-#             '''+f"background: {Fig.FileViewer.SCHEX};"+'''
-#             background-image: none;
-#             color: #292929;
-#             font-weight: bold;
-#             margin: 10px;
-#         }    
-#         ''' 
-#         self.setStyleSheet(self.defaultStyle)
-#         self.setAttribute(Qt.WA_TranslucentBackground)
-#         self.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
-#         text = "\n".join(textwrap.wrap(self.file.name[:textwidth*3], width=textwidth))
-#         self.setAttribute(Qt.WA_TranslucentBackground, True)
-#         self.setText(text) # truncate at 3 times the max textwidth
-#         self.setFixedSize(QSize(*size))
-#         self.setIconSize(QSize(50,50))
-#         self._setThumbnail()
-#         self._setPropertiesTip()
 
-#     def unselect(self):
-#         self.setStyleSheet(self.defaultStyle)
-
-#     def select(self):
-#         self.setStyleSheet(self.selectedStyle)
-
-#     def _setPropertiesTip(self):
-#         self.setToolTip(str(self.file))
-
-#     def _setThumbnail(self):
-#         self.setIcon(FigIcon(self.file.thumbnail))
-
-#     def enterEvent(self, event):
-#         shadowEffect = QGraphicsDropShadowEffect(self)
-#         shadowEffect.setOffset(0, 0)
-#         shadowEffect.setColor(QColor(*Fig.FileViewer.SCRGB))
-#         shadowEffect.setBlurRadius(100)
-#         self.setGraphicsEffect(shadowEffect)
-
-#     def leaveEvent(self, event):
-#         self.setGraphicsEffect(None)
+        
 class FigFileViewer(QWidget):
     def __init__(self, path=str(pathlib.Path.home()), parent=None, width=4, button_size=(100,100), icon_size=(60,60)):
         super(FigFileViewer, self).__init__(parent)   
-        all_files = self.listFiles(path) # get list of all files and folders.
         self.folderBar = self.initFolderNavBar() 
         self.folderBar.path = str(pathlib.Path.home())
         self.selectedItems = []
         self.ribbon_visible = True
         self.curr_path = path # initialize current path with the passed path or home.
         self._parent = parent
+        self.window = parent
         self.rubberBand = QRubberBand(QRubberBand.Rectangle, self)
         self.fileFilter = None
         scrollAreaStyle = '''
@@ -551,35 +595,17 @@ class FigFileViewer(QWidget):
         self.history = [path]
         self.historyIter = 0
         self.j = 0
-        import time
-        start = time.time()
-        self.init_thread = QThread()
-        self.init_worker = FileViewerInitWorker()
-        self.init_worker.moveToThread(self.init_thread)
-        self.init_thread.started.connect(lambda: self.init_worker.run(self, all_files))
-        self.init_worker.finished.connect(self.init_thread.quit)
-        self.init_worker.finished.connect(self.init_worker.deleteLater)
-        self.init_thread.finished.connect(self.init_thread.deleteLater)
-        # TODO: check dis.
-        # self.init_worker.progress.connect(self.reportProgress)
-        self.init_thread.start()
-        # for i, path in enumerate(all_files):
-        #     fileIcon = FigFileIcon(path, parent=self)
-        #     fileIcon.clicked.connect(self.open)
-        #     ### replace with FlowLayout ###
-        #     self.gridLayout.addWidget(fileIcon)
-        #     # self.gridLayout.addWidget(fileIcon, i // width, i % width) 
-        #     ###############################       
-        # self.viewer.setLayout(self.gridLayout)
-        
-        print("created grid layout:", time.time()-start)
-        # self.layout.addWidget(self.welcomeLabel, alignment=Qt.AlignCenter)
-        self.scrollArea.setWidget(self.viewer)
 
+        self.viewer.setLayout(self.gridLayout)
+        self.refresh(path)
+        
+        self.scrollArea.setWidget(self.viewer)
         self.sideBar = self.initSideBar()
+
         self.overallViewer = QSplitter(Qt.Horizontal)
         self.overallViewer.addWidget(self.sideBar)
         self.overallViewer.addWidget(self.scrollArea)
+        
         overallScrollArea = QScrollArea()
         overallScrollArea.setWidgetResizable(True)
         overallScrollArea.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
@@ -587,7 +613,6 @@ class FigFileViewer(QWidget):
         overallScrollArea.setStyleSheet(scrollAreaStyle)
         overallScrollArea.setWidget(self.overallViewer)
 
-        start = time.time()
         self.navbar = self.initNavBar()
         self.propbar = self.initPropBar()
         # self.editbar = self.initEditBar()
@@ -604,7 +629,6 @@ class FigFileViewer(QWidget):
         # self.layout.addWidget(self.viewbar)
         # self.layout.addWidget(self.utilbar)
 
-        start = time.time()
         # self.layout.addWidget(self.scrollArea)
         self.layout.addWidget(overallScrollArea)
         self.setLayout(self.layout)
@@ -1757,8 +1781,9 @@ class FigFileViewer(QWidget):
     #     return super().eventFilter(obj, event)
 
     def highlightOnClick(self):
+        # sendingBtn = self.sender().parent()
         sendingBtn = self.sender()
-        j = self.gridLayout.indexOf(sendingBtn.parent())
+        j = self.gridLayout.indexOf(sendingBtn)
         self.highlight(j)
     def clear(self):
         for i in reversed(range(self.gridLayout.count())): 
@@ -1775,6 +1800,7 @@ class FigFileViewer(QWidget):
             # selBtn.setStyleSheet("background: #ff5e00; color: #292929; font-weight: bold")
             selBtn.select()
         except AttributeError:
+            # to handle empty folders.
             self.back()
     # def eventFilter(self, source, event):
     #     if event.type() == QEvent.KeyPress:
@@ -1909,7 +1935,7 @@ class FigFileViewer(QWidget):
         self.clear()
         global GLOBAL_FILE_LIST
         GLOBAL_FILE_LIST = []
-        if self._parent:
+        if self.window:
             i = self._parent.tabs.currentIndex()
             name = pathlib.Path(path).name
             parent = pathlib.Path(path).parent.name
@@ -1918,8 +1944,9 @@ class FigFileViewer(QWidget):
             self._parent.log("launcher/fileviewer.png", str(path))
             # print("refreshing view ...")
             # self._parent.setWindowTitle("Loading")
+        print(f"refreshing {path}")
         self.refresh_thread = QThread()
-        self.refresh_worker = FileViewerRefreshWorker(os.scandir(path))
+        self.refresh_worker = FileViewerRefreshWorker(listdir(path, reverse=reverse), is_iter=False)
         self.refresh_worker.moveToThread(self.refresh_thread)
         self.refresh_thread.started.connect(self.refresh_worker.run)
         # self.refresh_worker.finished.connect(lambda: self.highlight(0))
@@ -1935,7 +1962,7 @@ class FigFileViewer(QWidget):
     def reportProgress(self, i):
         global GLOBAL_FILE_LIST
         fileIcon = FigFileIcon(GLOBAL_FILE_LIST[i], parent=self)
-        fileIcon.icon.clicked.connect(self.open)
+        fileIcon.clicked.connect(self.open)
         self.gridLayout.addWidget(fileIcon)
 
     def _refresh(self, path, reverse=False):
@@ -1952,7 +1979,7 @@ class FigFileViewer(QWidget):
         
         for i,path in enumerate(all_files):
             fileIcon = FigFileIcon(path, parent=self)
-            fileIcon.icon.clicked.connect(self.open)
+            fileIcon.clicked.connect(self.open)
             ### replace with FlowLayout ###
             self.gridLayout.addWidget(fileIcon)  
             # self.gridLayout.addWidget(fileIcon, i // self.width, i % self.width)  
@@ -2022,7 +2049,7 @@ class FigFileViewer(QWidget):
         all_files = self.listFiles(path, hide=False) # get list of all files and folders.
         for i,path in enumerate(all_files):
             fileIcon = FigFileIcon(path, parent=self)
-            fileIcon.icon.clicked.connect(self.open)
+            fileIcon.clicked.connect(self.open)
             ### replace with FlowLayout ###
             # self.gridLayout.addWidget(fileIcon, i // self.width, i % self.width)  
             self.gridLayout.addWidget(fileIcon)
@@ -2031,25 +2058,33 @@ class FigFileViewer(QWidget):
 
     def open(self):
         sendingBtn = self.sender()
-        j = self.gridLayout.indexOf(sendingBtn.parent())
+        # print(
+        #     sendingBtn.file.path, 
+        #     sendingBtn.file.name,
+        #     sendingBtn.file.parent,
+        #     sendingBtn.file.isfile
+        # )
+        j = self.gridLayout.indexOf(sendingBtn)
         if j != self.j:
             self.highlight(j)
-            return 
+            return
         if not sendingBtn.file.isfile:
+            # print("opening folder:", sendingBtn.file.path)
             path = sendingBtn.file.path
             self.curr_path = path
             self.history.append(path)
             self.historyIter += 1
             self.refresh(path)
         else:
-            if self._parent: # call file handler for the extension here
-                path = sendingBtn.path
-                handlerWidget = self._parent.handler.getUI(path)
-                name = pathlib.Path(path).name
-                parent = ".../" + pathlib.Path(path).parent.name
-                thumbnail = getThumbnail(path)
-                i = self._parent.tabs.addTab(handlerWidget, FigIcon(thumbnail), f"\t{name} {parent}")
-                self._parent.tabs.setCurrentIndex(i)
+            if self.window: # call file handler for the extension here
+                path = sendingBtn.file.path
+                print(f"getting handler for {path}")
+                
+                handlerWidget = self.window.handler.getUI(path)
+                thumbnail = sendingBtn.file.thumbnail
+                
+                i = self.window.tabs.addTab(handlerWidget, FigIcon(thumbnail), f"\t{sendingBtn.file.name} .../{sendingBtn.file.parent}")
+                self.window.tabs.setCurrentIndex(i)
 
     def sideBarToLeft(self):
         self.scrollArea.hide()

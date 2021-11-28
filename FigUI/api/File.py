@@ -211,3 +211,24 @@ Thumbnail: {self.thumbnail}
                 # print(self.name)
                 return f"launcher/txt.png" 
                 # if ext is not recognized set it to txt
+
+def listdir(path, reverse=False, filter_hidden=True, key=lambda x: x.lower()):
+    path = os.path.expanduser(path)
+    files, folders = [], []
+    for file in os.listdir(path):
+        abs_path = os.path.join(path, file)
+        if file.startswith(".") and filter_hidden:
+            continue
+        if os.path.isfile(abs_path):
+            files.append(file)
+        else:
+            folders.append(file)
+    files = sorted(files, key=lambda x: x.lower(), reverse=reverse)
+    folders = sorted(folders, key=lambda x: x.lower(), reverse=reverse)
+    paths = []
+    for file in folders:
+        paths.append(os.path.join(path, file))
+    for file in files:
+        paths.append(os.path.join(path, file))
+
+    return paths
