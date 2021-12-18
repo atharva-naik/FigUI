@@ -628,7 +628,6 @@ class FigFileViewer(QWidget):
         # print("created toolbars:", time.time()-start)
         # self.layout.addWidget(self.viewbar)
         # self.layout.addWidget(self.utilbar)
-
         # self.layout.addWidget(self.scrollArea)
         self.layout.addWidget(overallScrollArea)
         self.setLayout(self.layout)
@@ -640,10 +639,9 @@ class FigFileViewer(QWidget):
         self.toggleRibbon()
         self.backNavBtn.clicked.connect(self.prevPath)
         self.nextNavBtn.clicked.connect(self.nextPath)
-        self.folderBar.hide()
-        self.sideBar.hide()
-        # print("created toolbars:", time.time()-start)
-        # self.setLayout(self.gridLayout)
+        self.overallViewer.setSizes([70,700])
+        # self.folderBar.hide()
+        # self.sideBar.hide()
     def initSideBarBtn(self, name: str):
         home = str(pathlib.Path.home())
         tb = "    "
@@ -2058,12 +2056,6 @@ class FigFileViewer(QWidget):
 
     def open(self):
         sendingBtn = self.sender()
-        # print(
-        #     sendingBtn.file.path, 
-        #     sendingBtn.file.name,
-        #     sendingBtn.file.parent,
-        #     sendingBtn.file.isfile
-        # )
         j = self.gridLayout.indexOf(sendingBtn)
         if j != self.j:
             self.highlight(j)
@@ -2608,23 +2600,3 @@ if __name__ == "__main__":
 #             else: 
 #                 # print(self.name)
 #                 self.setIcon(FigIcon(f"launcher/txt.png")) # if ext is not recognized set it to txt
-    
-    # def _animateMovie(self):
-    #     import time
-    #     while True:
-    #         self._gifMovie.seek(self._gifIndex)
-    #         pixmap = QPixmap.fromImage(ImageQt.ImageQt(self._gifMovie))
-    #         self.setIcon(QIcon(pixmap))
-    #         self.setIconSize(QSize(*self.size))
-    #         time.sleep(self.rate/1000)
-    #         self._gifIndex += 1
-    #         self._gifIndex %= self._gifLength
-    # def setMovie(self, path, rate=100, size=(60,60)):
-    #     import threading
-    #     self.size = size
-    #     self.rate = rate
-    #     self.thread = threading.Thread(target=self._animateMovie)
-    #     self._gifIndex = 0
-    #     self._gifMovie = Image.open(path)
-    #     self._gifLength = self._gifMovie.n_frames
-    #     self.thread.start()

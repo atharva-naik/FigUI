@@ -788,7 +788,9 @@ class FigWindow(QMainWindow):
         # adding action when tab is changed
         self.tabs.currentChanged.connect(self.onCurrentTabChange)
         # making tabs closeable	
-        self.tabs.setTabsClosable(True) 	
+        self.tabs.setTabsClosable(True)
+        self.tabs.setElideMode(True)
+        self.tabs.setMovable(True) 	
         self.tabs.tabCloseRequested.connect(self.onCurrentTabClose) # adding action when tab close is requested
         # self.tabs.setGraphicsEffect(self.blur_effect)
         self.tabs.setStyleSheet('''
@@ -908,7 +910,7 @@ class FigWindow(QMainWindow):
         except: from .Launcher import FigLauncher
         self.fig_launcher = FigLauncher(self)
         # self.newTabBtn.clicked.connect(self.addNewTab)
-        self.tabs.addTab(self.fig_launcher, FigIcon("launcher.png"), "\tLauncher")
+        self.tabs.addTab(self.fig_launcher, FigIcon("launcher.png"), "Launcher")
         transBtn = QToolButton(self.tabs)
         transBtn.setAttribute(Qt.WA_TranslucentBackground)
         transBtn.setStyleSheet('''
@@ -1526,7 +1528,7 @@ class FigWindow(QMainWindow):
         # self.terminals.append(main_window)
         # window = QWindow.fromWinId(main_window.winId())
         # shell = QWidget.createWindowContainer(window)
-        i = self.tabs.addTab(terminal, FigIcon("launcher/bash.png"), "\tTerminal")
+        i = self.tabs.addTab(terminal, FigIcon("launcher/bash.png"), "Terminal")
         self.tabs.setCurrentIndex(i)
         self.tabs.tabBar().setExpanding(True)
         # self.tabs.setTabWhatsThis(i, "xterm (embedded)")
@@ -1538,7 +1540,7 @@ class FigWindow(QMainWindow):
         try: from FigUI.subSystem.Clock import FigClock
         except ImportError: from ..subSystem.Clock import FigClock
         clockApp = FigClock()
-        i = self.tabs.addTab(clockApp, FigIcon("sidebar/clock.png"), "\tClock")
+        i = self.tabs.addTab(clockApp, FigIcon("sidebar/clock.png"), "Clock")
         self.tabs.setCurrentIndex(i)
         self.tabs.setTabToolTip(i, "clock app")
 
@@ -1547,7 +1549,7 @@ class FigWindow(QMainWindow):
     def addNewTaskView(self):
         '''Add new task view window'''
         taskView = FigTaskWebView(parent=self, screen=self.screen)
-        i = self.tabs.addTab(taskView, FigIcon("ctrlbar/task-view.svg"), "\tTasks")
+        i = self.tabs.addTab(taskView, FigIcon("ctrlbar/task-view.svg"), "Tasks")
         self.tabs.setCurrentIndex(i)
         self.tabs.setTabToolTip(i, "manage tasks/tabs")
         self.log("ctrlbar/task-view.svg", "Task Viewer")
@@ -1557,7 +1559,7 @@ class FigWindow(QMainWindow):
         try: from FigUI.subSystem.ChatBot import FigChatBot
         except ImportError: from ..subSystem.ChatBot import FigChatBot
         chatBotApp = FigChatBot()
-        i = self.tabs.addTab(chatBotApp, FigIcon("sidebar/assistant.png"), "\tClock")
+        i = self.tabs.addTab(chatBotApp, FigIcon("sidebar/assistant.png"), "Clock")
         self.tabs.setCurrentIndex(i)
         self.tabs.setTabToolTip(i, "assistant app")
         self.log("sidebar/assistant.png", "Assistant")
@@ -1571,28 +1573,28 @@ class FigWindow(QMainWindow):
         home = pathlib.Path.home()
         bashrc = os.path.join(home, ".bashrc")
         handlerWidget = self.handler.getUI(path=bashrc)
-        i = self.tabs.addTab(handlerWidget, FigIcon("launcher/bashrc.png"), "\t.bashrc")
+        i = self.tabs.addTab(handlerWidget, FigIcon("launcher/bashrc.png"), ".bashrc")
         self.tabs.setCurrentIndex(i)
         self.log("launcher/bashrc.png", bashrc)
         # self.save_screenshot(handlerWidget)
     def addNewLicenseGenerator(self):
         '''Add new license template generator.'''
         licenseViewer = FigLicenseGenerator()
-        i = self.tabs.addTab(licenseViewer, FigIcon("launcher/license.png"), "\tLICENSE")
+        i = self.tabs.addTab(licenseViewer, FigIcon("launcher/license.png"), "LICENSE")
         self.tabs.setCurrentIndex(i)
         self.log("launcher/license.png", "LICENSE Generator")
         # self.save_screenshot(licenseViewer)
     def addNewHistoryViewer(self):
         '''Add new tab for viewing history.'''
         historyViewer = FigHistoryViewer(self.fig_history)
-        i = self.tabs.addTab(historyViewer, FigIcon("launcher/history.png"), f"\t{self.fig_history.title}'s history")
+        i = self.tabs.addTab(historyViewer, FigIcon("launcher/history.png"), f"{self.fig_history.title}'s history")
         self.tabs.setCurrentIndex(i)
         self.log("launcher/history.png", self.fig_history.path)
         # self.save_screenshot(historyViewer)
     def addNewTextEditor(self):
         '''Add new bashrc customizer.'''
         handlerWidget = self.handler.getUI("Untitled.txt")
-        i = self.tabs.addTab(handlerWidget, FigIcon("launcher/txt.png"), "\tUntitled")
+        i = self.tabs.addTab(handlerWidget, FigIcon("launcher/txt.png"), "Untitled")
         self.tabs.setCurrentIndex(i)
         self.log("launcher/txt.png", "Untitled")
         # self.save_screenshot(handlerWidget)
@@ -1609,7 +1611,7 @@ class FigWindow(QMainWindow):
             path = str(pathlib.Path.home())
         parent = ".../" + pathlib.Path(path).parent.name
         name = pathlib.Path(path).name
-        i = self.tabs.addTab(fileViewer, FigIcon("launcher/fileviewer.png"), f"\t{name} {parent}")# f"\t{str(pathlib.Path.home())}")
+        i = self.tabs.addTab(fileViewer, FigIcon("launcher/fileviewer.png"), f"{name} {parent}")# f"\t{str(pathlib.Path.home())}")
         self.tabs.setCurrentIndex(i)
         self.log("launcher/fileviewer.png", path)
         # self.save_screenshot(fileViewer)
@@ -1618,7 +1620,7 @@ class FigWindow(QMainWindow):
         try: from FigUI.subSystem.Email import FigEmailClient
         except ImportError: from ..subSystem.Email import FigEmailClient
         mailClient = FigEmailClient(self)
-        i = self.tabs.addTab(mailClient, FigIcon("sidebar/email.png"), f"\t{mailClient.imap_url}")
+        i = self.tabs.addTab(mailClient, FigIcon("sidebar/email.png"), f"{mailClient.imap_url}")
         self.tabs.setCurrentIndex(i)
 
     def addNewTab(self, qurl=None, label="Blank"):
@@ -1640,7 +1642,7 @@ class FigWindow(QMainWindow):
 									self.setupTab(i, browser.browser))
 
     def setupTab(self, i, browser):
-        self.tabs.setTabText(i, "\t"+browser.page().title())
+        self.tabs.setTabText(i, ""+browser.page().title())
         self.tabs.setTabIcon(i, FigIcon("launcher/browser.png"))
         self.log("launcher/browser.png", QUrl('http://www.google.com'))
 
